@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Altena Portfolio</title>
+    <meta name="description" content="Personal portfolio of Altena, 3DCG & Frontend Developer.">
+    <link rel="icon" href="img/favicon.ico">
+
+    <!-- fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+        rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- JS -->
+    <script src="js/main.js"></script>
+</head>
+
+<body>
+    <header class="header glass">
+        <div class="header-container">
+            <a href="index.html" class="logo">
+                <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+            </a>
+            <nav class="nav">
+                <ul>
+                    <li><a href="#skills">Skills</a></li>
+                    <li><a href="#timeline">Timeline</a></li>
+                    <li><a href="myworks.html">Works</a></li>
+                    <li><a href="notes.html">Notes</a></li>
+                    <li><a href="#profile">About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <div class="hero-placeholder"></div>
+                <div class="hero-text">
+                    <h1 class="reveal logo-text"><span class="title-typing"></span><span class="cursor" id="title-cursor">|</span></h1>
+                    <div class="typing-container reveal delay-1" id="subtitle-container" style="visibility: hidden;">
+                        <span class="prefix"></span>
+                        <span class="mono typing-animation"></span>
+                        <span class="cursor" id="subtitle-cursor" style="display: none;">|</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="content-wrapper">
+            <!-- SVG Circuit Layer -->
+            <svg id="circuit-overlay" class="circuit-layer"></svg>
+            <section class="under-construction reveal">
+                <p>Sytem Status: <span class="accent-bg">Upgrading...</span></p>
+            </section>
+
+            <!-- SECTION 1: 技術スタック -->
+            <section id="skills" class="skills-section reveal">
+                <h2 class="section-title">
+                    <div class="title-wrapper">
+                        <span class="sub-title">SKILLS & TOOLS</span>
+                        <span class="main-title">Tech Stack</span>
+                    </div>
+                </h2>
+                <div class="prog-lang-tile-container">
+                    <div class="prog-lang-tile-item glass">
+                        <div class="icon-box"><img src="img/python-logo.svg" alt="Python logo" class="prog-lang-img">
+                        </div>
+                        <h3>Python</h3>
+                        <p>Data Processing & Scripting</p>
+                    </div>
+                    <div class="prog-lang-tile-item glass">
+                        <div class="icon-box"><img src="img/HTML5-logo.svg" alt="HTML logo" class="prog-lang-img"></div>
+                        <h3>HTML</h3>
+                        <p>Semantic Core Structures</p>
+                    </div>
+                    <div class="prog-lang-tile-item glass">
+                        <div class="icon-box"><img src="img/CSS3-logo.svg" alt="CSS logo" class="prog-lang-img"></div>
+                        <h3>CSS</h3>
+                        <p>Modern Layouts & FX</p>
+                    </div>
+                    <div class="prog-lang-tile-item glass">
+                        <div class="icon-box"><img src="img/js-logo.png" alt="JavaScript logo" class="prog-lang-img">
+                        </div>
+                        <h3>JavaScript</h3>
+                        <p>ES6+ & Web Logic</p>
+                    </div>
+                    <div class="prog-lang-tile-item glass">
+                        <div class="icon-box"><img src="img/react-logo.svg" alt="React logo" class="prog-lang-img">
+                        </div>
+                        <h3>React</h3>
+                        <p>Frontend Component Architecture</p>
+                    </div>
+                    <div class="prog-lang-tile-item glass">
+                        <div class="icon-box"><img src="img/blender-logo.svg" alt="Blender logo" class="prog-lang-img">
+                        </div>
+                        <h3>Blender</h3>
+                        <p>3D Modeling & Rendering</p>
+                    </div>
+                    <div class="prog-lang-tile-item glass">
+                        <div class="icon-box"><img src="img/unity-logo.svg" alt="Unity logo" class="prog-lang-img">
+                        </div>
+                        <h3>Unity</h3>
+                        <p>Game & Asset Development</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TIMELINE -->
+            <section id="timeline" class="timeline-section reveal">
+                <h2 class="section-title">
+                    <div class="title-wrapper">
+                        <span class="sub-title">EXPERIENCE</span>
+                        <span class="main-title">Timeline</span>
+                    </div>
+                </h2>
+
+                <!-- Timeline Filters -->
+                <div class="filter-controls">
+                    <div class="chips-group">
+                        <label class="filter-chip">
+                            <input type="checkbox" name="category" value="school" checked>
+                            <span>School</span>
+                        </label>
+                        <label class="filter-chip">
+                            <input type="checkbox" name="category" value="cert" checked>
+                            <span>Certification</span>
+                        </label>
+                        <label class="filter-chip">
+                            <input type="checkbox" name="category" value="contest" checked>
+                            <span>Contest</span>
+                        </label>
+                    </div>
+                    <div class="filter-count mono">
+                        <span id="active-count">19</span> / <span id="total-count">19</span> items
+                    </div>
+                </div>
+
+                <div class="timeline-container">
+                    <ul class="timeline">
+                        <!-- School Category -->
+                        <li class="timeline-item" data-category="school">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2022/04/07</span>
+                                <h4>入学</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="school">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2023/04/01</span>
+                                <h4>第二学年進学</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2023/05/11</span>
+                                <h4>日本漢字能力検定 2級</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2023/05/17</span>
+                                <h4>ITパスポート</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2023/09/14</span>
+                                <h4>基本情報技術者</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2023/11/10</span>
+                                <h4>実用数学技能検定 準2級</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2023/12/24</span>
+                                <h4>統計検定 3級</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2024/03/09</span>
+                                <h4>G検定</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2024/05/16</span>
+                                <h4>情報セキュリティマネジメント</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2024/10/20</span>
+                                <h4>危険物取扱者 乙種第4類</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2025/03/27</span>
+                                <h4>タイピング技能検定 特級</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="school">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2025/04/01</span>
+                                <h4>第三学年進学</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2025/04/05</span>
+                                <h4>Python3 エンジニア認定基礎試験</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2025/04/20</span>
+                                <h4>応用情報技術者</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2025/07/06</span>
+                                <h4>カラーコーディネーター スタンダード</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2026/03/01</span>
+                                <h4>危険物取扱者 乙種第2類</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="cert">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2026/03/01</span>
+                                <h4>危険物取扱者 乙種第3類</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="contest">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2026/03/28</span>
+                                <h4>第2回 さくらのAIハッカソン with Kloud 最優秀賞</h4>
+                            </div>
+                        </li>
+                        <li class="timeline-item" data-category="school">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content glass">
+                                <span class="timeline-date">2026/04/01</span>
+                                <h4>第四学年進学</h4>
+                            </div>
+                        </li>
+                    </ul>
+                    <!-- We can keep the more button if needed, but for now we show all -->
+                    <div class="timeline-more">
+                        <button class="btn-outline">Download Full CSV</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: 他作品ページへのリンク -->
+            <section id="works" class="works-section reveal">
+                <h2 class="section-title">
+                    <div class="title-wrapper">
+                        <span class="sub-title">PORTFOLIO</span>
+                        <span class="main-title">Selected Works</span>
+                    </div>
+                </h2>
+                <div class="page-tile-container">
+                    <a href="work1.html" class="page-tile-item glass">
+                        <div class="page-img-wrapper">
+                            <img src="img/work1-thumb.jpg" alt="work1 thumbnail" class="page-img">
+                            <div class="page-overlay"><span>View Details</span></div>
+                        </div>
+                        <div class="page-info">
+                            <h3>Sample 1</h3>
+                            <p>Sample</p>
+                        </div>
+                    </a>
+                    <a href="work2.html" class="page-tile-item glass">
+                        <div class="page-img-wrapper">
+                            <img src="img/work2-thumb.jpg" alt="work2 thumbnail" class="page-img">
+                            <div class="page-overlay"><span>View Details</span></div>
+                        </div>
+                        <div class="page-info">
+                            <h3>Sample 2</h3>
+                            <p>Sample</p>
+                        </div>
+                    </a>
+                    <a href="work3.html" class="page-tile-item glass">
+                        <div class="page-img-wrapper">
+                            <img src="img/work3-thumb.jpg" alt="work3 thumbnail" class="page-img">
+                            <div class="page-overlay"><span>View Details</span></div>
+                        </div>
+                        <div class="page-info">
+                            <h3>Sample 3</h3>
+                            <p>Sample</p>
+                        </div>
+                    </a>
+                    <a href="work4.html" class="page-tile-item glass">
+                        <div class="page-img-wrapper">
+                            <img src="img/work4-thumb.jpg" alt="work4 thumbnail" class="page-img">
+                            <div class="page-overlay"><span>View Details</span></div>
+                        </div>
+                        <div class="page-info">
+                            <h3>Sample 4</h3>
+                            <p>Sample</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="works-more reveal">
+                    <a href="myworks.html" class="more-link mono">and more</a>
+                </div>
+            </section>
+
+            <!-- SECTION 4: AUTHOR PROFILE (Newly Added) -->
+            <section id="profile" class="about-section reveal" style="margin-top: 8rem;">
+                <h2 class="section-title">
+                    <div class="title-wrapper">
+                        <span class="sub-title">AUTHOR</span>
+                        <span class="main-title">Profile</span>
+                    </div>
+                </h2>
+                <div class="about-container glass">
+                    <div class="profile-image">
+                        <div class="image-placeholder"></div>
+                    </div>
+                    <div class="profile-text">
+                        <h3><span class="brand">Altena</span></h3>
+                        <p class="philosophy mono">Alt & Higher Standards</p>
+                        <div class="bio">
+                            <p>Sample</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="glass-top">
+        <div class="footer-content">
+            <p class="mono">&copy; 2026 Altena. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+
+</html>
