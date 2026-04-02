@@ -293,4 +293,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize circuits and redraw on resize
     setTimeout(drawCircuits, 100);
     window.addEventListener('resize', drawCircuits);
+
+    /**
+     * Mobile Menu Toggle
+     */
+    const initMobileMenu = () => {
+        const hamburger = document.getElementById('mobile-menu-toggle');
+        const nav = document.querySelector('.nav');
+        const navLinks = document.querySelectorAll('.nav a');
+
+        if (!hamburger || !nav) return;
+
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            nav.classList.toggle('active');
+            // Prevent scrolling when menu is open
+            document.body.style.overflow = nav.classList.contains('active') ? 'hidden' : '';
+        });
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                nav.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+    };
+
+    initMobileMenu();
 });
