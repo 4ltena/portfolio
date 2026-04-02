@@ -1,0 +1,8 @@
+# ディレクトリリスティング（ファイル一覧）を禁止
+Options -Indexes
+
+# フォルダアクセス時に index.html を優先表示
+DirectoryIndex index.html
+
+# 権限がない場合（index.htmlがなく一覧表示が禁止されている場合）はシステム共通のページを表示
+ErrorDocument 403 /system/nothing.html

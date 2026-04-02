@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Title | Altena Portfolio</title>
+    <meta name="description" content="Project Detail Page Template.">
+
+    <!-- fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+        rel="stylesheet">
+
+    <!-- CSS (Paths adjusted for works/project-name/index.html) -->
+    <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+    <link rel="stylesheet" href="../../style.css">
+
+    <!-- JS -->
+    <script src="../../js/main.js"></script>
+
+    <script>
+        // System Greeting: Archive Access
+        console.log("%c[SYSTEM] Accessing Archive: Sector [Project DATA].", "color: #00f2ff; font-weight: bold; background: #111; padding: 5px 10px; border-radius: 4px;");
+        console.log("%c[SYSTEM] Decryption 100% complete. Visualizing refined data...", "color: #a0a0a5; font-style: italic;");
+        console.log("%c[INFO] \"The beauty is in the details, Architect.\"", "color: #ff79c6;");
+    </script>
+</head>
+
+<body>
+    <!-- Hidden Comment
+　　 （・∀・）　　　|　|　ｶﾞｯ
+　　と　　　　）　 　 |　|
+　　　 Ｙ　/ノ　　　 人
+　　　　 /　）　 　 < 　>__Λ∩
+　　 ＿/し'　／／. Ｖ｀Д´）/ ←>>1
+　　（＿フ彡　　　　　 　　/
+    -->
+
+    <header class="header glass">
+        <div class="header-container">
+            <a href="../../index.html" class="logo" id="header-logo">
+                <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+            </a>
+            <nav class="nav">
+                <ul>
+                    <li><a href="../../index.html#skills">Skills</a></li>
+                    <li><a href="../../index.html#timeline">Timeline</a></li>
+                    <li><a href="../../myworks.html">Works</a></li>
+                    <li><a href="../../notes.html">Notes</a></li>
+                    <li><a href="../../index.html#profile">About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero small-hero">
+            <div class="hero-content">
+                <div class="hero-placeholder"></div>
+                <div class="hero-text">
+                    <h1 class="reveal">Project <span class="accent-blue">Title</span></h1>
+                    <p class="reveal delay-1">3DCG / Frontend / Design</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="content-wrapper">
+            <section class="project-detail reveal">
+                <h2 class="section-title">
+                    <div class="title-wrapper">
+                        <span class="sub-title">OVERVIEW</span>
+                        <span class="main-title">Project Summary</span>
+                    </div>
+                </h2>
+
+                <!-- Project Image Placeholder -->
+                <div class="project-hero-image glass"
+                    style="aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; margin-bottom: 4rem;">
+                    <span class="mono" style="opacity: 0.3;">[MAIN RENDER PLACEHOLDER]</span>
+                </div>
+
+                <div class="project-info-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 4rem;">
+                    <div class="project-desc">
+                        <h3>About the Project</h3>
+                        <p>Placeholder for project description. Describe your role, the tools used (Blender, Unity,
+                            etc.), and the final outcome.</p>
+
+                        <!-- Themed Code Block (Example) -->
+                        <div class="code-window reveal">
+                            <div class="code-header">
+                                <div class="code-controls">
+                                    <div class="control red"></div>
+                                    <div class="control yellow"></div>
+                                    <div class="control green"></div>
+                                </div>
+                                <div class="code-title">NullPointerExceptionSample.java</div>
+                            </div>
+                            <div class="code-content">
+                                <code><span class="token-keyword">public class</span> <span class="token-class">NullPointerExceptionSample</span> {
+    <span class="token-keyword">public static void</span> <span class="token-method">main</span>(<span class="token-type">String</span>[] args) {
+        <span class="token-keyword">try</span> {
+            <span class="token-type">String</span> i = <span class="token-keyword">null</span>;
+
+
+            i.<span class="token-method">toString</span>(); 
+
+        } <span class="token-keyword">catch</span> (<span class="token-class">NullPointerException</span> e) {
+            e.<span class="token-method">printStackTrace</span>();
+        }
+    }
+}</code>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="project-meta glass" style="padding: 2rem;">
+                        <ul class="mono" style="list-style: none; padding: 0; font-size: 0.9rem;">
+                            <li style="margin-bottom: 1rem;"><span class="accent-blue">Date:</span> 2026/04/01</li>
+                            <li style="margin-bottom: 1rem;"><span class="accent-blue">Tech:</span> Blender / WebGL</li>
+                            <li><span class="accent-blue">Category:</span> 3DCG Artwork</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="back-home reveal" style="margin-top: 6rem;">
+                    <a href="../../myworks.html" class="btn-outline">Back to Works</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="glass-top">
+        <div class="footer-content">
+            <p class="mono">&copy; 2026 Altena. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+
+</html>

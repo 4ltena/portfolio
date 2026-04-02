@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting... | Altena Portfolio</title>
+
+    <!-- fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+        rel="stylesheet">
+
+    <!-- JS (Absolute path for global access via ErrorDocument) -->
+    <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+    <link rel="stylesheet" href="/style.css">
+
+    <script>
+        // System Greeting: Null Sector
+        console.log("%c[ALERT] UNEXPECTED ACCESS: NULL SECTOR.", "color: #ff5555; font-weight: bold; background: #111; padding: 5px 10px; border-radius: 4px;");
+        console.log("%c[WARNING] Some voids are better left unexplored.", "color: #ffb86c; font-style: italic;");
+        console.log("%c[RECOVERY] Stabilizing reality... Redirecting to Root.", "color: #a0a0a5; font-style: italic;");
+    </script>
+
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        .status-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .kaomoji {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-text {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+        }
+
+        .dots {
+            display: inline-block;
+            min-width: 6ch;
+            text-align: left;
+            color: var(--accent-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Hidden Comment
+    　　／⌒ヽ  
+    　く/･〝　⌒ヽ
+    　 |　3　(∪￣ ]
+    　く､･〟 (∩￣ ]
+    ￣￣￣￣￣￣￣￣
+    -->
+    <div class="status-container">
+        <div class="kaomoji">(´・ω・`)</div>
+        <p class="status-text">ここにはなにもないようです<span class="dots" id="dots"></span></p>
+    </div>
+
+    <script>
+        const dotsEl = document.getElementById('dots');
+        let dotCount = 0;
+        const maxDots = 6;
+
+        // Dot animation
+        const dotInterval = setInterval(() => {
+            dotCount = (dotCount + 1) % (maxDots + 1);
+            dotsEl.textContent = '.'.repeat(dotCount);
+        }, 500);
+
+        // [Global Redirect] Redirect to root after 3s
+        setTimeout(() => {
+            clearInterval(dotInterval);
+            window.location.href = '/index.html';
+        }, 3000);
+    </script>
+</body>
+
+</html>

@@ -1,5 +1,42 @@
 document.addEventListener('DOMContentLoaded', () => {
     /**
+     * Logo Typing Animation
+     * Sequence: / -> // -> /// -> //A -> //Altena
+     */
+    const initLogoAnimation = () => {
+        const logo = document.getElementById('header-logo');
+        if (!logo) return;
+
+        const fullText = "Altena";
+        const slashIcon = '<span class="slash-icon">//</span>';
+        const enaPart = '<span class="ena">ena</span>';
+        
+        // Initial state: empty
+        logo.innerHTML = '<span class="slash-icon"></span><span class="logo-cursor"></span>';
+        
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        const animate = async () => {
+            // Fast sequence: / -> // -> ///
+            await delay(200);
+            logo.innerHTML = '<span class="slash-icon">/</span>';
+            await delay(50);
+            logo.innerHTML = '<span class="slash-icon">//</span>';
+            await delay(50);
+            logo.innerHTML = '<span class="slash-icon">///</span>';
+            await delay(150); 
+
+            // Final: /// becomes //Alt then //Altena
+            logo.innerHTML = '<span class="slash-icon">//</span>Alt';
+            await delay(100);
+            logo.innerHTML = slashIcon + 'Alt<span class="ena">ena</span>';
+        };
+
+        animate();
+    };
+
+    initLogoAnimation();
+    /**
      * Typing Animation for Title (One-time)
      */
     const initTitleTyping = () => {
