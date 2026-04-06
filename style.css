@@ -132,17 +132,16 @@ a {
     white-space: nowrap;
 }
 
+.logo:hover {
+    opacity: 0.7;
+}
+
 .logo .ena { color: var(--accent-primary); }
 
 .logo .slash-icon {
     display: inline-block;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.logo:hover .slash-icon {
-    transform: scaleX(-1);
-    color: var(--accent-primary);
-}
 
 
 .nav ul {
@@ -609,6 +608,62 @@ a {
     line-height: 1.8;
 }
 
+/* Search Box for Notes */
+.search-container {
+    margin: 2rem 0 3rem;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.search-icon {
+    font-size: 1.2rem;
+    opacity: 0.5;
+}
+
+.search-box input {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    flex-grow: 1;
+    font-size: 1.1rem;
+    outline: none;
+    font-family: var(--font-main);
+}
+
+#clear-search {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--text-secondary);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    font-size: 1rem;
+}
+
+#clear-search:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+}
+
+.search-stats {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    padding-left: 1rem;
+}
+
 /* Notes Section */
 .notes-section { margin-top: var(--section-spacing); }
 
@@ -839,3 +894,238 @@ footer {
 .token-type { color: #8be9fd; }
 .token-number { color: #bd93f9; }
 .token-builtin { color: #66d9ef; }
+
+/* ==========================================================================
+   Clickable Items & Interactivity
+   ========================================================================== */
+
+.clickable-item {
+    cursor: pointer;
+}
+
+.clickable-item:hover .timeline-content {
+    background: rgba(255, 255, 255, 0.08); /* Brighter glass */
+    transform: translateX(10px);
+    border-color: var(--accent-primary);
+    box-shadow: 0 10px 30px rgba(0, 242, 255, 0.15);
+}
+
+.clickable-item:hover .timeline-dot {
+    background: var(--accent-primary);
+    box-shadow: 0 0 15px var(--accent-primary);
+}
+
+/* Profile Links */
+.profile-links {
+    margin-top: 1.5rem;
+}
+
+.mono-link {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--accent-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    border-radius: 4px;
+    background: rgba(0, 242, 255, 0.03);
+}
+
+.mono-link:hover {
+    background: rgba(0, 242, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.arrow-link::after {
+    content: '→';
+    transition: transform 0.3s ease;
+}
+
+.arrow-link:hover::after {
+    transform: translateX(5px);
+}
+
+/* ==========================================================================
+   Certifications Node Editor Styles
+   ========================================================================== */
+
+.node-editor-container {
+    width: 100%;
+    min-height: 600px;
+    background: #0d0d0d;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--glass-border);
+    position: relative;
+    overflow: hidden;
+    margin-top: 3rem;
+}
+
+.node-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.nodes-layer {
+    position: relative;
+    z-index: 2;
+    padding: 2rem;
+    width: 100%;
+    height: 100%;
+}
+
+.blender-node {
+    position: absolute;
+    width: 200px;
+    background: #232323;
+    border-radius: 6px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    border: 1px solid #1a1a1a;
+    font-family: var(--font-main);
+    color: #e0e0e0;
+    padding-bottom: 0.5rem;
+    pointer-events: auto;
+    cursor: grab;
+    user-select: none;
+}
+
+.blender-node:active {
+    cursor: grabbing;
+}
+
+.node-header {
+    padding: 0.4rem 0.8rem;
+    border-radius: 5px 5px 0 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #000; /* Dark text on bright headers */
+}
+
+/* Category Colors */
+.node-header.info { background: #4d80e6; }     /* 情報通信 - Blue */
+.node-header.chem { background: #ffb340; }     /* 化学 - Amber/Orange */
+.node-header.lang { background: #a64de6; }     /* 言語・文化 - Purple */
+.node-header.math { background: #e64d4d; }     /* 数学・統計 - Red */
+.node-header.design { background: #4de680; }   /* デザイン - Green */
+
+/* Legacy Node Header Colors (Blender Style) */
+.node-header.input { background: #e6994d; }
+.node-header.process { background: #4d80e6; }
+.node-header.shader { background: #4de680; }
+.node-header.output { background: #e64d4d; }
+
+.node-content {
+    padding: 0.6rem 0.8rem;
+}
+
+/* Zoom & Pan Styles */
+.node-editor-container {
+    width: 100%;
+    min-height: 700px;
+    background: #0d0d0d;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--glass-border);
+    position: relative;
+    overflow: hidden;
+    margin-top: 3rem;
+    cursor: default;
+}
+
+.node-editor-container.panning {
+    cursor: grabbing;
+}
+
+.zoom-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform-origin: 0 0;
+    transition: transform 0.1s ease-out;
+}
+
+.node-row {
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+    position: relative;
+}
+
+/* Sockets */
+.socket {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #aaa;
+    position: absolute;
+}
+
+.socket.left { left: -14px; top: 4px; }
+.socket.right { right: -14px; top: 4px; }
+
+/* Socket Colors */
+.socket.color { background: #eeee44; }
+.socket.value { background: #aaaaaa; }
+.socket.vector { background: #6666ff; }
+.socket.shader { background: #44ee44; }
+
+.node-label {
+    flex-grow: 1;
+}
+
+.node-value {
+    color: #888;
+    background: #111;
+    padding: 1px 4px;
+    border-radius: 2px;
+}
+
+.node-editor-hint {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: #444;
+    z-index: 10;
+}
+
+.blender-ref-image-box {
+    margin-top: 4rem;
+    padding: 2rem;
+    border: 1px dashed var(--glass-border);
+    border-radius: var(--border-radius-lg);
+}
+
+.blender-ref-image-box h4 {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.blender-ref-image-box img {
+    max-width: 100%;
+    border-radius: 8px;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.blender-ref-image-box img:hover {
+    opacity: 1;
+}

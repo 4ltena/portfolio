@@ -67,6 +67,19 @@
                         <span class="main-title">Knowledge Base</span>
                     </div>
                 </h2>
+
+                <!-- Search Control -->
+                <div class="search-container reveal">
+                    <div class="search-box glass">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="notes-search" placeholder="Search logs by title, tag or content..." autocomplete="off">
+                        <button id="clear-search" class="mono">&times;</button>
+                    </div>
+                    <div class="search-stats mono">
+                        Showing <span id="visible-notes-count">4</span> / <span id="total-notes-count">4</span> entries
+                    </div>
+                </div>
+
                 <div class="note-grid">
                     <!-- Note 1: Study -->
                     <a href="#" class="note-card glass">
@@ -121,6 +134,63 @@
             <p class="mono">&copy; 2026 Altena. All rights reserved.</p>
         </div>
     </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('notes-search');
+            const clearBtn = document.getElementById('clear-search');
+            const noteCards = document.querySelectorAll('.note-card');
+            const visibleCountEl = document.getElementById('visible-notes-count');
+            const totalCountEl = document.getElementById('total-notes-count');
+
+            const filterNotes = (query) => {
+                query = query.toLowerCase().trim();
+                let visibleCount = 0;
+
+                noteCards.forEach(card => {
+                    const title = card.querySelector('h3').textContent.toLowerCase();
+                    const tag = card.querySelector('.note-tag').textContent.toLowerCase();
+                    const excerpt = card.querySelector('.note-excerpt').textContent.toLowerCase();
+
+                    if (title.includes(query) || tag.includes(query) || excerpt.includes(query)) {
+                        card.style.display = 'flex';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                visibleCountEl.textContent = visibleCount;
+                totalCountEl.textContent = noteCards.length;
+                
+                if (query.length > 0) {
+                    clearBtn.style.opacity = '1';
+                } else {
+                    clearBtn.style.opacity = '0';
+                }
+            };
+
+            searchInput.addEventListener('input', (e) => {
+                filterNotes(e.target.value);
+            });
+
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                filterNotes('');
+                searchInput.focus();
+            });
+
+            // Handle URL Search Param
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchQuery = urlParams.get('search');
+            if (searchQuery) {
+                searchInput.value = searchQuery;
+                filterNotes(searchQuery);
+            } else {
+                totalCountEl.textContent = noteCards.length;
+                visibleCountEl.textContent = noteCards.length;
+            }
+        });
+    </script>
 </body>
 
 </html>

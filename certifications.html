@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certifications | Portfolio</title>
+    <meta name="description" content="Visual map of certifications and technical achievements.">
+    
+    <!-- fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- JS -->
+    <script src="js/main.js"></script>
+</head>
+
+<body>
+    <header class="header glass">
+        <div class="header-container">
+            <a href="index.html" class="logo" id="header-logo">
+                <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+            </a>
+            <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+            <nav class="nav">
+                <ul>
+                    <li><a href="index.html#skills">Skills</a></li>
+                    <li><a href="index.html#timeline">Timeline</a></li>
+                    <li><a href="myworks.html">Works</a></li>
+                    <li><a href="notes.html">Notes</a></li>
+                    <li><a href="index.html#profile">About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero small-hero">
+            <div class="hero-content">
+                <div class="hero-placeholder"></div>
+                <div class="hero-text">
+                    <h1 class="reveal">Skill <span class="accent-blue">Nodes</span></h1>
+                    <p class="reveal delay-1">Mapping Technical Growth</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="content-wrapper">
+            <section class="cert-section reveal">
+                <h2 class="section-title">
+                    <div class="title-wrapper">
+                        <span class="sub-title">CERTIFICATIONS</span>
+                        <span class="main-title">Achievement Map</span>
+                    </div>
+                </h2>
+
+                <div class="node-editor-container" id="node-editor">
+                    <div class="zoom-container" id="zoom-container">
+                        <svg class="node-canvas" id="node-canvas"></svg>
+                        
+                        <div class="nodes-layer" id="nodes-layer">
+                            <!-- INFO & TECH (BLUE) -->
+                            <div class="blender-node" style="top: 50px; left: 50px;" id="node-itp">
+                                <div class="node-header info">ITパスポート</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">情報通信</span></div>
+                                    <div class="node-row"><span class="node-label">ITSS Lv</span><span class="node-value">1</span><div class="socket right value"></div></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2023/05/17</span></div>
+                                </div>
+                            </div>
+
+                            <div class="blender-node" style="top: 50px; left: 350px;" id="node-fe">
+                                <div class="node-header info">基本情報</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">情報通信</span></div>
+                                    <div class="node-row"><div class="socket left value"></div><span class="node-label">ITSS Lv</span><span class="node-value">2</span><div class="socket right shader"></div></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2023/09/14</span></div>
+                                </div>
+                            </div>
+
+                            <div class="blender-node" style="top: 50px; left: 650px;" id="node-ap">
+                                <div class="node-header info">応用情報</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">情報通信</span></div>
+                                    <div class="node-row"><div class="socket left shader"></div><span class="node-label">ITSS Lv</span><span class="node-value">3</span></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2025/04/20</span></div>
+                                </div>
+                            </div>
+
+                            <div class="blender-node" style="top: 250px; left: 50px;" id="node-g">
+                                <div class="node-header info">G検定</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">情報通信</span></div>
+                                    <div class="node-row"><span class="node-label">Grade</span><span class="node-value">General</span></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2024/03/09</span></div>
+                                </div>
+                            </div>
+
+                            <div class="blender-node" style="top: 450px; left: 50px;" id="node-sec">
+                                <div class="node-header info">情報セキュマネ</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">情報通信</span></div>
+                                    <div class="node-row"><div class="socket left shader"></div><span class="node-label">ITSS Lv</span><span class="node-value">2</span></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2024/05/16</span></div>
+                                </div>
+                            </div>
+
+                            <div class="blender-node" style="top: 650px; left: 50px;" id="node-typing">
+                                <div class="node-header info">Typing 特級</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">情報通信</span></div>
+                                    <div class="node-row"><span class="node-label">Grade</span><span class="node-value">特級</span></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2025/03/27</span></div>
+                                </div>
+                            </div>
+
+                            <!-- CHEMISTRY (AMBER) -->
+                            <div class="blender-node" style="top: 250px; left: 650px;" id="node-haz4">
+                                <div class="node-header chem">危険物乙4種</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">化学</span></div>
+                                    <div class="node-row"><span class="node-label">Grade</span><span class="node-value">乙4</span><div class="socket right value"></div></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2024/10/20</span></div>
+                                </div>
+                            </div>
+
+                            <div class="blender-node" style="top: 400px; left: 650px;" id="node-haz3">
+                                <div class="node-header chem">危険物乙3種</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">化学</span></div>
+                                    <div class="node-row"><span class="node-label">Grade</span><span class="node-value">乙3</span></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2026/03/01</span></div>
+                                </div>
+                            </div>
+
+                            <div class="blender-node" style="top: 550px; left: 650px;" id="node-haz2">
+                                <div class="node-header chem">危険物乙2種</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">化学</span></div>
+                                    <div class="node-row"><span class="node-label">Grade</span><span class="node-value">乙2</span></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2026/03/01</span></div>
+                                </div>
+                            </div>
+
+                            <!-- LANGUAGE & CULTURE (PURPLE) -->
+                            <div class="blender-node" style="top: 250px; left: 350px;" id="node-kanji">
+                                <div class="node-header lang">漢検 2級</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">言語・文化</span></div>
+                                    <div class="node-row"><span class="node-label">Grade</span><span class="node-value">2級</span></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2023/05/11</span></div>
+                                </div>
+                            </div>
+
+                            <div class="blender-node" style="top: 100px; left: 950px;" id="node-python">
+                                <div class="node-header info">Python CE</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">情報通信</span></div>
+                                    <div class="node-row"><span class="node-label">Grade</span><span class="node-value">Entry</span><div class="socket left color"></div></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2025/04/05</span></div>
+                                </div>
+                            </div>
+
+                            <!-- MATH & STATS (RED) -->
+                            <div class="blender-node" style="top: 450px; left: 350px;" id="node-math">
+                                <div class="node-header math">数検 準2級</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">数学・統計</span></div>
+                                    <div class="node-row"><span class="node-label">Grade</span><span class="node-value">準2級</span></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2023/11/10</span></div>
+                                </div>
+                            </div>
+
+                            <div class="blender-node" style="top: 600px; left: 350px;" id="node-stat">
+                                <div class="node-header math">統計検定 3級</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">数学・統計</span></div>
+                                    <div class="node-row"><span class="node-label">Grade</span><span class="node-value">3級</span></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2023/12/24</span></div>
+                                </div>
+                            </div>
+
+                            <!-- DESIGN (GREEN) -->
+                            <div class="blender-node" style="top: 700px; left: 650px;" id="node-color">
+                                <div class="node-header design">カラーコーディネーター</div>
+                                <div class="node-content">
+                                    <div class="node-row"><span class="node-label">Type</span><span class="node-value">デザイン</span></div>
+                                    <div class="node-row"><span class="node-label">Grade</span><span class="node-value">Standard</span></div>
+                                    <div class="node-row"><span class="node-label">Date</span><span class="node-value">2025/07/06</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="node-editor-hint">
+                        // Mouse Wheel to Zoom | Drag Nodes to Move
+                    </div>
+                </div>
+
+                <div class="back-home reveal">
+                    <a href="index.html" class="btn-outline">Back to Home</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="glass-top">
+        <div class="footer-content">
+            <p class="mono">&copy; 2026 Altena. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const editor = document.getElementById('node-editor');
+            const zoomContainer = document.getElementById('zoom-container');
+            const canvas = document.getElementById('node-canvas');
+            const nodes = document.querySelectorAll('.blender-node');
+
+            let state = {
+                scale: 0.8, // Initial zoom to see all
+                translateX: 50,
+                translateY: 50,
+                isDragging: false,
+                isPanning: false,
+                currentNode: null,
+                dragOffset: { x: 0, y: 0 },
+                lastMousePos: { x: 0, y: 0 }
+            };
+
+            const updateTransform = () => {
+                zoomContainer.style.transform = `scale(${state.scale}) translate(${state.translateX}px, ${state.translateY}px)`;
+            };
+
+            const drawConnection = (fromId, toId, fromSide = 'right', toSide = 'left') => {
+                const fromEl = document.getElementById(fromId);
+                const toEl = document.getElementById(toId);
+                if (!fromEl || !toEl) return;
+
+                const fromSocket = fromEl.querySelector(`.socket.${fromSide}`);
+                const toSocket = toEl.querySelector(`.socket.${toSide}`);
+                if (!fromSocket || !toSocket) return;
+
+                const fromRect = fromSocket.getBoundingClientRect();
+                const toRect = toSocket.getBoundingClientRect();
+                const zoomRect = zoomContainer.getBoundingClientRect();
+
+                // Coordinates relative to zoomContainer, then divide by scale
+                const x1 = (fromRect.left - zoomRect.left) / state.scale + fromRect.width / 2;
+                const y1 = (fromRect.top - zoomRect.top) / state.scale + fromRect.height / 2;
+                const x2 = (toRect.left - zoomRect.left) / state.scale + toRect.width / 2;
+                const y2 = (toRect.top - zoomRect.top) / state.scale + toRect.height / 2;
+
+                const cp1x = x1 + (x2 - x1) / 2;
+                const cp1y = y1;
+                const cp2x = x1 + (x2 - x1) / 2;
+                const cp2y = y2;
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", `M ${x1} ${y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`);
+                
+                const style = window.getComputedStyle(fromSocket);
+                path.setAttribute("stroke", style.backgroundColor);
+                path.setAttribute("stroke-width", "3");
+                path.setAttribute("fill", "none");
+                path.setAttribute("stroke-linecap", "round");
+                path.setAttribute("opacity", "0.7");
+
+                canvas.appendChild(path);
+            };
+
+            const refreshConnections = () => {
+                canvas.innerHTML = '';
+                // IT Pathway
+                drawConnection('node-itp', 'node-fe');
+                drawConnection('node-fe', 'node-ap');
+                drawConnection('node-fe', 'node-sec');
+
+                // Hazmat Pathway
+                drawConnection('node-haz4', 'node-haz3');
+                drawConnection('node-haz3', 'node-haz2');
+            };
+
+            // ZOOM LOGIC
+            editor.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomSpeed = 0.05;
+                const direction = e.deltaY > 0 ? -1 : 1;
+                const newScale = Math.max(0.3, Math.min(2.5, state.scale + direction * zoomSpeed));
+                
+                state.scale = newScale;
+                updateTransform();
+                refreshConnections();
+            });
+
+            // INTERACTION LOGIC
+            // Background Panning or Node Dragging
+            editor.addEventListener('mousedown', (e) => {
+                const targetNode = e.target.closest('.blender-node');
+                
+                if (targetNode) {
+                    // Node dragging
+                    state.isDragging = true;
+                    state.currentNode = targetNode;
+                    const rect = targetNode.getBoundingClientRect();
+                    // Offset in raw pixels
+                    state.dragOffset.x = (e.clientX - rect.left) / state.scale;
+                    state.dragOffset.y = (e.clientY - rect.top) / state.scale;
+                    
+                    targetNode.style.zIndex = "100";
+                    nodes.forEach(n => { if(n !== targetNode) n.style.zIndex = "2"; });
+                } else {
+                    // Start panning
+                    state.isPanning = true;
+                    state.lastMousePos.x = e.clientX;
+                    state.lastMousePos.y = e.clientY;
+                    editor.classList.add('panning');
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (state.isDragging && state.currentNode) {
+                    const zoomRect = zoomContainer.getBoundingClientRect();
+                    const x = (e.clientX - zoomRect.left) / state.scale - state.dragOffset.x;
+                    const y = (e.clientY - zoomRect.top) / state.scale - state.dragOffset.y;
+                    
+                    state.currentNode.style.left = x + 'px';
+                    state.currentNode.style.top = y + 'px';
+                    refreshConnections();
+                } else if (state.isPanning) {
+                    const dx = e.clientX - state.lastMousePos.x;
+                    const dy = e.clientY - state.lastMousePos.y;
+                    
+                    state.translateX += dx / state.scale;
+                    state.translateY += dy / state.scale;
+                    
+                    state.lastMousePos.x = e.clientX;
+                    state.lastMousePos.y = e.clientY;
+                    updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                state.isDragging = false;
+                state.isPanning = false;
+                state.currentNode = null;
+                editor.classList.remove('panning');
+            });
+
+            // Initial setup
+            updateTransform();
+            setTimeout(refreshConnections, 200);
+            window.addEventListener('resize', refreshConnections);
+        });
+    </script>
+</body>
+
+</html>
