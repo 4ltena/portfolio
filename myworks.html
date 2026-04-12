@@ -7,11 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Works | Portfolio</title>
     <meta name="description" content="A complete gallery of my creative projects and 3DCG work.">
-    
+
     <!-- fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+        rel="stylesheet">
 
     <!-- CSS -->
     <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
@@ -67,73 +69,45 @@
                         <span class="main-title">Full Gallery</span>
                     </div>
                 </h2>
-                <div class="page-tile-container">
-                    <!-- Work 1 -->
-                    <a href="works/sample-project/index.html" class="page-tile-item glass">
-                        <div class="page-img-wrapper">
-                            <img src="img/work1-thumb.jpg" alt="work1 thumbnail" class="page-img">
-                            <div class="page-overlay"><span>View Details</span></div>
-                        </div>
-                        <div class="page-info">
-                            <h3>Sample 1</h3>
-                            <p>Sample</p>
-                        </div>
-                    </a>
-                    <!-- Work 2 -->
-                    <a href="works/sample-project/index.html" class="page-tile-item glass">
-                        <div class="page-img-wrapper">
-                            <img src="img/work2-thumb.jpg" alt="work2 thumbnail" class="page-img">
-                            <div class="page-overlay"><span>View Details</span></div>
-                        </div>
-                        <div class="page-info">
-                            <h3>Sample 2</h3>
-                            <p>Sample</p>
-                        </div>
-                    </a>
-                    <!-- Work 3 -->
-                    <a href="works/sample-project/index.html" class="page-tile-item glass">
-                        <div class="page-img-wrapper">
-                            <img src="img/work3-thumb.jpg" alt="work3 thumbnail" class="page-img">
-                            <div class="page-overlay"><span>View Details</span></div>
-                        </div>
-                        <div class="page-info">
-                            <h3>Sample 3</h3>
-                            <p>Sample</p>
-                        </div>
-                    </a>
-                    <!-- Work 4 -->
-                    <a href="works/sample-project/index.html" class="page-tile-item glass">
-                        <div class="page-img-wrapper">
-                            <img src="img/work4-thumb.jpg" alt="work4 thumbnail" class="page-img">
-                            <div class="page-overlay"><span>View Details</span></div>
-                        </div>
-                        <div class="page-info">
-                            <h3>Sample 4</h3>
-                            <p>Sample</p>
-                        </div>
-                    </a>
-                    <!-- Work 5 (Placeholder) -->
-                    <div class="page-tile-item glass placeholder">
-                        <div class="page-img-wrapper">
-                            <div class="empty-state">Project 05</div>
-                        </div>
-                        <div class="page-info">
-                            <h3>Sample 5</h3>
-                            <p>Sample</p>
-                        </div>
+                <!-- Search Control -->
+                <div class="search-container reveal">
+                    <div class="search-box glass">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="works-search" placeholder="Search works by title, tag or tech..."
+                            autocomplete="off">
+                        <button id="clear-search" class="mono">&times;</button>
                     </div>
-                    <!-- Work 6 (Placeholder) -->
-                    <div class="page-tile-item glass placeholder">
-                        <div class="page-img-wrapper">
-                            <div class="empty-state">Project 06</div>
-                        </div>
-                        <div class="page-info">
-                            <h3>Sample 6</h3>
-                            <p>Sample</p>
-                        </div>
+                    <div class="search-stats mono">
+                        Showing <span id="visible-works-count">0</span> / <span id="total-works-count">0</span> works
                     </div>
                 </div>
-                
+
+                <!-- Tag Cloud -->
+                <div id="tag-cloud" class="tag-cloud-container reveal">
+                    <!-- Dynamic Tags will be injected here -->
+                </div>
+
+                <div class="page-tile-container">
+                    <!-- New Work: Blender Practice -->
+                    <a href="works/blender-bus-stop/index.html" class="page-tile-item glass"
+                        data-tags="#Blender #3DCG #Practice">
+                        <div class="page-img-wrapper">
+                            <img src="img/works/blender-bus-stop/thumb.png" alt="Blender Bus Stop thumbnail"
+                                class="page-img">
+                            <div class="page-overlay"><span>View Details</span></div>
+                        </div>
+                        <div class="page-info">
+                            <div class="note-meta">
+                                <span class="note-date">2026/04/11</span>
+                                <span class="hashtags"><span class="tag-link">#Blender</span> <span
+                                        class="tag-link">#3DCG</span></span>
+                            </div>
+                            <h3>Blender練習：バス停を作ってみた</h3>
+                            <p>Blender生活1週目。田舎のボロいバス停を作ってみた。</p>
+                        </div>
+                    </a>
+                </div>
+
                 <div class="back-home reveal">
                     <a href="index.html" class="btn-outline">Back to Home</a>
                 </div>
@@ -146,6 +120,129 @@
             <p class="mono">&copy; 2026 Altena. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('works-search');
+            const clearBtn = document.getElementById('clear-search');
+            const workCards = document.querySelectorAll('.page-tile-item');
+            const visibleCountEl = document.getElementById('visible-works-count');
+            const totalCountEl = document.getElementById('total-works-count');
+
+            const filterWorks = (query) => {
+                query = query.toLowerCase().trim();
+                let visibleCount = 0;
+
+                workCards.forEach(card => {
+                    if (card.classList.contains('placeholder')) return;
+
+                    const title = card.querySelector('h3').textContent.toLowerCase();
+                    const tags = card.getAttribute('data-tags').toLowerCase();
+                    const info = card.querySelector('p').textContent.toLowerCase();
+
+                    if (title.includes(query) || tags.includes(query) || info.includes(query)) {
+                        card.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                if (visibleCountEl) visibleCountEl.textContent = visibleCount;
+                if (totalCountEl) totalCountEl.textContent = workCards.length - document.querySelectorAll('.page-tile-item.placeholder').length;
+
+                if (query.length > 0) {
+                    clearBtn.style.opacity = '1';
+                } else {
+                    clearBtn.style.opacity = '0';
+                }
+
+                updateTagCloudActiveState(query);
+            };
+
+            const updateTagCloudActiveState = (query) => {
+                document.querySelectorAll('.tag-cloud-chip').forEach(chip => {
+                    if (chip.getAttribute('data-tag').toLowerCase() === query.toLowerCase()) {
+                        chip.classList.add('active');
+                    } else {
+                        chip.classList.remove('active');
+                    }
+                });
+            };
+
+            const initTagCloud = () => {
+                const tagCloud = document.getElementById('tag-cloud');
+                const tagCounts = {};
+
+                workCards.forEach(card => {
+                    const tagsAttr = card.getAttribute('data-tags');
+                    if (tagsAttr) {
+                        const tags = tagsAttr.split(' ').filter(t => t.startsWith('#'));
+                        tags.forEach(tag => {
+                            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                        });
+                    }
+                });
+
+                // Sort tags by frequency
+                const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
+
+                tagCloud.innerHTML = sortedTags.map(([tag, count]) => `
+                    <div class="tag-cloud-chip" data-tag="${tag}">${tag}(${count})</div>
+                `).join('');
+
+                // Add event listeners to chips
+                document.querySelectorAll('.tag-cloud-chip').forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        const tag = chip.getAttribute('data-tag');
+                        if (searchInput.value === tag) {
+                            searchInput.value = '';
+                            filterWorks('');
+                        } else {
+                            searchInput.value = tag;
+                            filterWorks(tag);
+                        }
+                    });
+                });
+            };
+
+            searchInput.addEventListener('input', (e) => {
+                filterWorks(e.target.value);
+            });
+
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                filterWorks('');
+                searchInput.focus();
+            });
+
+            // Hashtag Click Event (Inline tags)
+            document.querySelectorAll('.tag-link').forEach(tag => {
+                tag.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const tagText = tag.textContent;
+                    searchInput.value = tagText;
+                    filterWorks(tagText);
+                });
+            });
+
+            // Init Tag Cloud
+            initTagCloud();
+
+            // Handle URL Search Param
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchQuery = urlParams.get('search');
+            if (searchQuery) {
+                searchInput.value = searchQuery;
+                filterWorks(searchQuery);
+            } else {
+                const total = workCards.length - document.querySelectorAll('.page-tile-item.placeholder').length;
+                if (totalCountEl) totalCountEl.textContent = total;
+                if (visibleCountEl) visibleCountEl.textContent = total;
+            }
+        });
+    </script>
 </body>
 
 </html>

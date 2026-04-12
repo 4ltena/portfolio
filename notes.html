@@ -80,46 +80,26 @@
                     </div>
                 </div>
 
+                <!-- Tag Cloud -->
+                <div id="tag-cloud" class="tag-cloud-container reveal">
+                    <!-- Dynamic Tags will be injected here -->
+                </div>
+
                 <div class="note-grid">
-                    <!-- Note 1: Study -->
-                    <a href="#" class="note-card glass">
+                    <!-- New Note: Blender Day 5 -->
+                    <a href="notes/blender-day-5/index.html" class="note-card glass">
                         <div class="note-meta">
-                            <span class="note-date">2026/03/31</span>
-                            <span class="note-tag">Study</span>
+                            <span class="note-date">2026/04/11</span>
+                            <div class="hashtags">
+                                <span class="tag-link">#Blender</span>
+                                <span class="tag-link">#Study</span>
+                                <span class="tag-link">#Blender生活1週目</span>
+                            </div>
                         </div>
-                        <h3>Sample 1</h3>
-                        <p class="note-excerpt">Sample</p>
+                        <h3>Blender生活5日目</h3>
+                        <p class="note-excerpt">バス停のモデリングに挑戦。成果物はWorksページに掲載。</p>
                     </a>
 
-                    <!-- Note 2: Book -->
-                    <a href="#" class="note-card glass">
-                        <div class="note-meta">
-                            <span class="note-date">2026/03/25</span>
-                            <span class="note-tag">Book</span>
-                        </div>
-                        <h3>Sample 2</h3>
-                        <p class="note-excerpt">Sample</p>
-                    </a>
-
-                    <!-- Note 3: Development -->
-                    <a href="#" class="note-card glass">
-                        <div class="note-meta">
-                            <span class="note-date">2026/03/10</span>
-                            <span class="note-tag">Dev</span>
-                        </div>
-                        <h3>Sample 3</h3>
-                        <p class="note-excerpt">Sample</p>
-                    </a>
-
-                    <!-- Note 4: Fragment -->
-                    <a href="#" class="note-card glass">
-                        <div class="note-meta">
-                            <span class="note-date">2026/02/28</span>
-                            <span class="note-tag">Note</span>
-                        </div>
-                        <h3>Sample 4</h3>
-                        <p class="note-excerpt">Sample</p>
-                    </a>
                 </div>
 
                 <div class="back-home reveal">
@@ -148,10 +128,10 @@
 
                 noteCards.forEach(card => {
                     const title = card.querySelector('h3').textContent.toLowerCase();
-                    const tag = card.querySelector('.note-tag').textContent.toLowerCase();
+                    const hashtags = Array.from(card.querySelectorAll('.tag-link')).map(t => t.textContent.toLowerCase()).join(' ');
                     const excerpt = card.querySelector('.note-excerpt').textContent.toLowerCase();
 
-                    if (title.includes(query) || tag.includes(query) || excerpt.includes(query)) {
+                    if (title.includes(query) || hashtags.includes(query) || excerpt.includes(query)) {
                         card.style.display = 'flex';
                         visibleCount++;
                     } else {
@@ -167,6 +147,53 @@
                 } else {
                     clearBtn.style.opacity = '0';
                 }
+
+                updateTagCloudActiveState(query);
+            };
+
+            const updateTagCloudActiveState = (query) => {
+                document.querySelectorAll('.tag-cloud-chip').forEach(chip => {
+                    if (chip.getAttribute('data-tag').toLowerCase() === query.toLowerCase()) {
+                        chip.classList.add('active');
+                    } else {
+                        chip.classList.remove('active');
+                    }
+                });
+            };
+
+            const initTagCloud = () => {
+                const tagCloud = document.getElementById('tag-cloud');
+                const tagCounts = {};
+
+                noteCards.forEach(card => {
+                    card.querySelectorAll('.tag-link').forEach(tagEl => {
+                        const tag = tagEl.textContent.trim();
+                        if (tag.startsWith('#')) {
+                            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                        }
+                    });
+                });
+
+                // Sort tags by frequency
+                const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
+
+                tagCloud.innerHTML = sortedTags.map(([tag, count]) => `
+                    <div class="tag-cloud-chip" data-tag="${tag}">${tag}(${count})</div>
+                `).join('');
+
+                // Add event listeners to chips
+                document.querySelectorAll('.tag-cloud-chip').forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        const tag = chip.getAttribute('data-tag');
+                        if (searchInput.value === tag) {
+                            searchInput.value = '';
+                            filterNotes('');
+                        } else {
+                            searchInput.value = tag;
+                            filterNotes(tag);
+                        }
+                    });
+                });
             };
 
             searchInput.addEventListener('input', (e) => {
@@ -178,6 +205,20 @@
                 filterNotes('');
                 searchInput.focus();
             });
+
+            // Hashtag Click Event (Inline tags)
+            document.querySelectorAll('.tag-link').forEach(tag => {
+                tag.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const tagText = tag.textContent;
+                    searchInput.value = tagText;
+                    filterNotes(tagText);
+                });
+            });
+
+            // Init Tag Cloud
+            initTagCloud();
 
             // Handle URL Search Param
             const urlParams = new URLSearchParams(window.location.search);

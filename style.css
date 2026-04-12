@@ -382,12 +382,18 @@ a {
 .icon-box {
     width: 60px;
     height: 60px;
-    background: rgba(255,255,255,0.03);
+    background: rgba(255, 255, 255, 0.2); /* Increased brightness for dark logos */
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 1.5rem;
+    transition: var(--transition);
+}
+
+.prog-lang-tile-item:hover .icon-box {
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.15);
 }
 
 .prog-lang-img {
@@ -722,6 +728,51 @@ a {
     overflow: hidden;
 }
 
+/* Hashtag Styling */
+.hashtags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.tag-link {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--accent-primary);
+    background: rgba(0, 242, 255, 0.05);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 242, 255, 0.1);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.tag-link:hover {
+    background: rgba(0, 242, 255, 0.15);
+    border-color: var(--accent-primary);
+    transform: translateY(-1px);
+}
+
+.empty-state {
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.02),
+        rgba(255, 255, 255, 0.02) 10px,
+        rgba(255, 255, 255, 0.03) 10px,
+        rgba(255, 255, 255, 0.03) 20px
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
 /* ==========================================================================
    Global Footer
    ========================================================================== */
@@ -747,6 +798,69 @@ footer {
     border-bottom: 1px solid var(--glass-border);
 }
 
+/* Detail Pages (Works & Notes) */
+.project-detail, .note-detail {
+    margin-top: 4rem;
+}
+
+.note-header-info {
+    margin-bottom: 3rem;
+}
+
+.note-body {
+    margin-top: 3rem;
+    padding: 3rem;
+    min-height: 400px;
+}
+
+.empty-log-hint {
+    color: var(--text-secondary);
+    font-style: italic;
+    opacity: 0.6;
+}
+
+.related-work-card {
+    margin-top: 5rem;
+    padding: 2.5rem;
+    border: 1px dashed var(--accent-dimmed);
+    transition: var(--transition);
+}
+
+.related-work-card:hover {
+    border-color: var(--accent-primary);
+    background: rgba(0, 242, 255, 0.03);
+    transform: translateY(-5px);
+}
+
+.related-work-card h4 {
+    margin-bottom: 1.2rem;
+    color: var(--accent-primary);
+}
+
+.project-hero-image {
+    width: 100%;
+    margin-bottom: 4rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.project-info-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 4rem;
+}
+
+.project-meta {
+    padding: 2.5rem;
+}
+
+@media (max-width: 992px) {
+    .project-info-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+}
+
 .btn-outline {
     background: transparent;
     border: 1px solid var(--glass-border);
@@ -763,6 +877,47 @@ footer {
     border-color: var(--accent-primary);
     color: var(--text-primary);
     background: rgba(0, 242, 255, 0.05);
+}
+
+.back-home {
+    margin-top: 5rem;
+    text-align: center;
+    width: 100%;
+}
+
+/* Tag Cloud Styling */
+.tag-cloud-container {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    justify-content: flex-start;
+}
+
+.tag-cloud-chip {
+    padding: 0.4rem 0.8rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.tag-cloud-chip:hover {
+    background: rgba(0, 242, 255, 0.1);
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 242, 255, 0.1);
+}
+
+.tag-cloud-chip.active {
+    background: rgba(0, 242, 255, 0.2);
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
 }
 
 /* Reveal on Scroll */
