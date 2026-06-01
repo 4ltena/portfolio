@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes | Portfolio</title>
+  <meta name="description" content="A space for thoughts, study notes, and research by Altena.">
+
+  <!-- fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+    rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- JS -->
+  <script src="js/main.js"></script>
+  <script src="js/notes.js"></script>
+  <script>
+    console.log("%c[SYSTEM] Log Access Authorized. Identity: Guest. Reading encrypted notes...", "color: #00f2ff; font-weight: bold; background: #111; padding: 5px 10px; border-radius: 4px;");
+  </script>
+</head>
+
+<body>
+  <header class="header glass">
+    <div class="header-container">
+      <a href="index.html" class="logo" id="header-logo">
+        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+      </a>
+      <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <nav class="nav">
+        <ul>
+          <li><a href="index.html#skills">Skills</a></li>
+          <li><a href="index.html#timeline">Timeline</a></li>
+          <li><a href="myworks.html">Works</a></li>
+          <li><a href="notes.html">Notes</a></li>
+          <li><a href="index.html#profile">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero small-hero">
+      <div class="hero-content">
+        <div class="hero-placeholder"></div>
+        <div class="hero-text">
+          <h1 class="reveal">System <span class="accent-blue">Logs</span></h1>
+          <p class="reveal delay-1">Study, Books & Fragments</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="content-wrapper">
+      <section class="notes-section reveal">
+        <h2 class="section-title">
+          <div class="title-wrapper">
+            <span class="sub-title">SYSTEM LOGS</span>
+            <span class="main-title">Knowledge Base</span>
+          </div>
+        </h2>
+
+        <!-- Admin bar (visible only when logged in) -->
+        <div id="admin-bar" class="admin-bar" style="display:none">
+          <a href="admin/editor.html" class="btn-accent mono">+ New Post</a>
+        </div>
+
+        <!-- Search Control -->
+        <div class="search-container reveal">
+          <div class="search-box glass">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="notes-search" placeholder="Search logs by title, tag or content..." autocomplete="off">
+            <button id="clear-search" class="mono clear-search">×</button>
+          </div>
+          <div class="search-stats mono">
+            Showing <span id="visible-notes-count">0</span> / <span id="total-notes-count">0</span> entries
+          </div>
+        </div>
+
+        <!-- Tag Cloud -->
+        <div id="tag-cloud" class="tag-cloud-container reveal"></div>
+
+        <div class="note-grid" id="note-grid"></div>
+
+        <div class="back-home reveal">
+          <a href="index.html" class="btn-outline">Back to Home</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="glass-top">
+    <div class="footer-content">
+      <p class="mono">© 2026 <a href="/portfolio/admin/login.html" style="color:inherit;text-decoration:none;">Altena</a>. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+
+</html>

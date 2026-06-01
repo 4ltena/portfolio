@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SYSTEM ACCESS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { height: 100%; }
+
+    body {
+      min-height: 100%;
+      background: #000;
+      color: #c8c8c8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 2rem;
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.06) 2px,
+        rgba(0,0,0,0.06) 4px
+      );
+    }
+
+    #terminal {
+      max-width: 740px;
+      margin: 0 auto;
+    }
+
+    #output p   { margin: 0; white-space: pre-wrap; word-break: break-all; }
+    #output pre { margin: 0.25rem 0; white-space: pre; overflow-x: auto; font-size: 12px; }
+
+    .t-cyan  { color: #00f2ff; }
+    .t-dim   { color: #444; }
+    .t-muted { color: #666; }
+    .t-red   { color: #ff5555; }
+    .t-green { color: #50fa7b; }
+    .t-amber { color: #ffb86c; }
+    .t-white { color: #fff; }
+
+    .prompt-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6em;
+      margin-top: 2px;
+    }
+
+    #prompt-label {
+      color: #c8c8c8;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    #prompt-label.console-prompt { color: #00f2ff; }
+
+    #term-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #c8c8c8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      flex: 1;
+      caret-color: #00f2ff;
+      min-width: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="terminal">
+    <div id="output">
+      <p><span class="t-cyan">ALTENA PORTFOLIO SYSTEM</span> <span class="t-muted">v2.0</span></p>
+      <p class="t-dim">──────────────────────────────────────────────────</p>
+      <p>  kernel : <span class="t-muted">Rocky Linux 10.1 (Red Quartz)</span></p>
+      <p>  host   : <span class="t-muted">altena</span></p>
+      <p>  access : <span class="t-red">RESTRICTED</span></p>
+      <p class="t-dim">──────────────────────────────────────────────────</p>
+      <p></p>
+    </div>
+
+    <div class="prompt-row" id="prompt-row">
+      <span id="prompt-label">Portfolio login:</span>
+      <input id="term-input" type="text" autocomplete="off" spellcheck="false" autofocus>
+    </div>
+  </div>
+
+  <script>
+    const output      = document.getElementById('output');
+    const promptLabel = document.getElementById('prompt-label');
+    const termInput   = document.getElementById('term-input');
+
+    // State: 'login' | 'password' | 'console'
+    let state = 'login';
+    let token = null;
+    let loginUsername = '';
+
+    // --- Redirect if already authenticated ---
+    (async () => {
+      const saved = localStorage.getItem('admin_token');
+      if (!saved) return;
+      try {
+        const r = await fetch('/portfolio/api/auth/verify', {
+          headers: { Authorization: `Bearer ${saved}` }
+        });
+        if (r.ok) {
+          token = saved;
+          enterConsole();
+        }
+      } catch {}
+    })();
+
+    // --- Print helpers ---
+    function print(html, cls) {
+      const p = document.createElement('p');
+      if (cls) p.className = cls;
+      p.innerHTML = html;
+      output.appendChild(p);
+      scrollBottom();
+    }
+
+    function printPre(text) {
+      const pre = document.createElement('pre');
+      pre.textContent = text;
+      output.appendChild(pre);
+      scrollBottom();
+    }
+
+    function printBlank() { print(''); }
+
+    function scrollBottom() {
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    // --- State transitions ---
+    function setLoginState() {
+      state = 'login';
+      promptLabel.textContent = 'Portfolio login:';
+      promptLabel.classList.remove('console-prompt');
+      termInput.type = 'text';
+      termInput.value = '';
+      termInput.focus();
+    }
+
+    function setPasswordState() {
+      state = 'password';
+      promptLabel.textContent = 'Password:';
+      promptLabel.classList.remove('console-prompt');
+      termInput.type = 'password';
+      termInput.value = '';
+      termInput.focus();
+    }
+
+    function enterConsole() {
+      state = 'console';
+      promptLabel.textContent = '[admin@altena ~]$';
+      promptLabel.classList.add('console-prompt');
+      termInput.type = 'text';
+      termInput.value = '';
+      termInput.focus();
+    }
+
+    // --- Input handler ---
+    termInput.addEventListener('keydown', async (e) => {
+      if (e.key !== 'Enter') return;
+      const raw = termInput.value;
+      termInput.value = '';
+
+      if (state === 'login')         await handleLogin(raw);
+      else if (state === 'password') await handlePassword(raw);
+      else if (state === 'console')  await handleCommand(raw.trim());
+    });
+
+    // =========================================================
+    // LOGIN
+    // =========================================================
+    async function handleLogin(raw) {
+      const user = raw.trim();
+      print(`Portfolio login: <span class="t-muted">${escHtml(user)}</span>`);
+
+      if (!user) { setLoginState(); return; }
+
+      if (user.toLowerCase() === 'exit') {
+        print('<span class="t-muted">Connection closed.</span>');
+        setTimeout(() => window.location.href = '/portfolio/admin/login.html', 400);
+        document.getElementById('prompt-row').style.display = 'none';
+        return;
+      }
+
+      loginUsername = user.toLowerCase();
+      setPasswordState();
+    }
+
+    // =========================================================
+    // PASSWORD
+    // =========================================================
+    async function handlePassword(raw) {
+      print('Password:');
+
+      try {
+        const r = await fetch('/portfolio/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: loginUsername, password: raw })
+        });
+        const data = await r.json();
+
+        if (r.ok && data.type === 'easter') {
+          window.location.href = '/portfolio/api/easter?token=' + encodeURIComponent(data.token);
+          return;
+        }
+
+        if (r.ok) {
+          token = data.token;
+          localStorage.setItem('admin_token', token);
+          printBlank();
+          print(`Last login: ${new Date().toLocaleString('ja-JP')} from ${location.hostname}`);
+          printBlank();
+          print('Type <span class="t-cyan">help</span> to list available commands.', '');
+          printBlank();
+          enterConsole();
+        } else {
+          print('<span class="t-red">Login incorrect.</span>');
+          printBlank();
+          setLoginState();
+        }
+      } catch {
+        print('<span class="t-red">Connection error.</span>');
+        printBlank();
+        setLoginState();
+      }
+    }
+
+    // =========================================================
+    // CONSOLE COMMANDS
+    // =========================================================
+    const SYS_CMDS = ['free', 'df', 'uptime', 'top', 'ps', 'date', 'uname', 'whoami'];
+
+    async function handleCommand(cmd) {
+      const argv = cmd.split(/\s+/);
+      const name = argv[0].toLowerCase();
+
+      // Echo the command
+      print(`<span class="t-cyan">[admin@altena ~]$</span> ${escHtml(cmd)}`);
+
+      if (!name) return;
+
+      if (name === 'blog') {
+        print('<span class="t-muted">Launching blog editor...</span>');
+        setTimeout(() => window.location.href = '/portfolio/admin/editor.html', 500);
+
+      } else if (name === 'grafana') {
+        print('<span class="t-muted">Connecting to Grafana...</span>');
+        setTimeout(() => window.location.href = '/portfolio/admin/grafana.html', 500);
+
+      } else if (name === 'exit' || name === 'logout') {
+        print('<span class="t-muted">Logout.</span>');
+        localStorage.removeItem('admin_token');
+        setTimeout(() => window.location.href = '/portfolio/admin/login.html', 400);
+        document.getElementById('prompt-row').style.display = 'none';
+
+      } else if (name === 'clear') {
+        output.innerHTML = '';
+
+      } else if (name === 'help') {
+        printBlank();
+        print('  <span class="t-cyan">free</span>     — memory usage');
+        print('  <span class="t-cyan">df</span>       — disk space');
+        print('  <span class="t-cyan">uptime</span>   — system uptime');
+        print('  <span class="t-cyan">top</span>      — processes by CPU');
+        print('  <span class="t-cyan">ps</span>       — processes by memory');
+        print('  <span class="t-cyan">date</span>     — current date/time');
+        print('  <span class="t-cyan">uname</span>    — kernel information');
+        print('  <span class="t-cyan">whoami</span>   — current user');
+        print('  <span class="t-cyan">blog</span>     — open blog editor');
+        print('  <span class="t-cyan">grafana</span>  — server status dashboard');
+        print('  <span class="t-cyan">clear</span>    — clear terminal');
+        print('  <span class="t-cyan">exit</span>     — logout');
+        printBlank();
+
+      } else if (SYS_CMDS.includes(name)) {
+        await runSystemCmd(name);
+
+      } else {
+        print(`<span class="t-red">bash: ${escHtml(name)}: command not found</span>`);
+        printBlank();
+      }
+    }
+
+    async function runSystemCmd(cmd) {
+      try {
+        const r = await fetch(`/portfolio/api/system/${cmd}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (r.status === 401) {
+          print('<span class="t-red">Session expired. Please login again.</span>');
+          setTimeout(() => { localStorage.removeItem('admin_token'); location.reload(); }, 1500);
+          return;
+        }
+
+        const data = await r.json();
+        if (r.ok) {
+          printPre(data.output.trimEnd());
+        } else {
+          print(`<span class="t-red">${escHtml(data.error || 'Error')}</span>`);
+        }
+      } catch {
+        print('<span class="t-red">Connection error.</span>');
+      }
+      printBlank();
+    }
+
+    function escHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Works | Portfolio</title>
+  <meta name="description" content="A complete gallery of my creative projects and 3DCG work.">
+
+  <!-- fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+    rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- JS -->
+  <script src="js/main.js"></script>
+  <script>
+    console.log("%c[SYSTEM] Session Synced. Identity: Guest. Accessing Portfolio Archives...", "color: #00f2ff; font-weight: bold; background: #111; padding: 5px 10px; border-radius: 4px;");
+  </script>
+</head>
+
+<body>
+  <header class="header glass">
+    <div class="header-container">
+      <a href="index.html" class="logo" id="header-logo">
+        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+      </a>
+      <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <nav class="nav">
+        <ul>
+          <li><a href="index.html#skills">Skills</a></li>
+          <li><a href="index.html#timeline">Timeline</a></li>
+          <li><a href="myworks.html">Works</a></li>
+          <li><a href="notes.html">Notes</a></li>
+          <li><a href="index.html#profile">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero small-hero">
+      <div class="hero-content">
+        <div class="hero-placeholder"></div>
+        <div class="hero-text">
+          <h1 class="reveal">My <span class="accent-blue">Archive</span></h1>
+          <p class="reveal delay-1">All Projects & Case Studies</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="content-wrapper">
+      <section class="works-section reveal">
+        <h2 class="section-title">
+          <div class="title-wrapper">
+            <span class="sub-title">ARCHIVE</span>
+            <span class="main-title">Full Gallery</span>
+          </div>
+        </h2>
+
+        <!-- Search Control -->
+        <div class="search-container reveal">
+          <div class="search-box glass">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="works-search" placeholder="Search works by title, tag or tech..." autocomplete="off">
+            <button id="clear-search" class="mono clear-search">×</button>
+          </div>
+          <div class="search-stats mono">
+            Showing <span id="visible-works-count">0</span> / <span id="total-works-count">0</span> works
+          </div>
+        </div>
+
+        <!-- Tag Cloud -->
+        <div id="tag-cloud" class="tag-cloud-container reveal"></div>
+
+        <div class="page-tile-container">
+          <a href="works/blender-bus-stop/index.html" class="page-tile-item glass" data-tags="#Blender #3DCG #Practice">
+            <div class="page-img-wrapper">
+              <img src="img/works/blender-bus-stop/thumb.png" alt="Blender Bus Stop thumbnail" class="page-img">
+              <div class="page-overlay"><span>View Details</span></div>
+            </div>
+            <div class="page-info">
+              <div class="note-meta">
+                <span class="note-date">2026/04/11</span>
+                <span class="hashtags">
+                  <span class="tag-link">#Blender</span>
+                  <span class="tag-link">#3DCG</span>
+                </span>
+              </div>
+              <h3>Blender練習：バス停を作ってみた</h3>
+              <p>Blender生活1週目。田舎のボロいバス停を作ってみた。</p>
+            </div>
+          </a>
+        </div>
+
+        <div class="back-home reveal">
+          <a href="index.html" class="btn-outline">Back to Home</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="glass-top">
+    <div class="footer-content">
+      <p class="mono">© 2026 <a href="/portfolio/admin/login.html" style="color:inherit;text-decoration:none;">Altena</a>. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+
+</html>

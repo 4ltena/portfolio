@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server Status | Altena</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: #0a0a0a;
+      color: #c8c8c8;
+      font-family: 'JetBrains Mono', monospace;
+      overflow: hidden;
+    }
+
+    #header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1.2rem;
+      background: rgba(0,0,0,0.6);
+      border-bottom: 1px solid #1a1a1a;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      height: 42px;
+    }
+
+    #header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.72rem;
+    }
+
+    .h-label { color: #444; }
+    .h-value { color: #00f2ff; }
+
+    #header-right {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .btn-back {
+      background: transparent;
+      border: 1px solid #2a2a2a;
+      color: #666;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 3px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-back:hover { border-color: #00f2ff; color: #00f2ff; }
+
+    #frame-wrap {
+      position: fixed;
+      top: 42px; left: 0; right: 0; bottom: 0;
+    }
+
+    #grafana-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none;
+    }
+
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      color: #444;
+      font-size: 0.8rem;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid #1a1a1a;
+      border-top-color: #00f2ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #auth-error {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0a0a0a;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1rem;
+      font-size: 0.85rem;
+      color: #ff5555;
+    }
+    #auth-error.show { display: flex; }
+  </style>
+</head>
+<body>
+
+  <div id="header">
+    <div id="header-left">
+      <span class="h-label">host</span><span class="h-value">altena.me</span>
+      <span class="h-label">//</span>
+      <span class="h-label">service</span><span class="h-value">prometheus + grafana</span>
+      <span class="h-label">//</span>
+      <span id="h-time" class="h-value"></span>
+    </div>
+    <div id="header-right">
+      <a href="/portfolio/admin/login.html" class="btn-back">← console</a>
+    </div>
+  </div>
+
+  <div id="frame-wrap">
+    <div id="loading">
+      <div class="spinner"></div>
+      <span>connecting to grafana...</span>
+    </div>
+    <iframe
+      id="grafana-frame"
+      src=""
+      allowfullscreen
+    ></iframe>
+  </div>
+
+  <div id="auth-error">
+    <span>[ ACCESS DENIED ]</span>
+    <span style="color:#666;font-size:0.75rem">Admin authentication required.</span>
+    <a href="/portfolio/admin/login.html" style="color:#00f2ff;font-size:0.75rem;margin-top:0.5rem">→ login</a>
+  </div>
+
+  <script>
+    const DASHBOARD_URL =
+      '/portfolio/admin/grafana/d/altena-server/altena-server-status' +
+      '?orgId=1&kiosk&theme=dark&refresh=30s';
+
+    const TOKEN_KEY = 'admin_token';
+
+    // Clock
+    function updateClock() {
+      document.getElementById('h-time').textContent =
+        new Date().toLocaleTimeString('ja-JP', { hour12: false });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Auth check
+    (async () => {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) { showError(); return; }
+
+      try {
+        const r = await fetch('/portfolio/api/auth/verify', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!r.ok) { showError(); return; }
+      } catch { showError(); return; }
+
+      // Auth OK — load Grafana
+      const frame = document.getElementById('grafana-frame');
+      frame.src = DASHBOARD_URL;
+      frame.addEventListener('load', () => {
+        document.getElementById('loading').style.display = 'none';
+        frame.style.display = 'block';
+      });
+      // Fallback timeout
+      setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+        frame.style.display = 'block';
+      }, 4000);
+    })();
+
+    function showError() {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('auth-error').classList.add('show');
+    }
+  </script>
+</body>
+</html>

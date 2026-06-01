@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certifications | Portfolio</title>
+  <meta name="description" content="Visual map of certifications and technical achievements.">
+
+  <!-- fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+    rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- JS -->
+  <script src="js/main.js"></script>
+  <style>
+    .node-plan-badge {
+      font-size: 0.5rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 99px;
+      border: 1px solid rgba(0,0,0,0.45);
+      background: rgba(0,0,0,0.25);
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .blender-node.is-plan {
+      opacity: 0.5;
+      border-style: dashed;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header glass">
+    <div class="header-container">
+      <a href="index.html" class="logo" id="header-logo">
+        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+      </a>
+      <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <nav class="nav">
+        <ul>
+          <li><a href="index.html#skills">Skills</a></li>
+          <li><a href="index.html#timeline">Timeline</a></li>
+          <li><a href="myworks.html">Works</a></li>
+          <li><a href="notes.html">Notes</a></li>
+          <li><a href="index.html#profile">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero small-hero">
+      <div class="hero-content">
+        <div class="hero-placeholder"></div>
+        <div class="hero-text">
+          <h1 class="reveal">Skill <span class="accent-blue">Nodes</span></h1>
+          <p class="reveal delay-1">Mapping Technical Growth</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="content-wrapper">
+      <section class="cert-section reveal">
+        <h2 class="section-title">
+          <div class="title-wrapper">
+            <span class="sub-title">CERTIFICATIONS</span>
+            <span class="main-title">Achievement Map</span>
+          </div>
+        </h2>
+
+        <div class="node-editor-container" id="node-editor">
+          <div class="zoom-container" id="zoom-container">
+            <svg class="node-canvas" id="node-canvas"></svg>
+            <div class="nodes-layer" id="nodes-layer">
+              <div style="padding:3rem;font-family:var(--font-mono);font-size:0.8rem;color:#444">Loading nodes...</div>
+            </div>
+          </div>
+
+          <div class="node-editor-hint">
+            // Mouse Wheel to Zoom | Drag Nodes to Move
+          </div>
+        </div>
+
+        <div class="back-home reveal">
+          <a href="index.html" class="btn-outline">Back to Home</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+  (function () {
+    'use strict';
+
+    const CATEGORY_LABELS = {
+      info: '情報通信', chem: '化学', lang: '言語・文化',
+      math: '数学・統計', design: 'デザイン',
+    };
+    const HEADER_COLORS = {
+      info: '#4d80e6', chem: '#ffb340', lang: '#a64de6',
+      math: '#e64d4d', design: '#4de680',
+    };
+
+    let scale = 1, panX = 0, panY = 0;
+
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const container  = document.getElementById('node-editor');
+      const zoomCont   = document.getElementById('zoom-container');
+      const svg        = document.getElementById('node-canvas');
+      const nodesLayer = document.getElementById('nodes-layer');
+
+      function resizeCanvas() {
+        const PAD = 300;
+        let maxW = 1200, maxH = 900;
+        nodesLayer.querySelectorAll('.blender-node').forEach(n => {
+          maxW = Math.max(maxW, (parseInt(n.style.left) || 0) + n.offsetWidth  + PAD);
+          maxH = Math.max(maxH, (parseInt(n.style.top)  || 0) + n.offsetHeight + PAD);
+        });
+        svg.setAttribute('width',  maxW);
+        svg.setAttribute('height', maxH);
+        nodesLayer.style.width  = maxW + 'px';
+        nodesLayer.style.height = maxH + 'px';
+      }
+
+      // ── Fetch ─────────────────────────────────────────────────
+      let timeline = [], certNodesMeta = [], certPlans = [];
+      try {
+        const [tlRes, cnRes, cpRes] = await Promise.all([
+          fetch('/portfolio/api/timeline'),
+          fetch('/portfolio/api/cert-nodes'),
+          fetch('/portfolio/api/cert-plans'),
+        ]);
+        timeline      = await tlRes.json();
+        certNodesMeta = await cnRes.json();
+        certPlans     = await cpRes.json();
+      } catch {
+        nodesLayer.innerHTML = '<div style="color:#ff5555;font-family:var(--font-mono);padding:2rem">Failed to load data.</div>';
+        return;
+      }
+
+      const certs   = timeline.filter(t => t.category === 'cert');
+      const metaMap = {};
+      certNodesMeta.forEach(n => metaMap[n.id] = n);
+
+      const certNodes = certs.map(cert => ({
+        id:            cert.id,
+        title:         cert.title,
+        date:          cert.date,
+        node_category: metaMap[cert.id]?.node_category || 'info',
+        parent_id:     metaMap[cert.id]?.parent_id     || null,
+        extra_label:   metaMap[cert.id]?.extra_label   || '',
+        extra_value:   metaMap[cert.id]?.extra_value   || '',
+        isPlan:        false,
+      }));
+
+      const planNodes = certPlans.map(p => ({
+        id:            p.id,
+        title:         p.title,
+        date:          '',
+        node_category: p.node_category,
+        parent_id:     p.parent_id || null,
+        extra_label:   p.extra_label,
+        extra_value:   p.extra_value,
+        isPlan:        true,
+      }));
+
+      const nodes = [...certNodes, ...planNodes];
+
+      // ── Tree layout (Reingold-Tilford) ────────────────────────
+      const idMap = {};
+      nodes.forEach(n => idMap[n.id] = n);
+
+      // Build children map
+      const childMap = {};
+      nodes.forEach(n => childMap[n.id] = []);
+      nodes.forEach(n => {
+        if (n.parent_id && idMap[n.parent_id]) childMap[n.parent_id].push(n);
+      });
+
+      // Sort each child list: real certs by date, plans appended last
+      function sortGroup(arr) {
+        arr.sort((a, b) => {
+          if (a.isPlan !== b.isPlan) return a.isPlan ? 1 : -1;
+          return (a.date || '').localeCompare(b.date || '');
+        });
+      }
+      Object.values(childMap).forEach(sortGroup);
+
+      // Roots = nodes with no valid parent in this set
+      const roots = nodes.filter(n => !n.parent_id || !idMap[n.parent_id]);
+      sortGroup(roots);
+
+      // Depth per node (x-column)
+      const depthCache = {};
+      function getDepth(id, visited = new Set()) {
+        if (id in depthCache) return depthCache[id];
+        const node = idMap[id];
+        if (!node || !node.parent_id || visited.has(id)) return (depthCache[id] = 0);
+        visited.add(id);
+        return (depthCache[id] = 1 + getDepth(node.parent_id, new Set(visited)));
+      }
+      nodes.forEach(n => getDepth(n.id));
+
+      // DFS: leaves get sequential y-slots; parents center over their children
+      const COL_W = 270, SLOT = 148, START_X = 40, START_Y = 50;
+      let slotY = START_Y;
+
+      function assignPos(nodeId) {
+        const node = idMap[nodeId];
+        const kids = childMap[nodeId] || [];
+        node._x = START_X + (depthCache[nodeId] ?? 0) * COL_W;
+        if (kids.length === 0) {
+          node._y = slotY;
+          slotY  += SLOT;
+          return;
+        }
+        kids.forEach(k => assignPos(k.id));
+        // center parent between first and last child
+        node._y = (kids[0]._y + kids[kids.length - 1]._y) / 2;
+      }
+
+      roots.forEach(r => {
+        assignPos(r.id);
+        slotY += SLOT * 0.4; // small gap between unconnected trees
+      });
+
+      // Which IDs have children?
+      const hasChild = new Set(nodes.filter(n => n.parent_id).map(n => n.parent_id));
+
+      // ── Render nodes ───────────────────────────────────────────
+      nodesLayer.innerHTML = '';
+      nodes.forEach(node => {
+        const el  = document.createElement('div');
+        el.className = 'blender-node';
+        el.id        = 'node-' + node.id;
+        el.style.left = node._x + 'px';
+        el.style.top  = node._y + 'px';
+
+        const cat      = node.node_category;
+        const catLabel = CATEGORY_LABELS[cat] || cat;
+        const inSock   = node.parent_id      ? '<div class="socket left value"></div>'  : '';
+        const outSock  = hasChild.has(node.id) ? '<div class="socket right value"></div>' : '';
+
+        const extraRow = (node.extra_label || node.extra_value)
+          ? `<div class="node-row">
+               <span class="node-label">${esc(node.extra_label || '—')}</span>
+               <span class="node-value">${esc(node.extra_value)}</span>
+             </div>`
+          : '';
+
+        const dateRow = !node.isPlan
+          ? `<div class="node-row">
+               ${inSock}
+               <span class="node-label">Date</span>
+               <span class="node-value">${esc(node.date)}</span>
+               ${outSock}
+             </div>`
+          : `<div class="node-row">${inSock}<span class="node-label" style="opacity:.5">Planned</span>${outSock}</div>`;
+
+        const planBadge = node.isPlan
+          ? '<span class="node-plan-badge">Planning</span>'
+          : '';
+
+        el.innerHTML = `
+          <div class="node-header ${esc(cat)}">${esc(node.title)}${planBadge}</div>
+          <div class="node-content">
+            <div class="node-row">
+              <span class="node-label">Type</span>
+              <span class="node-value">${esc(catLabel)}</span>
+            </div>
+            ${dateRow}
+            ${extraRow}
+          </div>`;
+
+        if (node.isPlan) el.classList.add('is-plan');
+        nodesLayer.appendChild(el);
+      });
+
+      // ── Connections ────────────────────────────────────────────
+      const CONNECTIONS = nodes
+        .filter(n => n.parent_id && idMap[n.parent_id])
+        .map(n => ({ from: n.parent_id, to: n.id, cat: (idMap[n.parent_id]?.node_category || 'info') }));
+
+      const pathEls = {};
+
+      function socketPos(nodeEl, side) {
+        const cls  = side === 'out' ? '.socket.right' : '.socket.left';
+        const sock = nodeEl.querySelector(cls);
+        if (sock) {
+          const cr = container.getBoundingClientRect();
+          const sr = sock.getBoundingClientRect();
+          return {
+            x: (sr.left + sr.width  / 2 - cr.left - panX) / scale,
+            y: (sr.top  + sr.height / 2 - cr.top  - panY) / scale,
+          };
+        }
+        // fallback: node edge center
+        const l = parseInt(nodeEl.style.left) || 0;
+        const t = parseInt(nodeEl.style.top)  || 0;
+        return {
+          x: side === 'out' ? l + nodeEl.offsetWidth : l,
+          y: t + nodeEl.offsetHeight / 2,
+        };
+      }
+
+      function bezier(x1, y1, x2, y2) {
+        const cx = Math.max(Math.abs(x2 - x1) * 0.5, 60);
+        return `M ${x1} ${y1} C ${x1+cx} ${y1} ${x2-cx} ${y2} ${x2} ${y2}`;
+      }
+
+      function drawConnections() {
+        CONNECTIONS.forEach(({ from, to, cat }, i) => {
+          const fEl = document.getElementById('node-' + from);
+          const tEl = document.getElementById('node-' + to);
+          if (!fEl || !tEl) return;
+          const out = socketPos(fEl, 'out');
+          const inp = socketPos(tEl, 'in');
+          if (!pathEls[i]) {
+            const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            p.setAttribute('fill',           'none');
+            p.setAttribute('stroke-width',   '2');
+            p.setAttribute('stroke-linecap', 'round');
+            p.setAttribute('stroke-opacity', '0.75');
+            svg.appendChild(p);
+            pathEls[i] = p;
+          }
+          pathEls[i].setAttribute('d',      bezier(out.x, out.y, inp.x, inp.y));
+          pathEls[i].setAttribute('stroke', HEADER_COLORS[cat] || '#666');
+        });
+      }
+
+      // ── Transform ─────────────────────────────────────────────
+      function applyTransform() {
+        zoomCont.style.transition = 'none';
+        zoomCont.style.transform  = `translate(${panX}px,${panY}px) scale(${scale})`;
+      }
+
+      function toCanvas(sx, sy) {
+        const r = container.getBoundingClientRect();
+        return { x: (sx - r.left - panX) / scale, y: (sy - r.top - panY) / scale };
+      }
+
+      // ── Drag nodes ─────────────────────────────────────────────
+      function initDrag(node) {
+        node.addEventListener('mousedown', e => {
+          if (e.button !== 0) return;
+          e.preventDefault();
+          e.stopPropagation();
+          const p0   = toCanvas(e.clientX, e.clientY);
+          const offX = p0.x - (parseInt(node.style.left) || 0);
+          const offY = p0.y - (parseInt(node.style.top)  || 0);
+          node.style.zIndex = '10';
+          const onMove = e => {
+            const p = toCanvas(e.clientX, e.clientY);
+            node.style.left = (p.x - offX) + 'px';
+            node.style.top  = (p.y - offY) + 'px';
+            resizeCanvas();
+            drawConnections();
+          };
+          const onUp = () => {
+            node.style.zIndex = '';
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup',   onUp);
+          };
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup',   onUp);
+        });
+      }
+      nodesLayer.querySelectorAll('.blender-node').forEach(initDrag);
+
+      // ── Pan ───────────────────────────────────────────────────
+      container.addEventListener('mousedown', e => {
+        if (e.target.closest('.blender-node') || e.button !== 0) return;
+        e.preventDefault();
+        container.classList.add('panning');
+        const sx = e.clientX - panX, sy = e.clientY - panY;
+        const onMove = e => { panX = e.clientX - sx; panY = e.clientY - sy; applyTransform(); };
+        const onUp   = () => {
+          container.classList.remove('panning');
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup',   onUp);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup',   onUp);
+      });
+
+      // ── Zoom ─────────────────────────────────────────────────
+      container.addEventListener('wheel', e => {
+        e.preventDefault();
+        const r  = container.getBoundingClientRect();
+        const mx = e.clientX - r.left, my = e.clientY - r.top;
+        const f  = e.deltaY < 0 ? 1.1 : 0.9;
+        const ns = Math.max(0.25, Math.min(3, scale * f));
+        panX  = mx - (mx - panX) * (ns / scale);
+        panY  = my - (my - panY) * (ns / scale);
+        scale = ns;
+        applyTransform();
+      }, { passive: false });
+
+      setTimeout(() => { resizeCanvas(); drawConnections(); }, 50);
+    });
+  })();
+  </script>
+
+  <footer class="glass-top">
+    <div class="footer-content">
+      <p class="mono">© 2026 <a href="/portfolio/admin/login.html" style="color:inherit;text-decoration:none;">Altena</a>. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+
+</html>

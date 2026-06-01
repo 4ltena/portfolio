@@ -1,0 +1,107 @@
+[
+  {
+    "id": "sk-01",
+    "name": "Python",
+    "description": "Data Processing & Scripting",
+    "icon": "python-logo.svg",
+    "order": 0
+  },
+  {
+    "id": "sk-02",
+    "name": "C",
+    "description": "Low-level Systems Programming",
+    "icon": "c-logo.svg",
+    "order": 1
+  },
+  {
+    "id": "sk-03",
+    "name": "HTML",
+    "description": "Semantic Core Structures",
+    "icon": "HTML5-logo.svg",
+    "order": 2
+  },
+  {
+    "id": "sk-04",
+    "name": "CSS",
+    "description": "Modern Layouts & FX",
+    "icon": "CSS3-logo.svg",
+    "order": 3
+  },
+  {
+    "id": "sk-05",
+    "name": "JavaScript",
+    "description": "ES6+ & Web Logic",
+    "icon": "js-logo.png",
+    "order": 4
+  },
+  {
+    "id": "sk-06",
+    "name": "TypeScript",
+    "description": "Static Typing & Scale",
+    "icon": "typescript-logo.svg",
+    "order": 5
+  },
+  {
+    "id": "sk-07",
+    "name": "React",
+    "description": "Component Architecture",
+    "icon": "react-logo.svg",
+    "order": 6
+  },
+  {
+    "id": "sk-08",
+    "name": "Node.js",
+    "description": "Runtime & Server-side JS",
+    "icon": "nodejs-logo.svg",
+    "order": 7
+  },
+  {
+    "id": "sk-09",
+    "name": "Raspberry Pi",
+    "description": "IoT & Hardware Prototyping",
+    "icon": "raspi-logo.svg",
+    "order": 8
+  },
+  {
+    "id": "sk-10",
+    "name": "Blender",
+    "description": "3D Modeling & Rendering",
+    "icon": "blender-logo.svg",
+    "order": 9
+  },
+  {
+    "id": "sk-11",
+    "name": "Maya",
+    "description": "3D Animation & Modeling",
+    "icon": "Autodesk_Maya_logo.svg",
+    "order": 10
+  },
+  {
+    "id": "sk-12",
+    "name": "Houdini",
+    "description": "Procedural VFX & Simulation",
+    "icon": "Houdini3D.png",
+    "order": 11
+  },
+  {
+    "id": "sk-13",
+    "name": "Gaea",
+    "description": "Terrain & World Generation",
+    "icon": "Gaea_Logo2_Yellow.svg",
+    "order": 12
+  },
+  {
+    "id": "sk-14",
+    "name": "Unity",
+    "description": "Game & Asset Development",
+    "icon": "unity-logo.svg",
+    "order": 13
+  },
+  {
+    "id": "sk-15",
+    "name": "Unreal Engine",
+    "description": "Game & Asset Development",
+    "icon": "unreal-engine-logo.svg",
+    "order": 14
+  }
+]
