@@ -4,548 +4,317 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ALTENA PORTFOLIO - LITE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=DotGothic16&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html, body {
-      height: 100%;
-      background: #000;
-      color: #d8d8d8;
-      font-family: 'MS Gothic', 'Noto Sans Mono CJK JP', 'Courier New', monospace;
-      font-size: 14px;
-      line-height: 1.75;
-    }
-
-    body {
-      padding: 1.25rem 1.5rem;
-      min-height: 100vh;
-    }
-
+    html, body { height: 100%; background: #000; color: #d8d8d8;
+      font-family: 'VT323', 'DotGothic16', 'MS Gothic', monospace;
+      font-size: 16px; line-height: 1.75; }
+    body { padding: 1.25rem 1.5rem; min-height: 100vh; }
     #screen { max-width: 660px; }
 
-    .dim   { color: #555; }
-    .hi    { color: #fff; }
+    .dim { color: #555; }
     .cyan  { color: #00e8e8; }
     .amber { color: #e8b84b; }
-    .green { color: #50e878; }
     .red   { color: #e85050; }
+    .tl-cert    { color: #e8b84b; }
+    .tl-school  { color: #50e878; }
+    .tl-contest { color: #c850e8; }
 
-    hr {
-      border: none;
-      border-top: 1px solid #333;
-      margin: 0.6rem 0;
-    }
+    hr { border: none; border-top: 1px solid #333; margin: 0.6rem 0; }
 
-    /* Menu items */
-    .menu-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0 2rem;
-      margin: 0.5rem 0;
-    }
-
-    .menu-item {
-      cursor: pointer;
-      padding: 0.1rem 0;
-      user-select: none;
-    }
-    .menu-item:hover .menu-label,
-    .menu-item:active .menu-label { color: #fff; }
+    .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; margin: 0.5rem 0; }
+    .menu-item { cursor: pointer; padding: 0.1rem 0; user-select: none; }
+    .menu-item:hover .menu-label { color: #fff; }
     .menu-item .num { color: #00e8e8; }
     .menu-item .menu-label { color: #d8d8d8; }
 
-    /* Content sections */
-    #content-area { display: none; margin-top: 0.25rem; }
+    .data-row { display: flex; }
+    .data-key { color: #00e8e8; min-width: 14ch; flex-shrink: 0; }
+    .tl-row  { display: flex; gap: 1.5rem; }
+    .tl-date { color: #555; min-width: 11ch; flex-shrink: 0; }
+
+    .note-item { cursor: pointer; margin-bottom: 0.15rem; }
+    .note-item:hover { color: #fff; }
+
+    #content-area { display: none; }
     #content-area.visible { display: block; }
     #main-menu.hidden { display: none; }
 
-    .back-row {
-      margin-top: 1rem;
-      cursor: pointer;
-      color: #555;
-    }
-    .back-row:hover { color: #d8d8d8; }
+    #back-btn { margin-top: 1rem; cursor: pointer; color: #555; }
+    #back-btn:hover { color: #d8d8d8; }
 
-    /* Table-like layout */
-    .data-row {
-      display: flex;
-      gap: 0;
-    }
-    .data-key {
-      color: #00e8e8;
-      min-width: 14ch;
-      flex-shrink: 0;
-    }
-    .data-val { color: #d8d8d8; }
-
-    /* Timeline */
-    .tl-item { display: flex; gap: 1.5rem; }
-    .tl-date { color: #555; min-width: 11ch; flex-shrink: 0; }
-    .tl-cert { color: #e8b84b; }
-    .tl-school { color: #50e878; }
-    .tl-contest { color: #c850e8; }
-
-    /* Notes list */
-    .note-item { margin-bottom: 0.15rem; }
-    .note-date { color: #555; }
-    .note-title { color: #d8d8d8; }
-
-    /* Prompt */
-    #prompt-row {
-      margin-top: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+    #prompt-row { margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; }
     #prompt-label { color: #00e8e8; }
-    #prompt-input {
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #d8d8d8;
-      font-family: inherit;
-      font-size: 14px;
-      caret-color: #d8d8d8;
-      width: 4ch;
-    }
-
-    /* Scrollable content */
-    .scroll-hint { color: #444; font-size: 12px; margin-top: 0.5rem; }
+    #prompt-input { background: transparent; border: none; outline: none;
+      color: #d8d8d8; font-family: inherit; font-size: inherit;
+      caret-color: #d8d8d8; width: 4ch; }
 
     @media (max-width: 480px) {
-      body { font-size: 13px; padding: 1rem; }
+      body { font-size: 15px; padding: 1rem; }
       .menu-grid { grid-template-columns: 1fr; gap: 0; }
       .data-key { min-width: 12ch; }
-      .tl-item { flex-direction: column; gap: 0; }
+      .tl-row { flex-direction: column; gap: 0; }
       .tl-date { min-width: unset; }
     }
   </style>
 </head>
 <body>
-
 <div id="screen">
 
-  <!-- ─── MAIN MENU ─── -->
   <div id="main-menu">
-    <p><span class="hi">ALTENA PORTFOLIO SYSTEM</span>  <span class="dim">ver.2026</span></p>
-    <p><span class="dim">Copyright(C) altena.me  ALL Rights Reserved.</span></p>
+    <p><span style="color:#fff">ALTENA PORTFOLIO LITE</span>  <span class="dim">ver.2026</span></p>
+    <p class="dim">Copyright(C) Altena  ALL Rights Reserved.</p>
     <br>
     <p><span class="dim">前回アクセス: </span><span id="last-visit" class="dim">--</span></p>
     <br>
     <hr>
     <p><span class="cyan">ALTENA PORTFOLIO</span>  <span class="dim">TOP</span></p>
-    <hr>
-    <br>
+    <hr><br>
     <div class="menu-grid">
-      <div class="menu-item" data-sec="1">
-        <span class="num"> 1.</span> <span class="menu-label">PROFILE</span>
-      </div>
-      <div class="menu-item" data-sec="2">
-        <span class="num"> 2.</span> <span class="menu-label">TECH STACK</span>
-      </div>
-      <div class="menu-item" data-sec="3">
-        <span class="num"> 3.</span> <span class="menu-label">TIMELINE</span>
-      </div>
-      <div class="menu-item" data-sec="4">
-        <span class="num"> 4.</span> <span class="menu-label">WORKS</span>
-      </div>
-      <div class="menu-item" data-sec="5">
-        <span class="num"> 5.</span> <span class="menu-label">NOTES</span>
-      </div>
-      <div class="menu-item" data-sec="E">
-        <span class="num"> E.</span> <span class="menu-label dim">終了 / EXIT</span>
-      </div>
+      <div class="menu-item" data-sec="1"><span class="num"> 1.</span> <span class="menu-label">PROFILE</span></div>
+      <div class="menu-item" data-sec="2"><span class="num"> 2.</span> <span class="menu-label">TECH STACK</span></div>
+      <div class="menu-item" data-sec="3"><span class="num"> 3.</span> <span class="menu-label">TIMELINE</span></div>
+      <div class="menu-item" data-sec="4"><span class="num"> 4.</span> <span class="menu-label">WORKS</span></div>
+      <div class="menu-item" data-sec="5"><span class="num"> 5.</span> <span class="menu-label">NOTES</span></div>
+      <div class="menu-item" data-sec="E"><span class="num"> E.</span> <span class="menu-label dim">終了 / EXIT</span></div>
     </div>
     <br>
     <div id="prompt-row">
       <span id="prompt-label">選択&gt;</span>
-      <input id="prompt-input" type="text" maxlength="1" autocomplete="off" autocorrect="off"
-        spellcheck="false" inputmode="numeric" autofocus>
+      <input id="prompt-input" type="text" maxlength="1" autocomplete="off"
+        autocorrect="off" spellcheck="false" inputmode="numeric" autofocus>
     </div>
     <br>
     <p class="dim" style="font-size:12px">[ PC: 数字キー  |  Mobile: 項目タッチ ]</p>
   </div>
 
-  <!-- ─── CONTENT AREA ─── -->
   <div id="content-area">
-    <p>
-      <span class="dim">ALTENA PORTFOLIO &gt; </span><span id="section-title" class="cyan"></span>
-    </p>
+    <p><span class="dim">ALTENA PORTFOLIO &gt; </span><span id="section-title" class="cyan"></span></p>
     <hr>
     <div id="section-body"></div>
-    <div class="back-row" id="back-btn">
-      <br>
-      <span class="dim">[</span> <span class="cyan">0</span><span class="dim">/</span><span class="cyan">B</span> : TOP に戻る <span class="dim">]</span>
+    <div id="back-btn"><br>
+      <span class="dim">[</span> <span class="cyan">0</span><span class="dim">/</span><span class="cyan">B</span>
+      : <span id="back-label">TOP に戻る</span> <span class="dim">]</span>
     </div>
   </div>
 
-</div><!-- /screen -->
-
+</div>
 <script>
-  // ── Last visit ────────────────────────────────────────────
+  // ── 前回アクセス（ブラウザのlocalStorageに保存した日時を読み書き）
   const LV_KEY = 'altena_lite_lv';
   const now = new Date().toLocaleString('ja-JP', { hour12: false });
-  const lastVisit = localStorage.getItem(LV_KEY) || now;
-  document.getElementById('last-visit').textContent = lastVisit;
+  document.getElementById('last-visit').textContent = localStorage.getItem(LV_KEY) || now;
   localStorage.setItem(LV_KEY, now);
 
-  // ── Section data ──────────────────────────────────────────
-  function esc(s) {
-    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
+  // ── ユーティリティ
+  const escHtml = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+  const dataRow = (key, value) =>
+    `<div class="data-row"><span class="data-key">${key}</span><span>${value}</span></div>`;
+
+  // HTML記事をプレーンテキストに変換（タグ除去・エンティティデコード）
+  const stripHtml = html => html
+    .replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>|<\/div>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&nbsp;/g,' ')
+    .replace(/\n{3,}/g, '\n\n').trim();
+
+  // ── セクション描画
   async function renderProfile() {
-    return `
-<br>
-<div class="data-row"><span class="data-key">Name</span><span class="data-val hi">Altena</span></div>
-<div class="data-row"><span class="data-key">Domain</span><span class="data-val">altena.me</span></div>
-<div class="data-row"><span class="data-key">Location</span><span class="data-val">Japan</span></div>
-<div class="data-row"><span class="data-key">Status</span><span class="data-val cyan">Student / Engineer</span></div>
-<br>
-<hr>
-<p class="dim">-- About --</p>
-<br>
+    return `<br>
+${dataRow('Name', '<span style="color:#fff">Altena</span>')}
+${dataRow('Domain', 'altena.me')}
+${dataRow('Location', 'Japan')}
+${dataRow('Status', '<span class="cyan">Student / Engineer</span>')}
+<br><hr><p class="dim">-- About --</p><br>
 <p>情報系専門学校に在学中のエンジニア。</p>
-<p>バックエンド・フロントエンド・3DCG・組み込みシステムまで</p>
-<p>幅広く学習・開発中。資格取得にも積極的に取り組んでいる。</p>
-<br>
-<hr>
-<p class="dim">-- Interests --</p>
-<br>
+<p>バックエンド・フロントエンド・3DCG・組み込みシステムまで幅広く学習・開発中。</p>
+<br><hr><p class="dim">-- Interests --</p><br>
 <p>  Web開発 / サーバー構築 / Blender / Unity</p>
 <p>  組み込み(Raspberry Pi) / Linux / セキュリティ</p>
-<br>
-<hr>
-<p class="dim">-- Links --</p>
-<br>
-<div class="data-row"><span class="data-key">Portfolio</span><span class="data-val cyan">https://altena.me/portfolio/</span></div>
-<div class="data-row"><span class="data-key">Full site</span><span class="data-val">index.html</span></div>`;
+<br><hr><p class="dim">-- Links --</p><br>
+${dataRow('Portfolio', '<span class="cyan">https://altena.me/portfolio/</span>')}`;
   }
 
   async function renderSkills() {
     try {
-      const r = await fetch('/portfolio/api/skills');
-      const items = await r.json();
+      const items = await fetch('/portfolio/api/skills').then(r => r.json());
       if (!items.length) return '<br><p class="dim">-- データなし --</p>';
-      let html = '<br>';
       const cols = [[], []];
-      items.forEach((it, i) => cols[i % 2].push(it));
+      items.forEach((item, index) => cols[index % 2].push(item));
       const maxLen = Math.max(cols[0].length, cols[1].length);
-      for (let i = 0; i < maxLen; i++) {
-        const a = cols[0][i], b = cols[1][i];
-        const aStr = a ? `<span class="cyan">${esc(String(a.sort_order+1).padStart(2,'0'))}.</span> ${esc(a.name)}` : '';
-        const bStr = b ? `<span class="cyan">${esc(String(b.sort_order+1).padStart(2,'0'))}.</span> ${esc(b.name)}` : '';
-        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 2rem"><span>${aStr}</span><span>${bStr}</span></div>`;
-      }
-      html += '<br><hr><p class="dim" style="font-size:12px">-- 詳細は <a href="index.html#skills" style="color:#00e8e8">index.html#skills</a> を参照 --</p>';
+      const renderCell = item => item
+        ? `<span class="cyan">${String(item.sort_order+1).padStart(2,'0')}.</span> ${escHtml(item.name)}`
+        : '';
+      let html = '<br>';
+      for (let i = 0; i < maxLen; i++)
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 2rem">
+          <span>${renderCell(cols[0][i])}</span><span>${renderCell(cols[1][i])}</span></div>`;
       return html;
-    } catch {
-      return '<br><p class="red">データ取得エラー</p>';
-    }
+    } catch { return '<br><p class="red">データ取得エラー</p>'; }
   }
 
   async function renderTimeline() {
     try {
-      const r = await fetch('/portfolio/api/timeline');
-      const items = await r.json();
+      const items = await fetch('/portfolio/api/timeline').then(r => r.json());
       if (!items.length) return '<br><p class="dim">-- データなし --</p>';
+      const CATEGORY_CLASS = { cert:'tl-cert', school:'tl-school', contest:'tl-contest' };
+      const CATEGORY_MARK  = { cert:'*', school:'#', contest:'!' };
       let html = '<br>';
-      for (const it of items) {
-        let cls = 'data-val';
-        let mark = ' ';
-        if (it.category === 'cert')    { cls = 'tl-cert';    mark = '*'; }
-        if (it.category === 'school')  { cls = 'tl-school';  mark = '#'; }
-        if (it.category === 'contest') { cls = 'tl-contest'; mark = '!'; }
-        html += `<div class="tl-item">
-          <span class="tl-date">${esc(it.date)}</span>
-          <span class="${cls}">${mark} ${esc(it.title)}</span>
+      for (const item of items) {
+        const cls  = CATEGORY_CLASS[item.category] || '';
+        const mark = CATEGORY_MARK[item.category]  || ' ';
+        html += `<div class="tl-row">
+          <span class="tl-date">${escHtml(item.date)}</span>
+          <span class="${cls}">${mark} ${escHtml(item.title)}</span>
         </div>`;
       }
-      html += `<br><hr>
-<p class="dim" style="font-size:12px">凡例: <span class="tl-cert">* 資格</span>  <span class="tl-school"># 学歴</span>  <span class="tl-contest">! コンテスト</span></p>`;
-      return html;
-    } catch {
-      return '<br><p class="red">データ取得エラー</p>';
-    }
+      return html + `<br><hr><p class="dim" style="font-size:12px">凡例:
+        <span class="tl-cert">* 資格</span>  <span class="tl-school"># 学歴</span>  <span class="tl-contest">! コンテスト</span></p>`;
+    } catch { return '<br><p class="red">データ取得エラー</p>'; }
   }
 
-  const _worksList = [
-    {
-      title: 'Blender練習：バス停',
-      tech:  'Blender',
-      date:  '2026/04/11',
-      category: '3DCG Practice',
-      desc:  'Blender生活1週目。',
-      body:
-`== Project Summary ==
-
-About the Project
-
-Blender生活1週目。次作成したものは田舎によくあるバス停。
-現在企画中のゲームが夏の田舎を舞台としたものであるため、
-そこへ流用するために作成した。
-
-ただし…軽量化が課題です。
-
-----------------------------------------
-  Date     : 2026/04/11
-  Tech     : Blender
-  Category : 3DCG Practice
-  Log      : #Blender生活1週目`,
-    },
-  ];
+  const WORKS_LIST = [{
+    title: 'Blender練習：バス停', tech: 'Blender', date: '2026/04/11', category: '3DCG Practice',
+    desc: 'Blender生活1週目。',
+    body: `Blender生活1週目。田舎のバス停を作成。\n企画中のゲーム（夏の田舎舞台）に流用予定。\n軽量化が課題。\n\n----------------------------------------\n  Date     : 2026/04/11\n  Tech     : Blender\n  Category : 3DCG Practice\n  Log      : #Blender生活1週目`,
+  }];
 
   async function renderWorks() {
-    let html = '<br>';
-    _worksList.forEach((w, i) => {
-      const num = String(i + 1).padStart(2, ' ');
-      html += `<div class="note-item" data-work-idx="${i}" style="cursor:pointer;padding:0.2rem 0">
-        <span class="cyan">${num}.</span>
-        <span class="note-title">  ${esc(w.title)}</span>
-        <span class="dim" style="font-size:12px">  [${esc(w.tech)}]</span>
+    return '<br>' + WORKS_LIST.map((work, index) =>
+      `<div class="note-item" data-work-idx="${index}" style="padding:0.2rem 0">
+        <span class="cyan">${String(index+1).padStart(2,' ')}.</span>
+        <span>  ${escHtml(work.title)}</span>
+        <span class="dim" style="font-size:12px">  [${escHtml(work.tech)}]</span>
       </div>
-      <p class="dim" style="font-size:12px;padding-left:2.2rem;margin-bottom:0.5rem">${esc(w.desc)}</p>`;
-    });
-    html += '<br><hr><p class="dim" style="font-size:12px">数字キーまたはタッチで詳細を開く</p>';
-    return html;
+      <p class="dim" style="font-size:12px;padding-left:2.2rem;margin-bottom:0.5rem">${escHtml(work.desc)}</p>`
+    ).join('') + '<br><hr><p class="dim" style="font-size:12px">数字キーまたはタッチで詳細を開く</p>';
   }
 
-  function openWorkDetail(idx) {
-    const work = _worksList[idx];
-    if (!work) return;
-    sectionTitle.textContent = `WORKS > ${String(idx + 1).padStart(2, '0')}`;
-    setBackLabel('0/B : 一覧に戻る');
-    _state = 'detail';
-    _detailBackFn = () => reopenSection('4');
-
-    sectionBody.innerHTML = `<br>
-<div class="data-row"><span class="data-key">Title</span><span class="data-val hi">${esc(work.title)}</span></div>
-<div class="data-row"><span class="data-key">Tech</span><span class="data-val amber">${esc(work.tech)}</span></div>
-<div class="data-row"><span class="data-key">Date</span><span class="data-val">${esc(work.date)}</span></div>
-<div class="data-row"><span class="data-key">Category</span><span class="data-val">${esc(work.category)}</span></div>
-<br><hr><br>
-<pre style="white-space:pre-wrap;word-break:break-all;line-height:1.8;color:#d8d8d8">${esc(work.body)}</pre>
-<br>`;
-    window.scrollTo(0, 0);
-  }
-
-  // ── HTML → plain text ─────────────────────────────────────
-  function htmlToText(html) {
-    const blocks  = [];  // <pre> の中身を退避
-    const inlines = [];  // <code> の中身を退避
-
-    function decEnt(s) {
-      return s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')
-               .replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&nbsp;/g,' ');
-    }
-    function stripTags(s) { return s.replace(/<[^>]+>/g, ''); }
-
-    let t = html
-      // 1. コードブロック <pre>…</pre> をプレースホルダーに退避
-      .replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, (_, c) => {
-        blocks.push(decEnt(stripTags(c)).trim());
-        return `\x00B${blocks.length - 1}\x00`;
-      })
-      // 2. インラインコード <code>…</code> をプレースホルダーに退避
-      .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, (_, c) => {
-        inlines.push(decEnt(stripTags(c)));
-        return `\x00I${inlines.length - 1}\x00`;
-      })
-      // 3. 見出し
-      .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi,
-        (_, c) => '\n\n== ' + stripTags(c).trim() + ' ==\n')
-      // 4. ブロック要素 → 改行
-      .replace(/<\/p>|<\/div>|<\/blockquote>/gi, '\n')
-      .replace(/<p[^>]*>|<div[^>]*>|<blockquote[^>]*>/gi, '\n')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<li[^>]*>/gi, '\n  ')
-      .replace(/<\/li>/gi, '')
-      .replace(/<hr[^>]*\/?>/gi, '\n----------------------------------------\n')
-      // 5. 残タグ除去 & エンティティデコード
-      .replace(/<[^>]+>/g, '')
-      ;
-    t = decEnt(t);
-
-    // 6. プレースホルダーを復元
-    t = t.replace(/\x00B(\d+)\x00/g, (_, i) => '\n```\n' + blocks[i] + '\n```\n');
-    t = t.replace(/\x00I(\d+)\x00/g,  (_, i) => '`' + inlines[i] + '`');
-
-    return t.replace(/\n{3,}/g, '\n\n').trim();
-  }
-
-  // ── Notes ──────────────────────────────────────────────────
   let _notesList = [];
-
   async function renderNotes() {
     try {
-      const r = await fetch('/portfolio/api/articles');
-      _notesList = await r.json();
+      _notesList = await fetch('/portfolio/api/articles').then(r => r.json());
       if (!_notesList.length) return '<br><p class="dim">-- 記事なし --</p>';
-      let html = '<br>';
-      _notesList.forEach((it, i) => {
-        const num = String(i + 1).padStart(2, ' ');
-        const tags = (it.tags || []).length ? ` [${it.tags.join(', ')}]` : '';
-        html += `<div class="note-item" data-note-idx="${i}" style="cursor:pointer">
-          <span class="cyan">${num}.</span>
-          <span class="note-date">  ${esc(it.date)}</span>
-          <span class="note-title">  ${esc(it.title)}</span>
-          <span class="dim" style="font-size:12px">${esc(tags)}</span>
+      return '<br>' + _notesList.map((item, index) => {
+        const tags = (item.tags||[]).length ? ` [${item.tags.join(', ')}]` : '';
+        return `<div class="note-item" data-note-idx="${index}">
+          <span class="cyan">${String(index+1).padStart(2,' ')}.</span>
+          <span class="dim">  ${escHtml(item.date)}</span>
+          <span>  ${escHtml(item.title)}</span>
+          <span class="dim" style="font-size:12px">${escHtml(tags)}</span>
         </div>`;
-      });
-      html += '<br><hr><p class="dim" style="font-size:12px">数字キーまたはタッチで記事を開く</p>';
-      return html;
-    } catch {
-      return '<br><p class="red">データ取得エラー</p>';
-    }
-  }
-
-  async function openNoteDetail(idx) {
-    const article = _notesList[idx];
-    if (!article) return;
-    sectionTitle.textContent = `NOTES > ${String(idx + 1).padStart(2, '0')}`;
-    sectionBody.innerHTML = '<br><span class="dim">Loading...</span>';
-    setBackLabel('0/B : 一覧に戻る');
-    _state = 'detail';
-    _detailBackFn = () => reopenSection('5');
-
-    try {
-      const r = await fetch(`/portfolio/api/articles/${article.id}`);
-      const data = await r.json();
-      const text = htmlToText(data.content || '');
-      const tags = (data.tags || []).length ? data.tags.join(', ') : '--';
-      let html = `<br>
-<div class="data-row"><span class="data-key">Title</span><span class="data-val hi">${esc(data.title)}</span></div>
-<div class="data-row"><span class="data-key">Date</span><span class="data-val">${esc(data.date)}</span></div>
-<div class="data-row"><span class="data-key">Tags</span><span class="data-val amber">${esc(tags)}</span></div>
-<br><hr><br>
-<pre style="white-space:pre-wrap;word-break:break-all;line-height:1.8;color:#d8d8d8">${esc(text)}</pre>
-<br>`;
-      sectionBody.innerHTML = html;
-    } catch {
-      sectionBody.innerHTML = '<br><p class="red">記事の取得に失敗しました</p>';
-    }
-    window.scrollTo(0, 0);
+      }).join('') + '<br><hr><p class="dim" style="font-size:12px">数字キーまたはタッチで記事を開く</p>';
+    } catch { return '<br><p class="red">データ取得エラー</p>'; }
   }
 
   const SECTIONS = {
-    '1': { title: 'PROFILE',    render: renderProfile },
-    '2': { title: 'TECH STACK', render: renderSkills },
-    '3': { title: 'TIMELINE',   render: renderTimeline },
-    '4': { title: 'WORKS',      render: renderWorks },
-    '5': { title: 'NOTES',      render: renderNotes },
+    '1': { title:'PROFILE',    render: renderProfile },
+    '2': { title:'TECH STACK', render: renderSkills },
+    '3': { title:'TIMELINE',   render: renderTimeline },
+    '4': { title:'WORKS',      render: renderWorks },
+    '5': { title:'NOTES',      render: renderNotes },
   };
 
-  // ── Navigation state ───────────────────────────────────────
-  // 'menu' | 'section' | 'detail'
-  let _state = 'menu';
-  let _detailBackFn = null;   // called when pressing back from detail view
-  let _currentSectionKey = null;
-
+  // ── DOM refs
   const mainMenu     = document.getElementById('main-menu');
   const contentArea  = document.getElementById('content-area');
   const sectionTitle = document.getElementById('section-title');
   const sectionBody  = document.getElementById('section-body');
-  const backBtn      = document.getElementById('back-btn');
-  const backLabelEl  = backBtn.querySelector('span:last-child');
+  const backLabel    = document.getElementById('back-label');
 
-  function setBackLabel(text) {
-    backBtn.innerHTML = `<br><span class="dim">[</span> <span class="cyan">0</span><span class="dim">/</span><span class="cyan">B</span> : ${text} <span class="dim">]</span>`;
-  }
-  setBackLabel('TOP に戻る');
+  // state: 'menu' | 'section' | 'detail'
+  let _state = 'menu', _currentSectionKey = null, _detailBackFn = null;
 
-  // セクションを再表示（detail から一覧に戻るとき用）
-  async function reopenSection(key) {
-    const sec = SECTIONS[key];
-    if (!sec) return;
-    _state = 'section';
-    _currentSectionKey = key;
-    sectionTitle.textContent = sec.title;
-    setBackLabel('TOP に戻る');
+  async function openSection(sectionKey, reopen = false) {
+    const section = SECTIONS[sectionKey];
+    if (!section) return;
+    _state = 'section'; _currentSectionKey = sectionKey; _detailBackFn = null;
+    sectionTitle.textContent = section.title;
+    backLabel.textContent = 'TOP に戻る';
     sectionBody.innerHTML = '<br><span class="dim">Loading...</span>';
-    sectionBody.innerHTML = await sec.render();
-    bindDetailClicks(key);
+    if (!reopen) { mainMenu.classList.add('hidden'); contentArea.classList.add('visible'); }
+    sectionBody.innerHTML = await section.render();
+    sectionBody.querySelectorAll('[data-note-idx]').forEach(el =>
+      el.addEventListener('click', () => openNoteDetail(+el.dataset.noteIdx)));
+    sectionBody.querySelectorAll('[data-work-idx]').forEach(el =>
+      el.addEventListener('click', () => openWorkDetail(+el.dataset.workIdx)));
     window.scrollTo(0, 0);
   }
 
-  async function openSection(key) {
-    const sec = SECTIONS[key];
-    if (!sec) return;
-    _state = 'section';
-    _currentSectionKey = key;
-    sectionTitle.textContent = sec.title;
-    sectionBody.innerHTML = '<br><span class="dim">Loading...</span>';
-    setBackLabel('TOP に戻る');
-    mainMenu.classList.add('hidden');
-    contentArea.classList.add('visible');
-    sectionBody.innerHTML = await sec.render();
-    bindDetailClicks(key);
+  function openWorkDetail(index) {
+    const work = WORKS_LIST[index]; if (!work) return;
+    _state = 'detail'; _detailBackFn = () => openSection('4', true);
+    sectionTitle.textContent = `WORKS > ${String(index+1).padStart(2,'0')}`;
+    backLabel.textContent = '一覧に戻る';
+    sectionBody.innerHTML = `<br>
+${dataRow('Title', `<span style="color:#fff">${escHtml(work.title)}</span>`)}
+${dataRow('Tech', `<span class="amber">${escHtml(work.tech)}</span>`)}
+${dataRow('Date', escHtml(work.date))}
+${dataRow('Category', escHtml(work.category))}
+<br><hr><br><pre style="white-space:pre-wrap;word-break:break-all;line-height:1.8">${escHtml(work.body)}</pre><br>`;
     window.scrollTo(0, 0);
   }
 
-  function bindDetailClicks(key) {
-    if (key === '5') {
-      sectionBody.querySelectorAll('[data-note-idx]').forEach(el => {
-        el.addEventListener('click', () => openNoteDetail(Number(el.dataset.noteIdx)));
-      });
-    }
-    if (key === '4') {
-      sectionBody.querySelectorAll('[data-work-idx]').forEach(el => {
-        el.addEventListener('click', () => openWorkDetail(Number(el.dataset.workIdx)));
-      });
-    }
+  async function openNoteDetail(index) {
+    const article = _notesList[index]; if (!article) return;
+    _state = 'detail'; _detailBackFn = () => openSection('5', true);
+    sectionTitle.textContent = `NOTES > ${String(index+1).padStart(2,'0')}`;
+    backLabel.textContent = '一覧に戻る';
+    sectionBody.innerHTML = '<br><span class="dim">Loading...</span>';
+    try {
+      const data = await fetch(`/portfolio/api/articles/${article.id}`).then(r => r.json());
+      const tags = (data.tags||[]).length ? data.tags.join(', ') : '--';
+      sectionBody.innerHTML = `<br>
+${dataRow('Title', `<span style="color:#fff">${escHtml(data.title)}</span>`)}
+${dataRow('Date', escHtml(data.date))}
+${dataRow('Tags', `<span class="amber">${escHtml(tags)}</span>`)}
+<br><hr><br><pre style="white-space:pre-wrap;word-break:break-all;line-height:1.8">${escHtml(stripHtml(data.content||''))}</pre><br>`;
+    } catch { sectionBody.innerHTML = '<br><p class="red">記事の取得に失敗しました</p>'; }
+    window.scrollTo(0, 0);
   }
 
-  function backAction() {
-    if (_state === 'detail' && _detailBackFn) {
-      // detail → セクション一覧に戻る
-      _detailBackFn();
-    } else {
-      // section → TOP に戻る
-      _state = 'menu';
-      _currentSectionKey = null;
-      contentArea.classList.remove('visible');
-      mainMenu.classList.remove('hidden');
-      setBackLabel('TOP に戻る');
-      document.getElementById('prompt-input').focus();
-      window.scrollTo(0, 0);
-    }
+  function back() {
+    if (_state === 'detail' && _detailBackFn) { _detailBackFn(); return; }
+    _state = 'menu'; _currentSectionKey = null;
+    contentArea.classList.remove('visible');
+    mainMenu.classList.remove('hidden');
+    backLabel.textContent = 'TOP に戻る';
+    document.getElementById('prompt-input').focus();
+    window.scrollTo(0, 0);
   }
 
-  // Menu item clicks/taps
-  document.querySelectorAll('.menu-item').forEach(el => {
+  document.querySelectorAll('.menu-item').forEach(el =>
     el.addEventListener('click', () => {
-      const sec = el.dataset.sec;
-      if (sec === 'E') { window.location.href = 'index.html'; return; }
-      openSection(sec);
-    });
-  });
+      const sectionKey = el.dataset.sec;
+      if (sectionKey === 'E') { window.location.href = 'index.html'; return; }
+      openSection(sectionKey);
+    }));
 
-  // Back button
-  backBtn.addEventListener('click', backAction);
+  document.getElementById('back-btn').addEventListener('click', back);
 
-  // Keyboard navigation
   document.addEventListener('keydown', e => {
     const key = e.key;
-    if (_state === 'detail' || _state === 'section') {
-      if (key === '0' || key.toLowerCase() === 'b') { backAction(); return; }
+    if (_state !== 'menu') {
+      if (key === '0' || key.toLowerCase() === 'b') { back(); return; }
       if (_state === 'section') {
-        const idx = parseInt(key) - 1;
-        if (!isNaN(idx) && idx >= 0) {
-          if (_currentSectionKey === '5' && idx < _notesList.length)  { openNoteDetail(idx); return; }
-          if (_currentSectionKey === '4' && idx < _worksList.length)  { openWorkDetail(idx); return; }
+        const index = parseInt(key) - 1;
+        if (!isNaN(index) && index >= 0) {
+          if (_currentSectionKey === '5' && index < _notesList.length) openNoteDetail(index);
+          if (_currentSectionKey === '4' && index < WORKS_LIST.length) openWorkDetail(index);
         }
       }
       return;
     }
     if (SECTIONS[key]) { openSection(key); return; }
-    if (key.toLowerCase() === 'e') { window.location.href = 'index.html'; }
+    if (key.toLowerCase() === 'e') window.location.href = 'index.html';
   });
 
-  // Prompt input (main menu)
-  const promptInput = document.getElementById('prompt-input');
-  promptInput.addEventListener('input', () => {
-    const val = promptInput.value.toUpperCase();
-    promptInput.value = '';
+  document.getElementById('prompt-input').addEventListener('input', function () {
+    const val = this.value.toUpperCase(); this.value = '';
     if (val === 'E') { window.location.href = 'index.html'; return; }
     if (SECTIONS[val]) openSection(val);
   });
