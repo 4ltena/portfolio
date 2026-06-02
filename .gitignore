@@ -1,26 +1,10 @@
-# ── API secrets (auto-generated on first run, never commit) ─────
-api/data/config.json
+# Runtime data — never commit these
+portfolio/api/data/
 
-# ── Database & generated content ────────────────────────────────
-api/data/portfolio.db
-api/data/portfolio.db-shm
-api/data/portfolio.db-wal
-api/data/articles/
+# Node
+node_modules/
+npm-debug.log*
 
-# ── Node modules ────────────────────────────────────────────────
-api/node_modules/
-
-# ── Nginx server configuration ───────────────────────────────────
-nginx/
-
-# ── Auto-generated notes (created by the blog editor API) ───────
-notes/blog-editor-*/
-notes/lpic-*/
-
-# ── macOS ───────────────────────────────────────────────────────
+# OS
 .DS_Store
-**/.DS_Store
-
-# ── Editor / IDE ─────────────────────────────────────────────────
-.vscode/
-.idea/
+Thumbs.db
