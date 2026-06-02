@@ -1,3 +1,5 @@
+console.log("%c[SYSTEM] Kernel Loaded. Identity: Guest. Monitoring activity...", "color: #00f2ff; font-weight: bold; background: #111; padding: 5px 10px; border-radius: 4px;");
+
 function escHtml(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
