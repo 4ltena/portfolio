@@ -1048,14 +1048,12 @@ footer {
     .page-tile-container { grid-template-columns: 1fr; }
     .about-container { flex-direction: column; text-align: center; }
 
-    /* セクションタイトルの装飾線の負マージンはデスクトップの広い padding 前提。
-       モバイルでは画面外にはみ出すため 0 にする。 */
-    #skills .section-title::after,
-    #timeline .section-title::after,
-    #works .section-title::after { margin-right: 0; }
+    /* セクションタイトルの装飾線の負マージン(-60/-40/-20px)は circuit-overlay の
+       縦線位置（title 右端 +60/40/20px）に接続させるためのもの。モバイルでもガターを
+       4rem 確保しているので margin はそのまま活かし、横線と縦線を繋げる。
+       （以前は狭いガターで画面外へはみ出すため 0 にしていたが、ガター拡大により不要） */
 
-    /* circuit-overlay の縦線パスが title 右端の先まで描画され画面外にはみ出すので、
-       content-wrapper でクリップ（横スクロール／左寄りズレを防ぐ）。 */
+    /* 念のため circuit パスのはみ出しは content-wrapper でクリップ（横スクロール防止） */
     .content-wrapper { overflow-x: clip; }
 
     /* Notes 一覧: 1カラム化（詳細カードの余白は clamp で滑らかに縮小するため上書き不要） */
