@@ -8,7 +8,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     initLogoAnimation();
 
     // ── Dynamic section rendering (await before setting up observers) ──
-    await Promise.all([renderTimeline(), renderSkills()]);
+    // renderLatestNotes も await することで、drawCircuits 実行時には
+    // works セクションの高さが確定し、circuit の縦線がズレない。
+    await Promise.all([renderTimeline(), renderSkills(), renderLatestNotes()]);
 
     // ── Reveal observer (now all elements are in the DOM) ────
     initRevealObserver();
@@ -30,6 +32,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
+
+    // ── System status (live clock — placeholder の "Upgrading..." が固定表示になる問題の解消) ──
+    initSystemStatus();
 
     // ── Circuit lines ─────────────────────────────────────────
     setTimeout(drawCircuits, 100);
@@ -86,6 +91,65 @@ async function renderSkills() {
               <p>${escHtml(item.description)}</p>
             </div>`).join('');
     } catch {}
+}
+
+async function renderLatestNotes() {
+    const grid = document.getElementById('latest-notes-grid');
+    if (!grid) return;
+    try {
+        const r = await fetch('/portfolio/api/articles');
+        if (!r.ok) return;
+        // API は created_at DESC 順。先頭3件が最新。
+        const items = (await r.json()).slice(0, 3);
+        grid.innerHTML = items.map(a => {
+            const tagsHtml = (a.tags || [])
+                .map(t => `<span class="tag-link">#${escHtml(t)}</span>`)
+                .join('');
+            return `
+            <a href="/portfolio/notes/${escHtml(a.id)}/" class="note-card glass">
+              <div class="note-meta">
+                <span class="note-date">${escHtml(a.date)}</span>
+                <div class="hashtags">${tagsHtml}</div>
+              </div>
+              <h3>${escHtml(a.title)}</h3>
+              <p class="note-excerpt">${escHtml(a.excerpt || '')}</p>
+            </a>`;
+        }).join('');
+    } catch {}
+}
+
+// ─────────────────────────────────────────────────────────────
+// System status (live JST clock)
+// ─────────────────────────────────────────────────────────────
+
+async function initSystemStatus() {
+    const el = document.getElementById('sys-status');
+    if (!el) return;
+
+    // サーバーの稼働情報（nginx バージョン・uptime）を取得。
+    // 失敗してもライブ時計だけは動かす。
+    let server = '';
+    try {
+        const r = await fetch('/portfolio/api/status');
+        if (r.ok) {
+            const s = await r.json();
+            const parts = [];
+            if (s.nginx) parts.push(`nginx ${s.nginx}`);
+            if (s.uptime) parts.push(`up ${s.uptime.days}d ${s.uptime.hours}h`);
+            if (parts.length) server = ` · ${parts.join(' · ')}`;
+        }
+    } catch {}
+
+    const update = () => {
+        const t = new Date().toLocaleString('ja-JP', {
+            timeZone: 'Asia/Tokyo', hour12: false,
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        }).replace(/\//g, '-');
+        el.textContent = `ONLINE${server} · ${t} JST`;
+    };
+    update();
+    setInterval(update, 1000);
 }
 
 // ─────────────────────────────────────────────────────────────

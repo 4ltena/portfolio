@@ -78,7 +78,7 @@
       <!-- SVG Circuit Layer -->
       <svg id="circuit-overlay" class="circuit-layer"></svg>
       <section class="under-construction reveal">
-        <p>System Status: <span class="accent-bg" id="sys-status">...</span></p>
+        <p>System Status: <span class="accent-bg" id="sys-status">ONLINE</span></p>
         <p><a href="lite.html" class="lite-link">[TEXT MODE]</a></p>
       </section>
 
@@ -131,28 +131,18 @@
         </div>
       </section>
 
-      <!-- SECTION 3: 他作品ページへのリンク -->
+      <!-- SECTION 3: 最新ノートへのリンク（id/クラスは circuit-overlay の描画依存のため維持） -->
       <section id="works" class="works-section reveal">
         <h2 class="section-title">
           <div class="title-wrapper">
-            <span class="sub-title">PORTFOLIO</span>
-            <span class="main-title">Selected Works</span>
+            <span class="sub-title">SYSTEM LOGS</span>
+            <span class="main-title">Latest Notes</span>
           </div>
         </h2>
-        <div class="page-tile-container">
-          <a href="works/blender-bus-stop/index.html" class="page-tile-item glass">
-            <div class="page-img-wrapper">
-              <img src="img/works/blender-bus-stop/thumb.png" alt="Blender Bus Stop thumbnail" class="page-img">
-              <div class="page-overlay"><span>View Details</span></div>
-            </div>
-            <div class="page-info">
-              <h3>Blender練習：バス停を作ってみた</h3>
-              <p>Blender生活1週目。田舎のボロいバス停を作ってみた。</p>
-            </div>
-          </a>
-        </div>
+        <!-- 最新ノートは main.js の renderLatestNotes() が API から動的描画 -->
+        <div class="note-grid" id="latest-notes-grid"></div>
         <div class="works-more reveal">
-          <a href="myworks.html" class="more-link mono">and more</a>
+          <a href="notes.html" class="more-link mono">and more</a>
         </div>
       </section>
 
