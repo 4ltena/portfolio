@@ -87,6 +87,18 @@
 
     .tags-hint { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-secondary); opacity: 0.6; margin-top: 0.3rem; }
 
+    /* Tag autocomplete */
+    .tag-input-wrap { position: relative; }
+    .tag-suggest { display: none; position: absolute; z-index: 50; top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--surface-color, #0a0a0c); border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-sm); max-height: 220px; overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+    .tag-suggest.open { display: block; }
+    .tag-suggest-item { padding: 0.5rem 0.75rem; font-family: var(--font-mono); font-size: 0.8rem;
+      color: var(--text-secondary); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tag-suggest-item.active, .tag-suggest-item:hover { background: var(--glass-bg); color: var(--accent-primary); }
+    .tag-suggest-item mark { background: transparent; color: var(--accent-primary); font-weight: 700; }
+
     /* Buttons */
     .form-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; gap: 1rem; flex-wrap: wrap; }
 
@@ -291,8 +303,11 @@
           </div>
           <div class="form-field">
             <label for="tags-input">Tags</label>
-            <input class="form-input" id="tags-input" type="text" placeholder="Blender, Study, ...">
-            <span class="tags-hint">comma or space separated</span>
+            <div class="tag-input-wrap">
+              <input class="form-input" id="tags-input" type="text" placeholder="Blender, Study, ..." autocomplete="off">
+              <div class="tag-suggest" id="tag-suggest"></div>
+            </div>
+            <span class="tags-hint">comma or space separated · 既存タグは入力中に候補表示</span>
           </div>
           <div class="form-field full">
             <label for="excerpt-input">Excerpt</label>
@@ -680,6 +695,79 @@
     const btnCancel  = document.getElementById('btn-cancel');
     const btnSubmit  = document.getElementById('btn-submit');
 
+    // 既存タグ一覧（loadArticles で集計）
+    let allTags = [];
+
+    // ── Tags 予測補完（既存タグに近い語を入力するとプルダウン表示）──────────
+    (function initTagAutocomplete() {
+      const input = document.getElementById('tags-input');
+      const box   = document.getElementById('tag-suggest');
+      if (!input || !box) return;
+      const splitRe = /[\s,，]+/;
+      let current = [], activeIdx = -1;
+
+      const tokenBefore = () => {
+        const caret = input.selectionStart ?? input.value.length;
+        const parts = input.value.slice(0, caret).split(splitRe);
+        return { token: parts[parts.length - 1], caret };
+      };
+      const chosen = () => new Set(input.value.split(splitRe).map(t => t.trim().toLowerCase()).filter(Boolean));
+      const close  = () => { box.classList.remove('open'); box.innerHTML = ''; current = []; activeIdx = -1; };
+
+      function render() {
+        if (!current.length) { close(); return; }
+        const tk = tokenBefore().token.trim();
+        box.innerHTML = current.map((t, i) => {
+          const idx = t.toLowerCase().indexOf(tk.toLowerCase());
+          const hl = (tk && idx >= 0)
+            ? escHtml(t.slice(0, idx)) + '<mark>' + escHtml(t.slice(idx, idx + tk.length)) + '</mark>' + escHtml(t.slice(idx + tk.length))
+            : escHtml(t);
+          return `<div class="tag-suggest-item${i === activeIdx ? ' active' : ''}" data-tag="${escHtml(t)}">${hl}</div>`;
+        }).join('');
+        box.classList.add('open');
+      }
+
+      function update() {
+        const tk = tokenBefore().token.trim().toLowerCase();
+        if (!tk) { close(); return; }
+        const used = chosen();
+        current = allTags
+          .filter(t => t.toLowerCase().includes(tk) && !used.has(t.toLowerCase()))
+          .sort((a, b) => (a.toLowerCase().startsWith(tk) ? 0 : 1) - (b.toLowerCase().startsWith(tk) ? 0 : 1) || a.localeCompare(b))
+          .slice(0, 8);
+        activeIdx = -1;
+        render();
+      }
+
+      function applyTag(tag) {
+        const { caret } = tokenBefore();
+        const before = input.value.slice(0, caret);
+        const after  = input.value.slice(caret);
+        const parts  = before.split(splitRe);
+        parts[parts.length - 1] = tag;
+        const insert = parts.join(', ') + ', ';
+        input.value = insert + after.replace(/^[\s,，]+/, '');
+        input.setSelectionRange(insert.length, insert.length);
+        close();
+        input.focus();
+      }
+
+      input.addEventListener('input', update);
+      input.addEventListener('focus', update);
+      input.addEventListener('keydown', e => {
+        if (!box.classList.contains('open')) return;
+        if (e.key === 'ArrowDown')      { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, current.length - 1); render(); }
+        else if (e.key === 'ArrowUp')   { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); render(); }
+        else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); applyTag(current[activeIdx]); }
+        else if (e.key === 'Escape')    { close(); }
+      });
+      box.addEventListener('mousedown', e => {
+        const item = e.target.closest('.tag-suggest-item');
+        if (item) { e.preventDefault(); applyTag(item.dataset.tag); }
+      });
+      document.addEventListener('click', e => { if (!e.target.closest('.tag-input-wrap')) close(); });
+    })();
+
     function startEdit(article) {
       editingId.value = article.id;
       document.getElementById('title-input').value   = article.title   || '';
@@ -735,6 +823,10 @@
       try {
         const r        = await fetch('/portfolio/api/articles', { headers: authHeader() });
         const articles = await r.json();
+        // 既存タグを集計（予測補完用）
+        const tagSet = new Set();
+        articles.forEach(a => (a.tags || []).forEach(t => { const v = String(t).trim(); if (v) tagSet.add(v); }));
+        allTags = [...tagSet].sort((a, b) => a.localeCompare(b));
         document.getElementById('article-count').textContent = `(${articles.length})`;
         if (!articles.length) { list.innerHTML = '<div class="empty-list">No articles yet.</div>'; return; }
         list.innerHTML = '';
@@ -778,6 +870,23 @@
 
     function tlClearForm() { document.getElementById('tl-form').reset(); tlEditId.value = ''; tlCancel.style.display = 'none'; tlSubmit.textContent = 'Add →'; }
     tlCancel.addEventListener('click', tlClearForm);
+
+    // ── Category=cert を選ぶと Link に certifications.html を自動補填（削除可）──
+    (function initCertLinkAutofill() {
+      const catEl  = document.getElementById('tl-category');
+      const hrefEl = document.getElementById('tl-href');
+      if (!catEl || !hrefEl) return;
+      const CERT_LINK = 'certifications.html';
+      catEl.addEventListener('change', () => {
+        if (catEl.value === 'cert') {
+          // 空のときだけ補填（手動入力済みのリンクは上書きしない）
+          if (!hrefEl.value.trim()) hrefEl.value = CERT_LINK;
+        } else if (hrefEl.value.trim() === CERT_LINK) {
+          // cert 以外に変えたら、自動補填した既定値のみ消す
+          hrefEl.value = '';
+        }
+      });
+    })();
 
     function tlStartEdit(item) {
       tlEditId.value = item.id;
