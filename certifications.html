@@ -36,9 +36,6 @@
       opacity: 0.5;
       border-style: dashed;
     }
-    @media (max-width: 640px) {
-      .node-editor-container { height: 72vh; }
-    }
   </style>
 </head>
 
@@ -305,24 +302,22 @@
       const pathEls = {};
 
       function socketPos(nodeEl, side) {
-        const nl = parseInt(nodeEl.style.left) || 0;
-        const nt = parseInt(nodeEl.style.top)  || 0;
         const cls  = side === 'out' ? '.socket.right' : '.socket.left';
         const sock = nodeEl.querySelector(cls);
         if (sock) {
-          // Compute socket center relative to the node using getBoundingClientRect.
-          // Both rects are in the same scaled viewport space, so their difference
-          // gives the canvas-space offset when divided by scale.
-          const nr = nodeEl.getBoundingClientRect();
+          const cr = container.getBoundingClientRect();
           const sr = sock.getBoundingClientRect();
           return {
-            x: nl + (sr.left + sr.width  / 2 - nr.left) / scale,
-            y: nt + (sr.top  + sr.height / 2 - nr.top)  / scale,
+            x: (sr.left + sr.width  / 2 - cr.left - panX) / scale,
+            y: (sr.top  + sr.height / 2 - cr.top  - panY) / scale,
           };
         }
+        // fallback: node edge center
+        const l = parseInt(nodeEl.style.left) || 0;
+        const t = parseInt(nodeEl.style.top)  || 0;
         return {
-          x: side === 'out' ? nl + nodeEl.offsetWidth : nl,
-          y: nt + nodeEl.offsetHeight / 2,
+          x: side === 'out' ? l + nodeEl.offsetWidth : l,
+          y: t + nodeEl.offsetHeight / 2,
         };
       }
 
@@ -363,23 +358,6 @@
         return { x: (sx - r.left - panX) / scale, y: (sy - r.top - panY) / scale };
       }
 
-      function fitToView() {
-        const cw = container.clientWidth, ch = container.clientHeight;
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        nodesLayer.querySelectorAll('.blender-node').forEach(n => {
-          const l = parseInt(n.style.left) || 0, t = parseInt(n.style.top) || 0;
-          minX = Math.min(minX, l);         minY = Math.min(minY, t);
-          maxX = Math.max(maxX, l + n.offsetWidth); maxY = Math.max(maxY, t + n.offsetHeight);
-        });
-        if (minX === Infinity) return;
-        const PAD = 40;
-        const cntW = maxX - minX + PAD * 2, cntH = maxY - minY + PAD * 2;
-        scale = Math.min(cw / cntW, ch / cntH, 1);
-        panX  = (cw - cntW * scale) / 2 - (minX - PAD) * scale;
-        panY  = (ch - cntH * scale) / 2 - (minY - PAD) * scale;
-        applyTransform();
-      }
-
       // ── Drag nodes ─────────────────────────────────────────────
       function initDrag(node) {
         node.addEventListener('mousedown', e => {
@@ -405,37 +383,10 @@
           document.addEventListener('mousemove', onMove);
           document.addEventListener('mouseup',   onUp);
         });
-
-        node.addEventListener('touchstart', e => {
-          if (e.touches.length !== 1) return;
-          e.preventDefault();
-          e.stopPropagation();
-          const t0   = e.touches[0];
-          const p0   = toCanvas(t0.clientX, t0.clientY);
-          const offX = p0.x - (parseInt(node.style.left) || 0);
-          const offY = p0.y - (parseInt(node.style.top)  || 0);
-          node.style.zIndex = '10';
-          const onMove = e => {
-            e.preventDefault();
-            const t = e.touches[0];
-            const p = toCanvas(t.clientX, t.clientY);
-            node.style.left = (p.x - offX) + 'px';
-            node.style.top  = (p.y - offY) + 'px';
-            resizeCanvas();
-            drawConnections();
-          };
-          const onEnd = () => {
-            node.style.zIndex = '';
-            node.removeEventListener('touchmove', onMove);
-            node.removeEventListener('touchend',  onEnd);
-          };
-          node.addEventListener('touchmove', onMove, { passive: false });
-          node.addEventListener('touchend',  onEnd);
-        }, { passive: false });
       }
       nodesLayer.querySelectorAll('.blender-node').forEach(initDrag);
 
-      // ── Pan (mouse) ───────────────────────────────────────────
+      // ── Pan ───────────────────────────────────────────────────
       container.addEventListener('mousedown', e => {
         if (e.target.closest('.blender-node') || e.button !== 0) return;
         e.preventDefault();
@@ -451,7 +402,7 @@
         document.addEventListener('mouseup',   onUp);
       });
 
-      // ── Zoom (mouse wheel) ────────────────────────────────────
+      // ── Zoom ─────────────────────────────────────────────────
       container.addEventListener('wheel', e => {
         e.preventDefault();
         const r  = container.getBoundingClientRect();
@@ -464,66 +415,7 @@
         applyTransform();
       }, { passive: false });
 
-      // ── Pan + Pinch (touch) ───────────────────────────────────
-      let touchState = null;
-
-      container.addEventListener('touchstart', e => {
-        if (e.target.closest('.blender-node')) return;
-        e.preventDefault();
-        if (e.touches.length === 1) {
-          touchState = { mode: 'pan', sx: e.touches[0].clientX - panX, sy: e.touches[0].clientY - panY };
-        } else if (e.touches.length === 2) {
-          const t0 = e.touches[0], t1 = e.touches[1];
-          touchState = {
-            mode: 'pinch',
-            dist: Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY),
-          };
-        }
-      }, { passive: false });
-
-      container.addEventListener('touchmove', e => {
-        if (!touchState) return;
-        e.preventDefault();
-        if (e.touches.length === 1 && touchState.mode === 'pan') {
-          panX = e.touches[0].clientX - touchState.sx;
-          panY = e.touches[0].clientY - touchState.sy;
-          applyTransform();
-        } else if (e.touches.length === 2) {
-          const t0 = e.touches[0], t1 = e.touches[1];
-          const dist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
-          if (touchState.mode === 'pinch' && touchState.dist) {
-            const f  = dist / touchState.dist;
-            const ns = Math.max(0.25, Math.min(3, scale * f));
-            const r  = container.getBoundingClientRect();
-            const mx = (t0.clientX + t1.clientX) / 2 - r.left;
-            const my = (t0.clientY + t1.clientY) / 2 - r.top;
-            panX  = mx - (mx - panX) * (ns / scale);
-            panY  = my - (my - panY) * (ns / scale);
-            scale = ns;
-            applyTransform();
-            drawConnections();
-          }
-          touchState = { mode: 'pinch', dist };
-        }
-      }, { passive: false });
-
-      container.addEventListener('touchend', e => {
-        if (e.touches.length === 0) {
-          touchState = null;
-        } else if (e.touches.length === 1) {
-          touchState = { mode: 'pan', sx: e.touches[0].clientX - panX, sy: e.touches[0].clientY - panY };
-        }
-      });
-
-      // ── Hint text ─────────────────────────────────────────────
-      const hint = container.querySelector('.node-editor-hint');
-      if (hint) {
-        hint.textContent = window.matchMedia('(pointer: coarse)').matches
-          ? '// Pinch to Zoom | Drag to Pan'
-          : '// Mouse Wheel to Zoom | Drag Nodes to Move';
-      }
-
-      setTimeout(() => { resizeCanvas(); drawConnections(); fitToView(); }, 50);
+      setTimeout(() => { resizeCanvas(); drawConnections(); }, 50);
     });
   })();
   </script>
