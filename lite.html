@@ -15,13 +15,14 @@
     body { padding: 1.25rem 1.5rem; min-height: 100vh; }
     #screen { max-width: 660px; }
 
-    .dim { color: #555; }
+    .hi    { color: #fff; }
+    .dim   { color: #555; }
     .cyan  { color: #00e8e8; }
     .amber { color: #e8b84b; }
     .red   { color: #e85050; }
-    .tl-cert    { color: #e8b84b; }
     .tl-school  { color: #50e878; }
     .tl-contest { color: #c850e8; }
+    .small { font-size: 12px; }
 
     hr { border: none; border-top: 1px solid #333; margin: 0.6rem 0; }
 
@@ -35,9 +36,13 @@
     .data-key { color: #00e8e8; min-width: 14ch; flex-shrink: 0; }
     .tl-row  { display: flex; gap: 1.5rem; }
     .tl-date { color: #555; min-width: 11ch; flex-shrink: 0; }
+    .skills-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; }
 
     .note-item { cursor: pointer; margin-bottom: 0.15rem; }
     .note-item:hover { color: #fff; }
+    .work-desc   { font-size: 12px; padding-left: 2.2rem; margin-bottom: 0.5rem; }
+    pre { font-family: inherit; font-size: inherit; }
+    .content-pre { white-space: pre-wrap; word-break: break-all; line-height: 1.8; }
 
     #content-area { display: none; }
     #content-area.visible { display: block; }
@@ -54,10 +59,11 @@
 
     @media (max-width: 480px) {
       body { font-size: 15px; padding: 1rem; }
-      .menu-grid { grid-template-columns: 1fr; gap: 0; }
-      .data-key { min-width: 12ch; }
-      .tl-row { flex-direction: column; gap: 0; }
-      .tl-date { min-width: unset; }
+      .menu-grid  { grid-template-columns: 1fr; gap: 0; }
+      .skills-row { grid-template-columns: 1fr; }
+      .data-key   { min-width: 12ch; }
+      .tl-row     { flex-direction: column; gap: 0; }
+      .tl-date    { min-width: unset; }
     }
   </style>
 </head>
@@ -65,7 +71,7 @@
 <div id="screen">
 
   <div id="main-menu">
-    <p><span style="color:#fff">ALTENA PORTFOLIO LITE</span>  <span class="dim">ver.2026</span></p>
+    <p><span class="hi">ALTENA PORTFOLIO LITE</span>  <span class="dim">ver.2026</span></p>
     <p class="dim">Copyright(C) Altena  ALL Rights Reserved.</p>
     <br>
     <p><span class="dim">前回アクセス: </span><span id="last-visit" class="dim">--</span></p>
@@ -85,10 +91,10 @@
     <div id="prompt-row">
       <span id="prompt-label">選択&gt;</span>
       <input id="prompt-input" type="text" maxlength="1" autocomplete="off"
-        autocorrect="off" spellcheck="false" inputmode="numeric" autofocus>
+        autocorrect="off" spellcheck="false" inputmode="numeric">
     </div>
     <br>
-    <p class="dim" style="font-size:12px">[ PC: 数字キー  |  Mobile: 項目タッチ ]</p>
+    <p class="dim small">[ PC: 数字キー  |  Mobile: 項目タッチ ]</p>
   </div>
 
   <div id="content-area">
@@ -103,29 +109,34 @@
 
 </div>
 <script>
-  // ── 前回アクセス（ブラウザのlocalStorageに保存した日時を読み書き）
   const LV_KEY = 'altena_lite_lv';
   const now = new Date().toLocaleString('ja-JP', { hour12: false });
   document.getElementById('last-visit').textContent = localStorage.getItem(LV_KEY) || now;
   localStorage.setItem(LV_KEY, now);
 
-  // ── ユーティリティ
-  const escHtml = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // デスクトップのみフォーカス（モバイルでキーボードが開くのを防ぐ）
+  const isDesktop = !('ontouchstart' in window) && navigator.maxTouchPoints === 0;
 
-  const dataRow = (key, value) =>
-    `<div class="data-row"><span class="data-key">${key}</span><span>${value}</span></div>`;
-
-  // HTML記事をプレーンテキストに変換（タグ除去・エンティティデコード）
+  const escHtml  = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const dataRow  = (key, value) => `<div class="data-row"><span class="data-key">${key}</span><span>${value}</span></div>`;
+  const numLabel = n => String(n).padStart(2, ' ');
   const stripHtml = html => html
+    // 画像の alt テキストを抽出
+    .replace(/<img[^>]+alt="([^"]*)"/gi, '[画: $1]')
+    .replace(/<img[^>]+alt='([^']*)'/gi, "[画: $1]")
+    .replace(/<img[^>]*>/gi, '[画]')
+    // ブロック要素
     .replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>|<\/div>/gi, '\n')
+    // 残タグ削除
     .replace(/<[^>]+>/g, '')
+    // エンティティデコード
     .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&nbsp;/g,' ')
+    // 余分な改行削除
     .replace(/\n{3,}/g, '\n\n').trim();
 
-  // ── セクション描画
-  async function renderProfile() {
+  function renderProfile() {
     return `<br>
-${dataRow('Name', '<span style="color:#fff">Altena</span>')}
+${dataRow('Name', '<span class="hi">Altena</span>')}
 ${dataRow('Domain', 'altena.me')}
 ${dataRow('Location', 'Japan')}
 ${dataRow('Status', '<span class="cyan">Student / Engineer</span>')}
@@ -144,15 +155,14 @@ ${dataRow('Portfolio', '<span class="cyan">https://altena.me/portfolio/</span>')
       const items = await fetch('/portfolio/api/skills').then(r => r.json());
       if (!items.length) return '<br><p class="dim">-- データなし --</p>';
       const cols = [[], []];
-      items.forEach((item, index) => cols[index % 2].push(item));
+      items.forEach((item, i) => cols[i % 2].push(item));
       const maxLen = Math.max(cols[0].length, cols[1].length);
       const renderCell = item => item
         ? `<span class="cyan">${String(item.sort_order+1).padStart(2,'0')}.</span> ${escHtml(item.name)}`
         : '';
       let html = '<br>';
       for (let i = 0; i < maxLen; i++)
-        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 2rem">
-          <span>${renderCell(cols[0][i])}</span><span>${renderCell(cols[1][i])}</span></div>`;
+        html += `<div class="skills-row"><span>${renderCell(cols[0][i])}</span><span>${renderCell(cols[1][i])}</span></div>`;
       return html;
     } catch { return '<br><p class="red">データ取得エラー</p>'; }
   }
@@ -161,7 +171,7 @@ ${dataRow('Portfolio', '<span class="cyan">https://altena.me/portfolio/</span>')
     try {
       const items = await fetch('/portfolio/api/timeline').then(r => r.json());
       if (!items.length) return '<br><p class="dim">-- データなし --</p>';
-      const CATEGORY_CLASS = { cert:'tl-cert', school:'tl-school', contest:'tl-contest' };
+      const CATEGORY_CLASS = { cert:'amber', school:'tl-school', contest:'tl-contest' };
       const CATEGORY_MARK  = { cert:'*', school:'#', contest:'!' };
       let html = '<br>';
       for (const item of items) {
@@ -172,8 +182,7 @@ ${dataRow('Portfolio', '<span class="cyan">https://altena.me/portfolio/</span>')
           <span class="${cls}">${mark} ${escHtml(item.title)}</span>
         </div>`;
       }
-      return html + `<br><hr><p class="dim" style="font-size:12px">凡例:
-        <span class="tl-cert">* 資格</span>  <span class="tl-school"># 学歴</span>  <span class="tl-contest">! コンテスト</span></p>`;
+      return html + '<br><hr><p class="dim small">凡例: <span class="amber">* 資格</span>  <span class="tl-school"># 学歴</span>  <span class="tl-contest">! コンテスト</span></p>';
     } catch { return '<br><p class="red">データ取得エラー</p>'; }
   }
 
@@ -183,31 +192,32 @@ ${dataRow('Portfolio', '<span class="cyan">https://altena.me/portfolio/</span>')
     body: `Blender生活1週目。田舎のバス停を作成。\n企画中のゲーム（夏の田舎舞台）に流用予定。\n軽量化が課題。\n\n----------------------------------------\n  Date     : 2026/04/11\n  Tech     : Blender\n  Category : 3DCG Practice\n  Log      : #Blender生活1週目`,
   }];
 
-  async function renderWorks() {
-    return '<br>' + WORKS_LIST.map((work, index) =>
-      `<div class="note-item" data-work-idx="${index}" style="padding:0.2rem 0">
-        <span class="cyan">${String(index+1).padStart(2,' ')}.</span>
+  function renderWorks() {
+    return '<br>' + WORKS_LIST.map((work, i) =>
+      `<div class="note-item" data-work-idx="${i}">
+        <span class="cyan">${numLabel(i+1)}.</span>
         <span>  ${escHtml(work.title)}</span>
-        <span class="dim" style="font-size:12px">  [${escHtml(work.tech)}]</span>
+        <span class="dim small">  [${escHtml(work.tech)}]</span>
       </div>
-      <p class="dim" style="font-size:12px;padding-left:2.2rem;margin-bottom:0.5rem">${escHtml(work.desc)}</p>`
-    ).join('') + '<br><hr><p class="dim" style="font-size:12px">数字キーまたはタッチで詳細を開く</p>';
+      <p class="dim work-desc">${escHtml(work.desc)}</p>`
+    ).join('') + '<br><hr><p class="dim small">数字キーまたはタッチで詳細を開く</p>';
   }
 
   let _notesList = [];
   async function renderNotes() {
     try {
-      _notesList = await fetch('/portfolio/api/articles').then(r => r.json());
+      if (!_notesList.length)
+        _notesList = await fetch('/portfolio/api/articles').then(r => r.json());
       if (!_notesList.length) return '<br><p class="dim">-- 記事なし --</p>';
-      return '<br>' + _notesList.map((item, index) => {
+      return '<br>' + _notesList.map((item, i) => {
         const tags = (item.tags||[]).length ? ` [${item.tags.join(', ')}]` : '';
-        return `<div class="note-item" data-note-idx="${index}">
-          <span class="cyan">${String(index+1).padStart(2,' ')}.</span>
+        return `<div class="note-item" data-note-idx="${i}">
+          <span class="cyan">${numLabel(i+1)}.</span>
           <span class="dim">  ${escHtml(item.date)}</span>
           <span>  ${escHtml(item.title)}</span>
-          <span class="dim" style="font-size:12px">${escHtml(tags)}</span>
+          <span class="dim small">${escHtml(tags)}</span>
         </div>`;
-      }).join('') + '<br><hr><p class="dim" style="font-size:12px">数字キーまたはタッチで記事を開く</p>';
+      }).join('') + '<br><hr><p class="dim small">数字キーまたはタッチで記事を開く</p>';
     } catch { return '<br><p class="red">データ取得エラー</p>'; }
   }
 
@@ -219,14 +229,14 @@ ${dataRow('Portfolio', '<span class="cyan">https://altena.me/portfolio/</span>')
     '5': { title:'NOTES',      render: renderNotes },
   };
 
-  // ── DOM refs
   const mainMenu     = document.getElementById('main-menu');
   const contentArea  = document.getElementById('content-area');
   const sectionTitle = document.getElementById('section-title');
   const sectionBody  = document.getElementById('section-body');
   const backLabel    = document.getElementById('back-label');
+  const promptInput  = document.getElementById('prompt-input');
+  if (isDesktop) promptInput.focus();
 
-  // state: 'menu' | 'section' | 'detail'
   let _state = 'menu', _currentSectionKey = null, _detailBackFn = null;
 
   async function openSection(sectionKey, reopen = false) {
@@ -248,31 +258,31 @@ ${dataRow('Portfolio', '<span class="cyan">https://altena.me/portfolio/</span>')
   function openWorkDetail(index) {
     const work = WORKS_LIST[index]; if (!work) return;
     _state = 'detail'; _detailBackFn = () => openSection('4', true);
-    sectionTitle.textContent = `WORKS > ${String(index+1).padStart(2,'0')}`;
+    sectionTitle.textContent = `WORKS > ${numLabel(index+1)}`;
     backLabel.textContent = '一覧に戻る';
     sectionBody.innerHTML = `<br>
-${dataRow('Title', `<span style="color:#fff">${escHtml(work.title)}</span>`)}
+${dataRow('Title', `<span class="hi">${escHtml(work.title)}</span>`)}
 ${dataRow('Tech', `<span class="amber">${escHtml(work.tech)}</span>`)}
 ${dataRow('Date', escHtml(work.date))}
 ${dataRow('Category', escHtml(work.category))}
-<br><hr><br><pre style="white-space:pre-wrap;word-break:break-all;line-height:1.8">${escHtml(work.body)}</pre><br>`;
+<br><hr><br><pre class="content-pre">${escHtml(work.body)}</pre><br>`;
     window.scrollTo(0, 0);
   }
 
   async function openNoteDetail(index) {
     const article = _notesList[index]; if (!article) return;
     _state = 'detail'; _detailBackFn = () => openSection('5', true);
-    sectionTitle.textContent = `NOTES > ${String(index+1).padStart(2,'0')}`;
+    sectionTitle.textContent = `NOTES > ${numLabel(index+1)}`;
     backLabel.textContent = '一覧に戻る';
     sectionBody.innerHTML = '<br><span class="dim">Loading...</span>';
     try {
       const data = await fetch(`/portfolio/api/articles/${article.id}`).then(r => r.json());
       const tags = (data.tags||[]).length ? data.tags.join(', ') : '--';
       sectionBody.innerHTML = `<br>
-${dataRow('Title', `<span style="color:#fff">${escHtml(data.title)}</span>`)}
+${dataRow('Title', `<span class="hi">${escHtml(data.title)}</span>`)}
 ${dataRow('Date', escHtml(data.date))}
 ${dataRow('Tags', `<span class="amber">${escHtml(tags)}</span>`)}
-<br><hr><br><pre style="white-space:pre-wrap;word-break:break-all;line-height:1.8">${escHtml(stripHtml(data.content||''))}</pre><br>`;
+<br><hr><br><pre class="content-pre">${escHtml(stripHtml(data.content||''))}</pre><br>`;
     } catch { sectionBody.innerHTML = '<br><p class="red">記事の取得に失敗しました</p>'; }
     window.scrollTo(0, 0);
   }
@@ -283,7 +293,7 @@ ${dataRow('Tags', `<span class="amber">${escHtml(tags)}</span>`)}
     contentArea.classList.remove('visible');
     mainMenu.classList.remove('hidden');
     backLabel.textContent = 'TOP に戻る';
-    document.getElementById('prompt-input').focus();
+    if (isDesktop) promptInput.focus();
     window.scrollTo(0, 0);
   }
 
@@ -313,7 +323,7 @@ ${dataRow('Tags', `<span class="amber">${escHtml(tags)}</span>`)}
     if (key.toLowerCase() === 'e') window.location.href = 'index.html';
   });
 
-  document.getElementById('prompt-input').addEventListener('input', function () {
+  promptInput.addEventListener('input', function () {
     const val = this.value.toUpperCase(); this.value = '';
     if (val === 'E') { window.location.href = 'index.html'; return; }
     if (SECTIONS[val]) openSection(val);
