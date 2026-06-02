@@ -1,10 +1,32 @@
-# Runtime data — never commit these
-portfolio/api/data/
+# ── Secrets & runtime data — never commit ───────────────────────
+api/data/config.json
+api/data/portfolio.db
+api/data/portfolio.db-shm
+api/data/portfolio.db-wal
+api/data/articles/
+# 非公開の隠しページ（easter egg 本体）。公開ポートフォリオには含めない。
+api/data/easter.html
 
-# Node
+# ── Server-managed content (notes & works are added on the server) ──
+# 個別記事/作品ページとそのアップロード画像はサーバー側で増えていくため追跡しない。
+# 枠組み（notes.html / myworks.html / works/work-template.html）は追跡する。
+notes/*/
+works/*/
+img/works/
+
+# ── Server config ───────────────────────────────────────────────
+nginx/
+
+# ── Node ────────────────────────────────────────────────────────
 node_modules/
 npm-debug.log*
 
-# OS
+# ── OS ──────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+**/._*
+
+# ── Editor / IDE / local agent settings ─────────────────────────
+.vscode/
+.idea/
+.claude/

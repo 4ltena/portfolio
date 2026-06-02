@@ -13,6 +13,10 @@ const multer       = require('multer');
 const app = express();
 app.use(express.json({ limit: '4mb' }));
 
+const ts  = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
+const log = (...args) => console.log(`[${ts()}]`, ...args);
+const err = (...args) => console.error(`[${ts()}]`, ...args);
+
 // ─── Paths ────────────────────────────────────────────────────────────────────
 const PORTFOLIO_ROOT = path.resolve(__dirname, '..');
 const DATA_DIR       = path.join(__dirname, 'data');
@@ -178,7 +182,7 @@ function loadConfig() {
     const pw  = process.env.ADMIN_PASSWORD || 'changeme';
     const cfg = { passwordHash: bcrypt.hashSync(pw, 12), jwtSecret: crypto.randomBytes(48).toString('hex') };
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2), { mode: 0o600 });
-    console.log('[INIT] Config created. Set ADMIN_PASSWORD env var to change password.');
+    log('[INIT] Config created. Set ADMIN_PASSWORD env var to change password.');
     return cfg;
 }
 const config = loadConfig();
@@ -505,7 +509,7 @@ app.post('/fushi/chat', async (req, res) => {
         const text = await callGemini(String(input), String(systemPrompt));
         res.json({ text: text || null });
     } catch (e) {
-        console.error('[fushi/chat]', e.message);
+        err('[fushi/chat]', e.message);
         res.status(500).json({ error: 'Upstream error' });
     }
 });
@@ -712,4 +716,4 @@ app.get('/status', (req, res) => {
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '127.0.0.1', () => console.log(`Portfolio API on 127.0.0.1:${PORT}`));
+app.listen(PORT, '127.0.0.1', () => log(`[BOOT] Portfolio API listening on 127.0.0.1:${PORT}`));
