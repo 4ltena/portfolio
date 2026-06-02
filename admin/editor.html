@@ -473,6 +473,9 @@
   </div><!-- /admin-wrap -->
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- HTML → Markdown 変換（既存記事の編集時に保存済み HTML を Markdown へ戻す） -->
+  <script src="https://cdn.jsdelivr.net/npm/turndown/dist/turndown.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/turndown-plugin-gfm/dist/turndown-plugin-gfm.js"></script>
   <script>
     const TOKEN_KEY = 'admin_token';
     let token = localStorage.getItem(TOKEN_KEY);
@@ -569,6 +572,36 @@
         }
       }
     });
+
+    // ── HTML → Markdown（編集時に保存済み HTML を Markdown に変換して再編集可能に）──
+    const turndownService = (typeof TurndownService !== 'undefined') ? new TurndownService({
+      headingStyle: 'atx',
+      codeBlockStyle: 'fenced',
+      bulletListMarker: '-',
+      emDelimiter: '*',
+    }) : null;
+    if (turndownService) {
+      if (window.turndownPluginGfm) turndownService.use(window.turndownPluginGfm.gfm);
+      // <br> は改行に（保存時は marked breaks:true で再び <br> に戻る）
+      turndownService.addRule('lineBreak', { filter: 'br', replacement: () => '\n' });
+      // 画像 src の /portfolio/img/ プレフィックスを外し、エディタのファイル名記法に戻す
+      // 例: <img src="/portfolio/img/foo.png" alt="x"> → ![x](foo.png)
+      turndownService.addRule('portfolioImg', {
+        filter: 'img',
+        replacement: (content, node) => {
+          let src = (node.getAttribute('src') || '').replace(/^\/portfolio\/img\//, '');
+          const alt = node.getAttribute('alt') || '';
+          const title = node.getAttribute('title');
+          if (!src) return '';
+          return `![${alt}](${src}${title ? ` "${title}"` : ''})`;
+        }
+      });
+    }
+    function htmlToMarkdown(html) {
+      if (!html) return '';
+      if (!turndownService) return html;           // ライブラリ未読込時はそのまま
+      try { return turndownService.turndown(html).trim(); } catch { return html; }
+    }
 
     function updateMdPreview() {
       const md = contentInput.value;
@@ -774,7 +807,8 @@
       document.getElementById('date-input').value    = article.date    || '';
       document.getElementById('tags-input').value    = (article.tags || []).join(', ');
       document.getElementById('excerpt-input').value = article.excerpt || '';
-      contentInput.value = article.content || '';
+      // 保存済み content は HTML。Markdown に変換して再び Markdown として編集できるようにする。
+      contentInput.value = htmlToMarkdown(article.content || '');
       updateMdPreview();
       editLabel.textContent = article.title;
       editBanner.style.display = 'block';
