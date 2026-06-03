@@ -1,8 +1,6 @@
 console.log("%c[SYSTEM] Kernel Loaded. Identity: Guest. Monitoring activity...", "color: #00f2ff; font-weight: bold; background: #111; padding: 5px 10px; border-radius: 4px;");
 
-function escHtml(s) {
-    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// escHtml / buildNoteCard は js/utils.js（main.js より前に読み込む）で定義。
 
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -103,20 +101,7 @@ async function renderLatestNotes() {
         if (!r.ok) return;
         // API は created_at DESC 順。先頭3件が最新。
         const items = (await r.json()).slice(0, 3);
-        grid.innerHTML = items.map(a => {
-            const tagsHtml = (a.tags || [])
-                .map(t => `<span class="tag-link">#${escHtml(t)}</span>`)
-                .join('');
-            return `
-            <a href="/portfolio/notes/${escHtml(a.id)}/" class="note-card glass">
-              <div class="note-meta">
-                <span class="note-date">${escHtml(a.date)}</span>
-                <div class="hashtags">${tagsHtml}</div>
-              </div>
-              <h3>${escHtml(a.title)}</h3>
-              <p class="note-excerpt">${escHtml(a.excerpt || '')}</p>
-            </a>`;
-        }).join('');
+        grid.replaceChildren(...items.map(buildNoteCard));
     } catch {}
 }
 

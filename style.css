@@ -103,6 +103,17 @@ a {
     border-radius: var(--border-radius-lg);
 }
 
+/* グリッド内に表示する空状態 / エラー文（旧インラインstyleを集約） */
+.empty-list {
+    grid-column: 1 / -1;
+    padding: 3rem 0;
+    text-align: center;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    opacity: 0.5;
+}
+
 /* ==========================================================================
    Layout Components
    ========================================================================== */
