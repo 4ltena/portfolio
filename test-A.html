@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEST A — Overview (whoami) | Altena Portfolio</title>
+  <meta name="description" content="Personal portfolio of Altena, 3DCG & Frontend Developer.">
+  <link rel="icon" href="img/favicon.ico">
+
+  <!-- fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+    rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Three.js importmap（ヒーローCanvas用） -->
+  <script type="importmap">
+  { "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165/examples/jsm/"
+  }}
+  </script>
+
+  <!-- JS -->
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/main.js"></script>
+  <script type="module" src="js/hero.js"></script>
+
+  <!-- 候補A 専用の試作スタイル。採用が決まったら style.css へ移植する。 -->
+  <style>
+    /* マキナス4 Flat（画像の見出し書体）。採用時は fonts/ ごと移植する。 */
+    @font-face {
+      font-family: 'Makinas4';
+      src: url('fonts/Makinas-4-Flat.otf') format('opentype');
+      font-weight: normal;
+      font-display: swap;
+    }
+
+    /* ===== Manifesto（教養×技術＝独創）— セクション名なしのコーナーフレーム＋起動演出 =====
+       既定 reveal の一括フェードは無効化し、可視制御は内部要素のシーケンスで行う。
+       タイムライン（.active 付与＝起点）:
+         0.00-0.60s  左上の四角い点が点滅（起動）
+         0.60-1.30s  フレームが左上→右下へ拡張、残り3隅が点灯
+         1.30s〜     教養列 → 独創列 → 概要文 の順にパルス出現 */
+    .manifesto-section.reveal { opacity: 1; transform: none; transition: none; }
+    .manifesto-section { margin: 2rem 0 1rem; }
+
+    .manifesto {
+      position: relative;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: clamp(2.25rem, 6vw, 3.5rem) clamp(2rem, 6vw, 3.75rem);
+      font-family: 'Makinas4', var(--font-main);
+      /* 起動前は左上の小さな矩形のみ。点滅後にここから右下へ拡張する */
+      clip-path: inset(0 calc(100% - 44px) calc(100% - 44px) 0);
+    }
+    .manifesto-section.active .manifesto {
+      animation: mf-expand 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
+    }
+    @keyframes mf-expand {
+      from { clip-path: inset(0 calc(100% - 44px) calc(100% - 44px) 0); }
+      to   { clip-path: inset(0 0 0 0); }
+    }
+
+    /* コーナーブラケット（L字）＋四隅の四角い点（黒線→アクセントシアンで dark に馴染ませる） */
+    .m-corner {
+      position: absolute;
+      width: clamp(24px, 4.5vw, 34px);
+      height: clamp(24px, 4.5vw, 34px);
+      border: 0 solid var(--accent-primary);
+      opacity: 0;
+    }
+    .m-corner::after {
+      content: '';
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      background: var(--accent-primary);
+      box-shadow: 0 0 8px rgba(0, 242, 255, 0.55);
+    }
+    .m-corner.tl { top: 0; left: 0;  border-top-width: 2px; border-left-width: 2px; }
+    .m-corner.tr { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; }
+    .m-corner.bl { bottom: 0; left: 0;  border-bottom-width: 2px; border-left-width: 2px; }
+    .m-corner.br { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; }
+    .m-corner.tl::after { top: -4px; left: -4px; }
+    .m-corner.tr::after { top: -4px; right: -4px; }
+    .m-corner.bl::after { bottom: -4px; left: -4px; }
+    .m-corner.br::after { bottom: -4px; right: -4px; }
+
+    /* 起動シーケンス：左上が先（点滅）→ 残り3隅が拡張に合わせて点灯 */
+    .manifesto-section.active .m-corner.tl { opacity: 1; }
+    .manifesto-section.active .m-corner.tl::after { animation: mf-ignite 0.6s steps(1, end) both; }
+    .manifesto-section.active .m-corner.tr,
+    .manifesto-section.active .m-corner.bl,
+    .manifesto-section.active .m-corner.br { opacity: 1; transition: opacity 0.3s ease 0.7s; }
+
+    @keyframes mf-ignite {
+      0%, 38%, 66%      { opacity: 0; }
+      18%, 52%, 80%, 100% { opacity: 1; }
+    }
+
+    /* 見出し・本文：拡張後にパルス点滅しながら順次出現 */
+    .m-line1, .m-line2, .m-body { opacity: 0; }
+    .manifesto-section.active .m-line1 { animation: mf-pulse 0.5s ease 1.30s both; }
+    .manifesto-section.active .m-line2 { animation: mf-pulse 0.5s ease 1.65s both; }
+    .manifesto-section.active .m-body  { animation: mf-pulse 0.6s ease 2.05s both; }
+    @keyframes mf-pulse {
+      0%   { opacity: 0; }
+      25%  { opacity: 0.7; }
+      40%  { opacity: 0.12; }
+      65%  { opacity: 1; }
+      80%  { opacity: 0.45; }
+      100% { opacity: 1; }
+    }
+
+    .m-line1 {
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      color: var(--text-primary);
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+    }
+    .m-line1 .x { color: var(--accent-primary); margin: 0 0.1em; }
+    .m-line2 {
+      font-size: clamp(2.6rem, 9vw, 4.5rem);
+      color: var(--text-primary);
+      line-height: 1.05;
+      text-align: center;
+      margin: 0.2em 0 0.6em;
+    }
+    .m-line2 .eq { color: var(--accent-primary); }
+    .m-body {
+      font-family: var(--font-main);
+      font-size: clamp(0.9rem, 2.5vw, 1.05rem);
+      line-height: 1.9;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+    }
+
+    /* モーション低減設定では演出を全て無効化し、最初から全体を表示 */
+    @media (prefers-reduced-motion: reduce) {
+      .manifesto { clip-path: none; }
+      .manifesto-section.active .manifesto { animation: none; }
+      .m-corner,
+      .m-line1, .m-line2, .m-body { opacity: 1 !important; animation: none !important; }
+      .m-corner::after { animation: none !important; opacity: 1 !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header glass">
+    <div class="header-container">
+      <a href="index.html" class="logo" id="header-logo">
+        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+      </a>
+      <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <nav class="nav">
+        <ul>
+          <li><a href="#skills">Skills</a></li>
+          <li><a href="#timeline">Timeline</a></li>
+          <li><a href="myworks.html">Works</a></li>
+          <li><a href="notes.html">Notes</a></li>
+          <li><a href="#profile">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <canvas id="hero-canvas" aria-hidden="true"></canvas>
+      <div class="hero-content">
+        <div class="hero-placeholder"></div>
+        <div class="hero-text">
+          <h1 class="reveal logo-text"><span class="title-typing"></span><span class="cursor" id="title-cursor">|</span></h1>
+          <div class="typing-container reveal delay-1" id="subtitle-container">
+            <span class="prefix"></span>
+            <span class="mono typing-animation"></span>
+            <span class="cursor" id="subtitle-cursor">|</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="content-wrapper">
+      <!-- SVG Circuit Layer -->
+      <svg id="circuit-overlay" class="circuit-layer" aria-hidden="true"></svg>
+      <section class="under-construction reveal">
+        <p>System Status: <span class="accent-bg" id="sys-status">ONLINE</span></p>
+        <p><a href="lite.html" class="lite-link">[TEXT MODE]</a></p>
+      </section>
+
+      <!-- ===== Manifesto（教養×技術＝独創）— セクション名なし・コーナーフレーム ===== -->
+      <section class="reveal manifesto-section">
+        <div class="manifesto">
+          <span class="m-corner tl"></span>
+          <span class="m-corner tr"></span>
+          <span class="m-corner bl"></span>
+          <span class="m-corner br"></span>
+          <p class="m-line1">教養<span class="x">x</span>技術</p>
+          <p class="m-line2"><span class="eq">=</span>独創</p>
+          <p class="m-body">
+            これからは設計や企画といった上流工程が主役になる。技術を知っているだけでは、
+            何も生まれず代替されてしまう。幅広い教養を土台に顧客へ寄り添った提案ができること——
+            それこそが人間にしか出せない強みだと考えています。
+          </p>
+        </div>
+      </section>
+
+      <!-- SECTION 1: 技術スタック -->
+      <section id="skills" class="skills-section reveal">
+        <h2 class="section-title">
+          <div class="title-wrapper">
+            <span class="sub-title">SKILLS & TOOLS</span>
+            <span class="main-title">Tech Stack</span>
+          </div>
+        </h2>
+        <div class="prog-lang-tile-container" id="skills-grid"></div>
+      </section>
+
+      <!-- SECTION 2: タイムライン -->
+      <section id="timeline" class="timeline-section reveal">
+        <h2 class="section-title">
+          <div class="title-wrapper">
+            <span class="sub-title">EXPERIENCE</span>
+            <span class="main-title">Timeline</span>
+          </div>
+        </h2>
+
+        <!-- Timeline Filters -->
+        <div class="filter-controls">
+          <div class="chips-group">
+            <label class="filter-chip">
+              <input type="checkbox" name="category" value="school" checked>
+              <span>School</span>
+            </label>
+            <label class="filter-chip">
+              <input type="checkbox" name="category" value="cert" checked>
+              <span>Certification</span>
+            </label>
+            <label class="filter-chip">
+              <input type="checkbox" name="category" value="contest" checked>
+              <span>Contest</span>
+            </label>
+          </div>
+          <div class="filter-count mono">
+            <span id="active-count">0</span> / <span id="total-count">0</span> items
+          </div>
+        </div>
+
+        <div class="timeline-container">
+          <ul class="timeline" id="timeline-list"></ul>
+        </div>
+      </section>
+
+      <!-- SECTION 3: 最新ノートへのリンク（id/クラスは circuit-overlay の描画依存のため維持） -->
+      <section id="works" class="works-section reveal">
+        <h2 class="section-title">
+          <div class="title-wrapper">
+            <span class="sub-title">SYSTEM LOGS</span>
+            <span class="main-title">Latest Notes</span>
+          </div>
+        </h2>
+        <!-- 最新ノートは main.js の renderLatestNotes() が API から動的描画 -->
+        <div class="note-grid" id="latest-notes-grid"></div>
+        <div class="works-more reveal">
+          <a href="notes.html" class="more-link mono">and more</a>
+        </div>
+      </section>
+
+      <!-- SECTION 4: AUTHOR PROFILE -->
+      <section id="profile" class="about-section reveal">
+        <h2 class="section-title">
+          <div class="title-wrapper">
+            <span class="sub-title">AUTHOR</span>
+            <span class="main-title">Profile</span>
+          </div>
+        </h2>
+        <div class="about-container glass">
+          <div class="profile-image">
+            <div class="image-placeholder"></div>
+          </div>
+          <div class="profile-text">
+            <h3><span class="brand">Altena</span></h3>
+            <p class="philosophy mono">Alt & Higher Standards</p>
+            <div class="bio">
+              <p>情報系・高専4年<br>音ゲー・執筆・資格を取ることが趣味。最近は3DCGやインフラばかり触っている。</p>
+              <div class="profile-links">
+                <a href="certifications.html" class="mono-link arrow-link">Certifications</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="glass-top">
+    <div class="footer-content">
+      <p class="mono">© 2026 <a href="/portfolio/admin/login.html" style="color:inherit;text-decoration:none;">Altena</a>. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+
+</html>

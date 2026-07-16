@@ -59,12 +59,30 @@ async function renderTimeline() {
     const ul = document.getElementById('timeline-list');
     if (!ul) return;
     try {
-        const r = await fetch('/portfolio/api/timeline');
+        // タイムライン本体と、資格の分類メタ（node_category）を並行取得。
+        // node_category === 'info'（情報通信）を IT 系とみなし、それ以外（化学・言語・
+        // 数学・デザイン）は data-category='cert-other' に振り分けて、フィルタで個別に
+        // 出し分ける。cert-nodes が取れない場合は全資格を IT 系（'cert'）として表示。
+        const [r, cnRes] = await Promise.all([
+            fetch('/portfolio/api/timeline'),
+            fetch('/portfolio/api/cert-nodes').catch(() => null),
+        ]);
         if (!r.ok) return;
         const items = await r.json();
+
+        const metaMap = {};
+        if (cnRes && cnRes.ok) {
+            for (const n of await cnRes.json()) metaMap[n.id] = n;
+        }
+        const categoryOf = item => {
+            if (item.category !== 'cert') return item.category;
+            const nc = metaMap[item.id]?.node_category || 'info';
+            return nc === 'info' ? 'cert' : 'cert-other';
+        };
+
         ul.innerHTML = items.map(item => `
             <li class="timeline-item${item.href ? ' clickable-item' : ''}"
-                data-category="${escHtml(item.category)}"
+                data-category="${escHtml(categoryOf(item))}"
                 ${item.href ? `data-href="${escHtml(item.href)}"` : ''}>
               <div class="timeline-dot"></div>
               <div class="timeline-content glass">
