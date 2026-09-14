@@ -1,19 +1,9 @@
 // トップページだけを装飾する。構図の割り当ては記事と一緒にサーバーへ保存する。
 const HomeBanners = (() => {
-    const covers = new WeakMap();
-    const observer = new ResizeObserver(entries => {
-        for (const { target } of entries) paint(target);
-    });
-
-    function paint(element) {
-        const { id, pattern } = covers.get(element);
-        const { width, height } = element.getBoundingClientRect();
-        if (!width || !height) return;
-        element.innerHTML = PastelCover.render(id, width / height, 0, pattern);
-    }
+    // 大カードの8:3を共通原画にし、小カードはSVGのsliceで上下を切り取る。
+    const posterAspect = 8 / 3;
 
     function decorateNotes(grid, articles) {
-        observer.disconnect();
         grid.dataset.noteCount = articles.length;
         [...grid.children].forEach((card, index) => {
             const article = articles[index];
@@ -26,11 +16,9 @@ const HomeBanners = (() => {
             const cover = document.createElement('div');
             cover.className = 'pastel-note-art';
             cover.setAttribute('aria-hidden', 'true');
+            cover.innerHTML = PastelCover.render(article.id, posterAspect, 0, pattern);
             card.classList.add('pastel-note');
             card.append(cover, copy);
-            covers.set(cover, { id: article.id, pattern });
-            paint(cover);
-            observer.observe(cover);
         });
     }
 

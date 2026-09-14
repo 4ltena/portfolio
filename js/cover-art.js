@@ -94,8 +94,8 @@ const PastelCover = (() => {
       layers += polygon([[.05,.86],[.15,.60],[.25,.86],[.15,1.12]],navy);
       layers += rect(.45,-.06,.06,.22,d);
     } else if (recipe === 7) {
-      layers += `<path d="M${x(.12)} ${y(1.07)}V${y(.43)}C${x(.12)} ${y(-.27)} ${x(.49)} ${y(-.27)} ${x(.49)} ${y(.43)}V${y(1.07)}Z" fill="${a}"/>`;
-      layers += `<path d="M${x(.23)} ${y(1.08)}V${y(.49)}C${x(.23)} ${y(.16)} ${x(.38)} ${y(.16)} ${x(.38)} ${y(.49)}V${y(1.08)}Z" fill="${paper}"/>`;
+      layers += `<path d="M${x(.12)} ${y(1.07)}V${y(.43)}A${x(.185)} ${x(.185)} 0 0 1 ${x(.49)} ${y(.43)}V${y(1.07)}Z" fill="${a}"/>`;
+      layers += `<path d="M${x(.23)} ${y(1.08)}V${y(.49)}A${x(.075)} ${x(.075)} 0 0 1 ${x(.38)} ${y(.49)}V${y(1.08)}Z" fill="${paper}"/>`;
       layers += polygon([[.57,-.05],[.92,1.05],[.57,1.05]],b);
       layers += circle(1.02,-.02,radius*.92,c);
       layers += rect(.46,.64,.28,.10,navy);
@@ -108,7 +108,8 @@ const PastelCover = (() => {
       layers += rect(.76,.40,.11,.17,navy);
       layers += circle(.47,-.12,Math.min(height*.28,width*.09),d);
     } else if (recipe === 9) {
-      layers += `<path d="M${x(-.03)} ${y(1.06)}V${y(-.07)}Q${x(.43)} ${y(-.07)} ${x(.43)} ${y(1.06)}Z" fill="${a}"/>`;
+      const fanRadius = x(.46);
+      layers += `<path d="M${x(-.03)} ${y(1.06)}V${n(y(1.06)-fanRadius)}A${fanRadius} ${fanRadius} 0 0 1 ${x(.43)} ${y(1.06)}Z" fill="${a}"/>`;
       layers += circle(.03,1.08,radius*.44,paper);
       layers += rect(.63,-.04,.30,.38,b);
       layers += polygon([[.57,.69],[.70,.35],[.83,.69]],c);

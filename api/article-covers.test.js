@@ -106,7 +106,7 @@ test('failed publishing rolls back both rows and removes only newly created outp
     assert.equal(db.prepare("SELECT id FROM articles WHERE id='collision'").get(), undefined);
 });
 
-test('server pattern IDs match the unchanged ten-template renderer', () => {
+test('server pattern IDs match the ten-template renderer', () => {
     const context = vm.createContext({});
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/cover-art.js'), 'utf8'), context);
     assert.equal(vm.runInContext('PastelCover.patterns.length', context), PATTERN_COUNT);
@@ -116,5 +116,18 @@ test('server pattern IDs match the unchanged ten-template renderer', () => {
         assert.equal(vm.runInContext(source, context), svg);
         assert(svg.includes(`data-composition="${pattern}"`));
         assert(!/NaN|undefined/.test(svg));
+    }
+});
+
+// 円弧をキャンバスの縦横へ別々に引き伸ばさず、同じ半径で描く。
+test('arch and fan use circular arcs in the shared poster coordinates', () => {
+    const context = vm.createContext({});
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/cover-art.js'), 'utf8'), context);
+    for (const pattern of [7, 9]) {
+        const svg = vm.runInContext(
+            `PastelCover.render('circular-arcs', 8 / 3, 0, ${pattern})`, context);
+        const arcs = [...svg.matchAll(/A([\d.]+) ([\d.]+) 0 0 1/g)];
+        assert(arcs.length >= (pattern === 7 ? 2 : 1), 'Expected circular arch/fan arcs');
+        for (const arc of arcs) assert.equal(Number(arc[1]), Number(arc[2]));
     }
 });

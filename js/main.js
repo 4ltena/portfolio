@@ -29,8 +29,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     initSystemStatus();
 
     // ── Circuit lines ─────────────────────────────────────────
-    setTimeout(drawCircuits, 100);
-    window.addEventListener('resize', drawCircuits);
+    if (document.getElementById('circuit-overlay')) {
+        setTimeout(drawCircuits, 100);
+        window.addEventListener('resize', drawCircuits);
+    }
 
     // ── Mobile menu ───────────────────────────────────────────
     initMobileMenu();
@@ -72,6 +74,19 @@ async function renderTimeline() {
             return nc === 'info' ? 'cert' : 'cert-other';
         };
 
+        if (ul.classList.contains('timeline-summary')) {
+            items.sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
+            ul.innerHTML = items.map(item => {
+                const content = `<time datetime="${escHtml(item.date.replaceAll('/', '-'))}">${escHtml(item.date)}</time>
+                    <span>${escHtml(item.title)}</span>`;
+                return `<li class="timeline-item" data-category="${escHtml(categoryOf(item))}">
+                    ${item.href ? `<a class="timeline-entry" href="${escHtml(item.href)}">${content}</a>`
+                        : `<div class="timeline-entry">${content}</div>`}
+                    </li>`;
+            }).join('');
+            return;
+        }
+
         ul.innerHTML = items.map(item => `
             <li class="timeline-item${item.href ? ' clickable-item' : ''}"
                 data-category="${escHtml(categoryOf(item))}"
@@ -92,6 +107,23 @@ async function renderSkills() {
         const r = await fetch('/portfolio/api/skills');
         if (!r.ok) return;
         const items = await r.json();
+        if (grid.classList.contains('skills-columns')) {
+            const groups = [
+                { title: 'Web & Development', names: ['HTML', 'CSS', 'JavaScript', 'TypeScript', 'React', 'Node.js'] },
+                { title: '3D & Creative', names: ['Blender', 'Maya', 'Houdini', 'Gaea', 'Unity', 'Unreal Engine'] },
+                { title: 'Systems & Tools', names: [] },
+            ];
+            const grouped = groups.map(() => []);
+            for (const item of items) {
+                const index = groups.findIndex(group => group.names.includes(item.name));
+                grouped[index < 0 ? 2 : index].push(item);
+            }
+            grid.innerHTML = groups.map((group, index) => `
+                <div class="skill-column"><h3>${escHtml(group.title)}</h3>
+                    <ul>${grouped[index].map(item => `<li title="${escHtml(item.description)}">${escHtml(item.name)}</li>`).join('')}</ul>
+                </div>`).join('');
+            return;
+        }
         // Signal Tile デザイン（採用: 2026-08-19）はロゴアイコンを持たない。
         // 必要になったら item.icon から再度 <img> を組み込める。
         grid.innerHTML = items.map(item => `
@@ -519,26 +551,38 @@ function initFilters() {
 
     if (!filterCheckboxes.length || !timelineItems.length) return;
 
+    const toggle = document.getElementById('timeline-expand');
+    let expanded = false;
     const updateFilters = () => {
         const active = Array.from(filterCheckboxes)
             .filter(i => i.checked)
             .map(i => i.value);
 
-        let visible = 0;
+        let visible = 0, matching = 0;
         timelineItems.forEach(item => {
             const cat = item.getAttribute('data-category');
-            if (active.includes(cat)) { item.classList.remove('hidden'); visible++; }
-            else                      { item.classList.add('hidden'); }
+            const matches = active.includes(cat);
+            if (matches) matching++;
+            const show = matches && (!toggle || expanded || visible < 4);
+            item.classList.toggle('hidden', !show);
+            if (toggle) item.hidden = !show;
+            if (show) visible++;
         });
 
         const countEl = document.getElementById('active-count');
         const totalEl = document.getElementById('total-count');
         if (countEl) countEl.textContent = visible;
         if (totalEl) totalEl.textContent = timelineItems.length;
+        if (toggle) {
+            toggle.hidden = matching <= 4;
+            toggle.setAttribute('aria-expanded', String(expanded));
+            toggle.textContent = expanded ? '最新4件に戻す' : `すべての経歴を表示（${matching}件）`;
+        }
     };
 
     updateFilters();
     filterCheckboxes.forEach(cb => cb.addEventListener('change', updateFilters));
+    if (toggle) toggle.addEventListener('click', () => { expanded = !expanded; updateFilters(); });
 }
 
 // ─────────────────────────────────────────────────────────────
