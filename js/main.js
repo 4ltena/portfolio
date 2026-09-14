@@ -75,9 +75,14 @@ async function renderTimeline() {
         };
 
         if (ul.classList.contains('timeline-summary')) {
-            items.sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
+            const dateOrder = value => {
+                const parts = String(value).match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+                return parts ? Number(parts[1]) * 10000 + Number(parts[2]) * 100 + Number(parts[3]) : Infinity;
+            };
+            items.sort((a, b) => dateOrder(a.date) - dateOrder(b.date) || String(a.id).localeCompare(String(b.id)));
             ul.innerHTML = items.map(item => {
-                const content = `<time datetime="${escHtml(item.date.replaceAll('/', '-'))}">${escHtml(item.date)}</time>
+                const dateTime = item.date.replace(/[/.]/g, '-').replace(/-(\d)(?=-|$)/g, '-0$1');
+                const content = `<time datetime="${escHtml(dateTime)}">${escHtml(item.date)}</time>
                     <span>${escHtml(item.title)}</span>`;
                 return `<li class="timeline-item" data-category="${escHtml(categoryOf(item))}">
                     ${item.href ? `<a class="timeline-entry" href="${escHtml(item.href)}">${content}</a>`
@@ -552,20 +557,56 @@ function initFilters() {
     if (!filterCheckboxes.length || !timelineItems.length) return;
 
     const toggle = document.getElementById('timeline-expand');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const transitions = new WeakMap();
+    const setVisibility = (item, show, animate) => {
+        const previous = transitions.get(item);
+        if (animate && previous?.show === show) return;
+
+        // 連続操作では現在の高さから再開し、古い完了処理が表示状態を戻さないようにする。
+        const fromHeight = item.getBoundingClientRect().height;
+        const fromOpacity = item.hidden ? 0 : Number(getComputedStyle(item).opacity);
+        previous?.animation?.cancel();
+        const state = { show, animation: null };
+        transitions.set(item, state);
+        item.inert = !show;
+        item.setAttribute('aria-hidden', String(!show));
+        const settle = () => {
+            item.hidden = !show;
+            item.classList.toggle('hidden', !show);
+        };
+        if (!animate || reducedMotion.matches) { settle(); return; }
+
+        item.hidden = false;
+        item.classList.remove('hidden');
+        const toHeight = show ? item.getBoundingClientRect().height : 0;
+        const animation = item.animate([
+            { height: `${fromHeight}px`, opacity: fromOpacity, overflow: 'clip' },
+            { height: `${toHeight}px`, opacity: show ? 1 : 0, overflow: 'clip' },
+        ], { duration: 220, easing: 'cubic-bezier(.2, 0, .2, 1)', fill: 'both' });
+        state.animation = animation;
+        animation.finished.then(() => {
+            if (transitions.get(item) !== state) return;
+            settle();
+            animation.cancel();
+            state.animation = null;
+        }).catch(() => {});
+    };
     let expanded = false;
-    const updateFilters = () => {
+    const updateFilters = (animate = false) => {
         const active = Array.from(filterCheckboxes)
             .filter(i => i.checked)
             .map(i => i.value);
 
-        let visible = 0, matching = 0;
+        const matchingItems = [...timelineItems].filter(item => active.includes(item.dataset.category));
+        // 過去→現在の順序を保ち、折りたたみ時だけ末尾の直近4件を表示する。
+        const shownItems = new Set(toggle && !expanded ? matchingItems.slice(-4) : matchingItems);
+        let visible = 0;
+        const matching = matchingItems.length;
         timelineItems.forEach(item => {
-            const cat = item.getAttribute('data-category');
-            const matches = active.includes(cat);
-            if (matches) matching++;
-            const show = matches && (!toggle || expanded || visible < 4);
-            item.classList.toggle('hidden', !show);
-            if (toggle) item.hidden = !show;
+            const show = shownItems.has(item);
+            if (toggle) setVisibility(item, show, animate);
+            else item.classList.toggle('hidden', !show);
             if (show) visible++;
         });
 
@@ -581,8 +622,9 @@ function initFilters() {
     };
 
     updateFilters();
-    filterCheckboxes.forEach(cb => cb.addEventListener('change', updateFilters));
-    if (toggle) toggle.addEventListener('click', () => { expanded = !expanded; updateFilters(); });
+    filterCheckboxes.forEach(cb => cb.addEventListener('change', () => updateFilters(true)));
+    if (toggle) toggle.addEventListener('click', () => { expanded = !expanded; updateFilters(true); });
+    reducedMotion.addEventListener('change', () => updateFilters(false));
 }
 
 // ─────────────────────────────────────────────────────────────
