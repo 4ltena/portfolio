@@ -402,7 +402,7 @@ function initLogoAnimation() {
     if (!logo) return;
 
     logo.setAttribute('aria-label', 'Altena — Home');
-    logo.innerHTML = '<span class="slash-icon" aria-hidden="true"></span><span class="logo-wordmark" aria-hidden="true">Alt<span class="ena">ena</span></span>';
+    logo.innerHTML = "<svg class=\"logo-wordmark\" viewBox=\"0 0 3329 840\" width=\"114\" height=\"28\" aria-hidden=\"true\" focusable=\"false\"><use href=\"/portfolio/img/altena-logo.svg#wordmark\"></use></svg>";
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     logo.querySelector('.logo-wordmark').animate([
         { clipPath: 'inset(0 100% 0 0)' },
@@ -643,14 +643,21 @@ function initFilters() {
 
     updateFilters();
     filterCheckboxes.forEach(cb => cb.addEventListener('change', () => updateFilters(true)));
+    let viewportUpdate = 0;
     if (toggle) toggle.addEventListener('click', () => {
+        const update = ++viewportUpdate;
+        const root = document.documentElement;
+        const heading = document.getElementById('timeline-heading');
+        // 行の縮小による自動スクロール補正と、見出しへの移動を競合させない。
+        root.classList.add('timeline-resizing');
+        heading?.focus({ preventScroll: true });
         expanded = !expanded;
         updateFilters(true);
-        const heading = document.getElementById('timeline-heading');
-        if (heading) {
-            heading.focus({ preventScroll: true });
-            heading.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'start' });
-        }
+        heading?.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'start' });
+        Promise.allSettled([...timelineItems].map(item => transitions.get(item)?.animation?.finished))
+            .then(() => {
+                if (viewportUpdate === update) root.classList.remove('timeline-resizing');
+            });
     });
     reducedMotion.addEventListener('change', () => updateFilters(false));
 }

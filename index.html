@@ -5,8 +5,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Altena Portfolio</title>
+  <link rel="icon" href="img/favicon.ico?v=20260915-brand" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260915-brand">
   <meta name="description" content="Personal portfolio of Altena, 3DCG & Frontend Developer.">
-  <link rel="icon" href="img/favicon.ico">
 
   <!-- fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +18,7 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260915-brand">
 
   <!-- Three.js importmap（ヒーローCanvas用） -->
   <script type="importmap">
@@ -31,7 +32,7 @@
   <script defer src="js/utils.js"></script>
   <script defer src="js/cover-art.js?v=20260914-ui2"></script>
   <script defer src="js/home-banners.js?v=20260914-ui2"></script>
-  <script defer src="js/main.js?v=20260914-ui2"></script>
+  <script defer src="js/main.js?v=20260915-brand"></script>
   <!-- ヒーロー背景の Three.js（importmap を使うため type=module。module は defer 相当で実行される） -->
   <script type="module" src="js/hero.js"></script>
   <link rel="stylesheet" href="status-beacon.css">
@@ -42,7 +43,7 @@
   <header class="header glass">
     <div class="header-container">
       <a href="index.html" class="logo" id="header-logo" aria-label="Altena — Home">
-        <span class="slash-icon" aria-hidden="true"></span><span class="logo-wordmark" aria-hidden="true">Alt<span class="ena">ena</span></span>
+        <svg class="logo-wordmark" viewBox="0 0 3329 840" width="114" height="28" aria-hidden="true" focusable="false"><use href="/portfolio/img/altena-logo.svg#wordmark"></use></svg>
       </a>
       <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
         <span class="bar"></span>
@@ -78,7 +79,7 @@
         </div>
       </section>
 
-      <!-- ヒーローと本文の境界（Glitch Slice）。破片は js/main.js が生成する。 -->
+      <!-- ヒーローと本文の境界（Glitch Slice）。破片は js/main.js?v=20260915-brand が生成する。 -->
       <div class="divider-lines" aria-hidden="true">
         <div class="shard-group" id="shard-group">
           <span class="divider-rule"></span>
@@ -86,7 +87,7 @@
         </div>
       </div>
       <!-- role="status"/aria-live はこのブロック全体ではなく [SYS] の値だけに絞る。
-           #divider-status-detail は js/main.js の毎秒の時計更新を反映するため、
+           #divider-status-detail は js/main.js?v=20260915-brand の毎秒の時計更新を反映するため、
            ブロック全体を aria-live にすると支援技術に1秒おきの再読み上げが
            発生してしまう（オンライン/オフラインが実際に変わった時だけ知らせたい）。 -->
       <div class="divider-status-beacon mono">
@@ -146,7 +147,7 @@
     </div>
 
     <div class="content-wrapper">
-      <!-- #sys-status は表示テキストを持たない。js/main.js の initSystemStatus() が更新し、
+      <!-- #sys-status は表示テキストを持たない。js/main.js?v=20260915-brand の initSystemStatus() が更新し、
            js/status-beacon.js の MutationObserver 経由で境界下のステータスログ（[SYSTEM STATUS] 等）
            へ反映される、非表示の更新元。status-beacon.css の .status-source で隠す。
            可視コンテンツだった [TEXT MODE] はステータスログ側（[SYSTEM STATUS] の直下）へ移した。 -->

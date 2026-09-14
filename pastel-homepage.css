@@ -12,7 +12,6 @@
     height: 100%;
     object-fit: cover;
 }
-
 #latest-notes-grid.pastel-notes {
     grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr);
     gap: 24px;
@@ -102,6 +101,7 @@
 .pastel-home .filter-chip input:checked + span { border-bottom-color: #70adb6; color: #273850; background: transparent; box-shadow: none; }
 .pastel-home .filter-chip input:focus-visible + span { outline: 2px solid #236e87; outline-offset: 3px; }
 .pastel-home .filter-count { color: #6c7c8d; font-size: 10px; }
+html.timeline-resizing { overflow-anchor: none; }
 .timeline-summary { list-style: none; margin: 0; padding: 0; border-top: 1px solid #dce3e9; }
 .timeline-summary .timeline-item { max-height: none; padding: 0; margin: 0; opacity: 1; border-bottom: 1px solid #e6ebef; transition: none; }
 .timeline-summary .timeline-item[hidden] { display: none; }
