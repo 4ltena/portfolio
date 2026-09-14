@@ -29,10 +29,13 @@
 
   <!-- JS -->
   <script defer src="js/utils.js"></script>
-  <script defer src="js/main.js"></script>
+  <script defer src="js/cover-art.js?v=20260914"></script>
+  <script defer src="js/home-banners.js?v=20260914"></script>
+  <script defer src="js/main.js?v=20260914"></script>
   <!-- ヒーロー背景の Three.js（importmap を使うため type=module。module は defer 相当で実行される） -->
   <script type="module" src="js/hero.js"></script>
   <link rel="stylesheet" href="status-beacon.css">
+  <link rel="stylesheet" href="pastel-homepage.css?v=20260914">
 </head>
 
 <body>
@@ -159,6 +162,9 @@
             <span class="main-title">Tech Stack</span>
           </div>
         </h2>
+        <div class="tech-stack-banner" aria-hidden="true">
+          <img src="img/tech-stack-banner.svg" width="1200" height="180" alt="" decoding="async">
+        </div>
         <div class="prog-lang-tile-container" id="skills-grid"></div>
       </section>
 
@@ -210,7 +216,7 @@
           </div>
         </h2>
         <!-- 最新ノートは main.js の renderLatestNotes() が API から動的描画 -->
-        <div class="note-grid" id="latest-notes-grid"></div>
+        <div class="note-grid pastel-notes" id="latest-notes-grid"></div>
         <div class="works-more reveal">
           <a href="notes.html" class="more-link mono">and more</a>
         </div>

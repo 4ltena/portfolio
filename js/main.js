@@ -111,6 +111,7 @@ async function renderLatestNotes() {
         // API は created_at DESC 順。先頭3件が最新。
         const items = (await r.json()).slice(0, 3);
         grid.replaceChildren(...items.map(buildNoteCard));
+        if (typeof HomeBanners !== 'undefined') HomeBanners.decorateNotes(grid, items);
     } catch {}
 }
 

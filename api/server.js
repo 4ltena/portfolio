@@ -176,6 +176,10 @@ const DEFAULT_SKILLS = [
     }
 })();
 
+const { createArticleCovers } = require('./article-covers');
+const { publishArticle } = require('./publish-article');
+const articleCovers = createArticleCovers(db);
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 function loadConfig() {
     if (fs.existsSync(CONFIG_FILE)) return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
@@ -326,8 +330,10 @@ function generateHtml(a) {
 
 // ─── Articles ─────────────────────────────────────────────────────────────────
 app.get('/articles', (req, res) => {
-    const rows = db.prepare('SELECT id,title,date,tags,excerpt,created_at FROM articles ORDER BY created_at DESC').all();
-    res.json(rows.map(r => ({ id: r.id, title: r.title, date: r.date, tags: JSON.parse(r.tags), excerpt: r.excerpt, createdAt: r.created_at })));
+    const rows = db.prepare(`SELECT a.id,a.title,a.date,a.tags,a.excerpt,a.created_at,c.cover_pattern
+        FROM articles a LEFT JOIN article_covers c ON c.article_id = a.id
+        ORDER BY a.created_at DESC, a.id DESC`).all();
+    res.json(rows.map(r => ({ id: r.id, title: r.title, date: r.date, tags: JSON.parse(r.tags), excerpt: r.excerpt, createdAt: r.created_at, coverPattern: r.cover_pattern })));
 });
 
 app.get('/articles/:id', (req, res) => {
@@ -341,16 +347,13 @@ app.post('/articles', requireAuth, (req, res) => {
     const { title, date, tags, excerpt, content } = req.body;
     if (!title?.trim() || !content?.trim()) return res.status(400).json({ error: 'title and content are required' });
     const id      = makeId(title);
-    const tagJson = JSON.stringify(Array.isArray(tags) ? tags.map(t => t.trim()).filter(Boolean) : []);
     const now     = Date.now();
-    db.prepare('INSERT INTO articles (id,title,date,tags,excerpt,content,created_at) VALUES (?,?,?,?,?,?,?)').run(
-        id, title.trim(), date?.trim() || todayStr(), tagJson, excerpt?.trim() || '', content.trim(), now
-    );
-    const article = { id, title: title.trim(), date: date?.trim() || todayStr(), tags: JSON.parse(tagJson), excerpt: excerpt?.trim() || '', content: content.trim() };
+    const article = { id, title: title.trim(), date: date?.trim() || todayStr(),
+        tags: Array.isArray(tags) ? tags.map(t => t.trim()).filter(Boolean) : [],
+        excerpt: excerpt?.trim() || '', content: content.trim(), createdAt: now };
     const dir = path.join(NOTES_OUT_DIR, id);
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, 'index.html'), generateHtml(article));
-    res.status(201).json({ id, url: `/portfolio/notes/${id}/` });
+    const coverPattern = publishArticle(db, articleCovers, article, dir, generateHtml(article));
+    res.status(201).json({ id, url: `/portfolio/notes/${id}/`, coverPattern });
 });
 
 app.put('/articles/:id', requireAuth, (req, res) => {

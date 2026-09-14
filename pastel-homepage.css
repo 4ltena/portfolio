@@ -1,0 +1,70 @@
+/* 採用済みの幾何学バナー。対象はトップページの2セクションに限定する。 */
+.tech-stack-banner {
+    height: 136px;
+    margin: 0 0 28px;
+    overflow: hidden;
+    background: #f1f6f8;
+}
+.tech-stack-banner img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#latest-notes-grid.pastel-notes {
+    grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr);
+    gap: 24px;
+}
+#latest-notes-grid[data-note-count="3"] .pastel-note:first-child {
+    grid-row: span 2;
+}
+#latest-notes-grid .pastel-note {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #dce3e9;
+    border-radius: 0;
+    background: #fff;
+    color: #273850;
+    transition: border-color .2s;
+}
+#latest-notes-grid .pastel-note::before { content: none; }
+#latest-notes-grid .pastel-note:hover {
+    border-color: #658eaa;
+    box-shadow: none;
+    transform: none;
+}
+.pastel-note-art {
+    flex: 0 0 76px;
+    height: 76px;
+    overflow: hidden;
+    background: #faf7ef;
+}
+.pastel-note-art svg { display: block; width: 100%; height: 100%; }
+.pastel-note:first-child .pastel-note-art { flex-basis: 220px; height: 220px; }
+.pastel-note-copy { padding: 20px 22px 24px; }
+#latest-notes-grid .pastel-note h3 {
+    margin: 8px 0 12px;
+    font-size: 1.125rem;
+    font-weight: 500;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+#latest-notes-grid .pastel-note:first-child h3 { font-size: 1.5rem; }
+#latest-notes-grid .pastel-note .note-date { color: #65768a; }
+#latest-notes-grid .pastel-note:not(:first-child) .note-excerpt { display: none; }
+#latest-notes-grid .pastel-note .hashtags { margin-top: 12px; }
+
+@media (max-width: 768px) {
+    .tech-stack-banner { height: 92px; margin-bottom: 24px; }
+    #latest-notes-grid.pastel-notes { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    #latest-notes-grid[data-note-count="3"] .pastel-note:first-child { grid-row: auto; }
+    .pastel-note:first-child .pastel-note-art { flex-basis: 156px; height: 156px; }
+    #latest-notes-grid .pastel-note:first-child h3 { font-size: 1.25rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #latest-notes-grid .pastel-note { transition: none; }
+}
