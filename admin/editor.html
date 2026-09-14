@@ -11,6 +11,23 @@
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
   <link rel="stylesheet" href="../style.css">
   <style>
+    /* 管理エディタは暗色のまま据え置く。公開側は style.css で明色テーマに移行したが、
+       このページ独自のスタイルは rgba(255,255,255,…) 前提で書かれているため、
+       トークンだけ旧値へ戻して従来の見た目を保つ。 */
+    :root {
+      --ink: 255, 255, 255;
+      --bg-color: #050505;
+      --surface-color: #0a0a0c;
+      --text-primary: #fff;
+      --text-secondary: #a0a0a5;
+      --accent-primary: #00f2ff;
+      --accent-rgb: 0, 242, 255;
+      --glass-bg: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-hover: rgba(255, 255, 255, 0.06);
+      --shadow-color: rgba(0, 0, 0, 0.5);
+    }
+
     .admin-header {
       position: sticky;
       top: 0;

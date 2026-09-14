@@ -4,17 +4,35 @@
 */
 
 :root {
-    /* Colors */
-    --bg-color: #050505;
-    --surface-color: #0a0a0c;
-    --glass-bg: rgba(255, 255, 255, 0.03);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --accent-primary: #00f2ff;
+    /* Colors
+       --ink は前景色の RGB 三つ組。半透明の重ね色（ガラス・境界線・影）はすべて
+       これを経由させてあるので、暗色領域に .on-dark を当てるだけで一括反転する。 */
+    --ink: 13, 17, 23;
+    --bg-color: #fafdfe;
+    --surface-color: #ffffff;
+    --glass-bg: rgba(var(--ink), 0.025);
+    --glass-border: rgba(var(--ink), 0.10);
+    --glass-hover: rgba(var(--ink), 0.05);
+    --shadow-color: rgba(var(--ink), 0.10);
+
+    /* アクセント。--accent-primary は #fafdfe 上で 4.8:1 あり本文リンクに使える。
+       --accent-glow (#00f2ff) は明色背景では 1.35:1 しかないため、発光・ホバー・
+       暗色面の上に限って使う。--accent-dimmed は 3.7:1 で罫線・回路線用。 */
+    --accent-primary: #0a7d8c;
+    --accent-rgb: 10, 125, 140;
     --accent-secondary: #7000ff;
-    --accent-dimmed: #02939b; /* Solid color equivalent to 60% accent on bg */
+    --accent-dimmed: #02939b;
+    --accent-glow: #00f2ff;
     --accent-gradient: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    --text-primary: #fff;
-    --text-secondary: #a0a0a5;
+    --text-primary: #0d1117;
+    --text-secondary: #5b6670;
+
+    /* ヒーローと境界 */
+    --hero-dark: #020810;        /* js/hero.js の scene.background と同値 */
+    --divider-angle: 18deg;
+    /* tan(18°) = 0.32492。初回描画で暗色プレートが全高のまま出ないよう概算値を置き、
+       js/main.js の initDivider() が実測幅から正確な値へ差し替える。 */
+    --divider-drop: calc(100vw * 0.32492);
 
     /* Typography */
     --font-main: 'Outfit', sans-serif;
@@ -30,6 +48,17 @@
     /* Animation */
     --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     --reveal-duration: 0.8s;
+}
+
+/* 暗いままにする領域（ヒーロー、コード枠）にはこれを当ててトークンを局所反転する。 */
+.on-dark {
+    --ink: 255, 255, 255;
+    --text-primary: #fafdfe;
+    --text-secondary: #9aa4ad;
+    --accent-primary: var(--accent-glow);
+    --accent-rgb: 0, 242, 255;
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --shadow-color: rgba(0, 0, 0, 0.5);
 }
 
 /* トップページのみ左右ガターを広めに固定（4rem）。circuit-overlay の縦線パスは
@@ -129,9 +158,41 @@ a {
     border: none;
     border-bottom: 1px solid var(--glass-border);
     border-radius: 0;
+    /* 背後の色は大きく通し、流れてくる文字は強い blur で潰す。アルファを下げて
+       blur を上げるほど「その場の背景色を帯びた面」に近づく。濃さの調整は
+       このアルファ 1 箇所で足りる。 */
+    background: rgba(250, 253, 254, 0.40);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+}
+
+/* ヒーローの暗色プレートに載っている範囲だけを覆う層。境界と同じ傾きで切り抜くので、
+   スクロールにつれて右端から左端へ向かって連続的に切り替わる（一括のオン/オフでは
+   ない）。--hdr-left / --hdr-right は js/main.js の initHeaderTheme() が
+   境界の実座標から毎スクロール算出して入れる。未設定時は描かれない。 */
+.header-plate {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: rgba(2, 8, 16, 0.55);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    clip-path: polygon(0 0, 100% 0,
+                       100% var(--hdr-right, 0px),
+                       0    var(--hdr-left,  0px));
+}
+
+/* 暗色側に載っている要素だけトークンを明色文字へ倒す。ヘッダー全体ではなく
+   ロゴ・ナビ項目・ハンバーガーの単位で個別に付け外しするため、境界がナビを
+   横切っていく間は ABOUT → NOTES → … の順に右から色が入れ替わる。 */
+.header .over-dark {
+    --text-primary: #fafdfe;
+    --text-secondary: rgba(250, 253, 254, 0.72);
+    --accent-primary: var(--accent-glow);
 }
 
 .header-container {
+    position: relative;
+    z-index: 1;   /* .header-plate より前面に */
     max-width: var(--max-width);
     margin: 0 auto;
     display: flex;
@@ -254,7 +315,7 @@ a {
     width: 100%;
     height: 100%;
     background: radial-gradient(circle at 70% 30%, rgba(112, 0, 255, 0.15), transparent 40%),
-                radial-gradient(circle at 20% 80%, rgba(0, 242, 255, 0.1), transparent 50%);
+                radial-gradient(circle at 20% 80%, rgba(var(--accent-rgb), 0.1), transparent 50%);
     z-index: -1;
 }
 
@@ -262,42 +323,11 @@ a {
     text-align: center;
 }
 
-.hero-text h1.logo-text {
-    font-family: var(--font-mono);
-    font-weight: 200;
-    font-size: clamp(3rem, 10vw, 7rem);
-    line-height: 0.9;
-    color: var(--text-primary);
-    margin-bottom: 1.5rem;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-}
-
 .hero-text p {
     font-size: 1.25rem;
     letter-spacing: 0.5em;
     text-transform: uppercase;
     margin-bottom: 2rem;
-}
-
-.typing-container {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    color: var(--text-secondary);
-    margin-top: 0.5rem;
-    visibility: hidden;
-}
-
-.typing-container .cursor {
-    display: none;
-}
-
-.prefix { margin-right: 0.4rem; }
-
-.typing-animation {
-    min-width: 1ch;
-    font-weight: 500;
 }
 
 .cursor {
@@ -310,9 +340,141 @@ a {
     animation: blink 1s step-end infinite;
 }
 
+.cursor[hidden] { display: none; }
+
 @keyframes blink {
     from, to { opacity: 1; }
     50% { opacity: 0; }
+}
+
+/* --------------------------------------------------------------------------
+   トップページのヒーロー — 暗色を保ったまま下端を斜めに切る
+   -------------------------------------------------------------------------- */
+
+.hero-wrap {
+    --divider-bleed: 72px;   /* 境界の下へ切り離される破片のための余白 */
+    position: relative;
+    background: var(--bg-color);
+    padding-bottom: var(--divider-bleed);
+    overflow: hidden;
+}
+
+.hero-wrap .hero {
+    padding: 0;
+    justify-content: flex-start;
+    background: transparent;
+}
+
+.hero-wrap .hero-content { width: 100%; }
+
+/* 暗色プレートの切り抜き。左が深く、右へ向かって浅くなる（境界は右上がり）。
+   --divider-drop は js/main.js が実測幅 × tan(--divider-angle) で流し込む。
+   同じ値から破片レイヤーの回転角も決まるので、両者は常に平行になる。 */
+#hero-canvas,
+.hero-wrap .hero::after {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--divider-drop)), 0 100%);
+}
+
+/* 見出しの左端を下の .content-wrapper と揃える。box-sizing:border-box なので
+   max-width にパディングを含めた形が content-wrapper と同じ組み方になる。 */
+.hero-inner {
+    width: 100%;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 var(--container-padding);
+    text-align: left;
+}
+
+.hero-title {
+    font-family: var(--font-mono);
+    font-weight: 200;
+    font-size: clamp(3.25rem, 9vw, 8rem);
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    text-shadow: 0 0 32px rgba(0, 0, 0, 0.45);
+}
+
+.hero-title .row {
+    display: block;
+    white-space: nowrap;
+}
+
+/* visibility は使わない。.reveal の transition が all で、離散プロパティである
+   visibility まで遷移対象に含めてしまい、JS のインライン指定が効かなくなる。
+   タイピング前は中身が空でカーソルも hidden なので、そもそも隠す必要がない。 */
+.hero-sub {
+    margin-top: 1.75rem;
+    min-height: 1.6em;   /* 文字が入る前後で下の要素が動かないように */
+    font-size: clamp(0.85rem, 1.6vw, 1.05rem);
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+}
+
+.hero-sub .prefix { margin-right: 0.4rem; }
+
+.hero-sub .typing-animation {
+    min-width: 1ch;
+    font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   ヒーローと本文の境界 — Glitch Slice
+   .divider-lines を境界の左端（＝回転の支点）に置き、--divider-angle だけ回す。
+   子要素は「境界に平行な座標系」で置けるので、破片はすべて自動で境界に沿う。
+   破片の座標は js/main.js の DIVIDER_SHARDS が持つ。
+   -------------------------------------------------------------------------- */
+
+/* bottom を --divider-bleed に合わせると、ヒーローの高さが変わっても
+   支点はつねに暗色プレートの左下端に一致する。 */
+.divider-lines {
+    position: absolute;
+    left: 0;
+    bottom: var(--divider-bleed);
+    width: 100%;
+    height: 0;
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* 幅は「回転後に画面幅ぶんを覆う最小の長さ」= 100vw / cos(18°) ≒ 105.1vw。
+   破片の左位置と幅はこの長さに対する % なので、余分に長くすると右側の
+   クラスタが画面外へ押し出される。106vw なら % がほぼ画面幅と一致する。 */
+.shard-group {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 106vw;
+    height: 0;
+    transform-origin: 0 0;
+    transform: rotate(calc(-1 * var(--divider-angle)));
+}
+
+.shard-group > * { position: absolute; }
+
+/* cut = 明色。暗色プレートを上へ削り込む
+   frag = 暗色。境界の下へ切り離された破片
+   glow / violet = 面のずれ目に滲む色収差を模した 1.5px のスリット */
+.shard.cut    { background: var(--bg-color); }
+.shard.frag   { background: var(--hero-dark); }
+.shard.glow   { background: var(--accent-glow); }
+.shard.violet { background: var(--accent-secondary); }
+
+.divider-rule {
+    left: 0;
+    top: 30px;
+    width: 100%;
+    height: 1px;
+    background: var(--accent-dimmed);
+    opacity: 0.35;
+}
+
+.divider-rule.short {
+    top: 37px;
+    left: 33%;
+    width: 40%;
+    background: var(--accent-glow);
+    opacity: 0.4;
 }
 
 /* ==========================================================================
@@ -385,45 +547,50 @@ a {
    Dynamic Sections
    ========================================================================== */
 
-/* Skills Grid */
+/* Skills Grid — Signal Tile
+   枠を持たず、カテゴリ色の左端バーだけで区切るフラットなタイル。
+   test-cards.html 候補 D を本移植したもの（採用: 2026-08-19）。
+   実データに level/since に相当する項目がないため、meta 行は持たない。 */
 .prog-lang-tile-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
 }
 
 .prog-lang-tile-item {
-    padding: 2.5rem;
-}
-
-.prog-lang-tile-item:hover {
-    transform: translateY(-8px);
-    background: rgba(255,255,255,0.06);
-    border-color: var(--accent-primary);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-}
-
-.icon-box {
-    width: 60px;
-    height: 60px;
-    background: rgba(255, 255, 255, 0.2); /* Increased brightness for dark logos */
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1.5rem;
+    background: var(--glass-bg);
+    border-radius: 4px;
+    padding: 1.3rem 1.5rem 1.3rem 1.6rem;
+    position: relative;
     transition: var(--transition);
 }
 
-.prog-lang-tile-item:hover .icon-box {
-    background: rgba(255, 255, 255, 0.35);
-    box-shadow: 0 0 15px rgba(0, 242, 255, 0.15);
+.prog-lang-tile-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6rem;
+    bottom: 0.6rem;
+    width: 3px;
+    background: var(--accent-primary);
+    border-radius: 2px;
 }
 
-.prog-lang-img {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
+.prog-lang-tile-item:hover {
+    background: var(--glass-hover);
+    transform: translateX(4px);
+}
+
+.prog-lang-tile-item h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.prog-lang-tile-item p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
 }
 
 /* Timeline */
@@ -470,10 +637,10 @@ a {
 }
 
 .filter-chip input:checked + span {
-    background: rgba(0, 242, 255, 0.1);
+    background: rgba(var(--accent-rgb), 0.1);
     border-color: var(--accent-primary);
     color: var(--text-primary);
-    box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+    box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.2);
 }
 
 .timeline-container { max-width: 800px; }
@@ -525,7 +692,7 @@ a {
     z-index: 1;
 }
 
-.timeline-content { padding: 1.5rem 2rem; }
+.timeline-content { padding: 1.5rem 2rem; position: relative; }
 
 .timeline-date {
     font-family: var(--font-mono);
@@ -621,9 +788,9 @@ a {
 .image-placeholder {
     width: 180px;
     height: 180px;
-    background: #fff;
+    background: var(--glass-hover);
+    border: 1px solid var(--glass-border);
     border-radius: 20px;
-    opacity: 0.9;
 }
 
 .philosophy {
@@ -667,7 +834,7 @@ a {
 }
 
 .clear-search {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--ink), 0.08);
     border: none;
     color: var(--text-secondary);
     width: 24px;
@@ -683,7 +850,7 @@ a {
 }
 
 .clear-search:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(var(--ink), 0.15);
     color: var(--text-primary);
 }
 
@@ -703,28 +870,51 @@ a {
     gap: 1.5rem;
 }
 
+/* Note Card — Index Card
+   上端が破線の切り取り線、右上に参照タブ（LOG-001 等）。
+   test-cards.html 候補 C を本移植したもの（採用: 2026-08-19）。
+   data-ref はレンダリング時の並び順（buildNoteCard の index）から振る連番で、
+   記事の恒久 ID ではない。フィルタや検索で表示順が変われば番号も変わる。 */
 .note-card {
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    background: var(--surface-color);
+    border: 1px solid var(--glass-border);
+    border-top: 2px dashed var(--accent-dimmed);
+    border-radius: 0 0 10px 10px;
+    padding: 1.6rem 1.6rem 1.4rem;
+    position: relative;
+}
+
+.note-card::before {
+    content: attr(data-ref);
+    position: absolute;
+    top: -1px;
+    right: 1.2rem;
+    transform: translateY(-100%);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    background: var(--bg-color);
+    padding: 0.1rem 0.5rem;
+    border: 1px solid var(--glass-border);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
 }
 
 .note-card:hover {
-    transform: translateY(-5px);
-    border-color: var(--accent-primary);
-    background: rgba(255, 255, 255, 0.05);
+    border-top-color: var(--accent-primary);
+    box-shadow: 0 12px 26px var(--shadow-color);
+    transform: translateY(-3px);
 }
 
-.note-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+.note-card .hashtags { margin-top: 0.8rem; }
 
 .note-date {
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
     color: var(--accent-primary);
+    display: block;
+    margin-bottom: 0.6rem;
 }
 
 .note-tag {
@@ -763,16 +953,16 @@ a {
     font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--accent-primary);
-    background: rgba(0, 242, 255, 0.05);
+    background: rgba(var(--accent-rgb), 0.05);
     padding: 0.1rem 0.4rem;
     border-radius: 4px;
-    border: 1px solid rgba(0, 242, 255, 0.1);
+    border: 1px solid rgba(var(--accent-rgb), 0.1);
     cursor: pointer;
     transition: var(--transition);
 }
 
 .tag-link:hover {
-    background: rgba(0, 242, 255, 0.15);
+    background: rgba(var(--accent-rgb), 0.15);
     border-color: var(--accent-primary);
     transform: translateY(-1px);
 }
@@ -782,10 +972,10 @@ a {
     height: 100%;
     background: repeating-linear-gradient(
         45deg,
-        rgba(255, 255, 255, 0.02),
-        rgba(255, 255, 255, 0.02) 10px,
-        rgba(255, 255, 255, 0.03) 10px,
-        rgba(255, 255, 255, 0.03) 20px
+        rgba(var(--ink), 0.025),
+        rgba(var(--ink), 0.025) 10px,
+        rgba(var(--ink), 0.045) 10px,
+        rgba(var(--ink), 0.045) 20px
     );
     display: flex;
     align-items: center;
@@ -809,18 +999,12 @@ footer {
 
 .glass-top {
     border-top: 1px solid var(--glass-border);
-    background: rgba(255,255,255,0.01);
+    background: rgba(var(--ink), 0.015);
 }
 
 /* ==========================================================================
    Misc & Animations
    ========================================================================== */
-
-.under-construction {
-    padding: 1rem 0;
-    margin-bottom: 4rem;
-    border-bottom: 1px solid var(--glass-border);
-}
 
 /* Detail Pages (Works & Notes) */
 .project-detail, .note-detail {
@@ -899,7 +1083,7 @@ footer {
 
 .related-work-card:hover {
     border-color: var(--accent-primary);
-    background: rgba(0, 242, 255, 0.03);
+    background: rgba(var(--accent-rgb), 0.03);
     transform: translateY(-5px);
 }
 
@@ -947,7 +1131,7 @@ footer {
 .btn-outline:hover {
     border-color: var(--accent-primary);
     color: var(--text-primary);
-    background: rgba(0, 242, 255, 0.05);
+    background: rgba(var(--accent-rgb), 0.05);
 }
 
 .back-home {
@@ -978,15 +1162,15 @@ footer {
 }
 
 .tag-cloud-chip:hover {
-    background: rgba(0, 242, 255, 0.1);
+    background: rgba(var(--accent-rgb), 0.1);
     border-color: var(--accent-primary);
     color: var(--text-primary);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 242, 255, 0.1);
+    box-shadow: 0 5px 15px rgba(var(--accent-rgb), 0.1);
 }
 
 .tag-cloud-chip.active {
-    background: rgba(0, 242, 255, 0.2);
+    background: rgba(var(--accent-rgb), 0.2);
     border-color: var(--accent-primary);
     color: var(--text-primary);
 }
@@ -1023,14 +1207,14 @@ footer {
 
     .nav {
         position: fixed;
-        top: 0;
-        right: 0;
+        /* inset:0 でビューポートに正確に一致させる。100vh はモバイルのアドレスバーぶん
+           ずれて下端に隙間が出る。オーバーレイが明色になった以上その隙間から暗色の
+           ヒーローが覗いてしまうので、高さ指定ではなく inset で覆い切る。 */
+        inset: 0;
         /* right:-100% だと fixed 要素が overflow-x:hidden に無視され横スクロールを生む。
            transform なら layout box は画面内に留まり、はみ出さない。 */
         transform: translateX(100%);
-        width: 100%;
-        height: 100vh;
-        background: rgba(5, 5, 5, 0.95);
+        background: rgba(250, 253, 254, 0.97);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         display: flex;
@@ -1044,6 +1228,16 @@ footer {
         transform: translateX(0);
     }
 
+    /* メニューを開くと明色のオーバーレイが全画面を覆う。トップページ最上部では
+       ヘッダーが白文字トークンに切り替わっているため、ここで明色側へ戻さないと
+       リンクとハンバーガーが背景に沈む。 */
+    .nav.active,
+    .hamburger.active {
+        --text-primary: #0d1117;
+        --text-secondary: #5b6670;
+        --accent-primary: #0a7d8c;
+    }
+
     .nav ul {
         flex-direction: column;
         align-items: center;
@@ -1055,7 +1249,6 @@ footer {
         letter-spacing: 0.2em;
     }
 
-    .hero-text h1.logo-text { font-size: 4rem; }
     .page-tile-container { grid-template-columns: 1fr; }
     .about-container { flex-direction: column; text-align: center; }
 
@@ -1081,15 +1274,19 @@ footer {
    Code & Terminal Styling
    ========================================================================== */
 
+/* コード枠は明色テーマでも暗いまま残す（配色が Dracula 前提で、明色化すると
+   トークン色がすべて破綻するため）。トークンだけ局所反転させる。 */
 .code-window {
-    background: rgba(10, 10, 12, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    --ink: 255, 255, 255;
+    --text-secondary: #9aa4ad;
+    --glass-border: rgba(255, 255, 255, 0.12);
+
+    background: rgba(10, 10, 12, 0.95);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
     overflow: hidden;
     margin: 2.5rem 0;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 18px 44px rgba(13, 17, 23, 0.18);
     text-align: left;
 }
 
@@ -1160,11 +1357,63 @@ footer {
     cursor: pointer;
 }
 
-.clickable-item:hover .timeline-content {
-    background: rgba(255, 255, 255, 0.08); /* Brighter glass */
-    transform: translateX(10px);
-    border-color: var(--accent-primary);
-    box-shadow: 0 10px 30px rgba(0, 242, 255, 0.15);
+/* ホバー時、動かして持ち上げるのではなく、枠に沿って光が時計回りに一周する。
+   @property で角度を補間可能にし、コニックグラデーションを回す。
+   ::before を実寸より少し外側に置き、mask で「枠の太さぶんだけ」くり抜いて
+   リング状に見せる（.timeline-content 自体の背景・blur には触れない）。 */
+/* --timeline-sweep は「左上の角から時計回りにどこまで塗ったか」を表す割合。
+   0% で未着色、100% で一周分すべて塗り終わる。角度ではなく割合で持つのは、
+   conic-gradient のストップ位置をそのまま animate できるため。 */
+@property --timeline-sweep {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 0%;
+}
+
+.timeline-content::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 2px;
+    /* from 280deg ≈ このカードの実寸（幅700〜750px・高さ約105px、横長）での
+       左上角の方向。conic-gradient は円の角度（0deg=上、時計回り）で位置を
+       決めるため、正方形なら 315deg で正確に角に来るが、横長の矩形では中心
+       からその角までの角度がもっと真左（270deg）寄りになる — 実測: atan2(-半幅,半高)
+       ≈ 278deg。--timeline-sweep が 0%→100% でアクセント色の弧がそこから
+       時計回りに伸び、一周すると枠全体が塗り終わる。 */
+    background: conic-gradient(from 280deg,
+        var(--accent-primary) 0%,
+        var(--accent-primary) var(--timeline-sweep),
+        transparent var(--timeline-sweep),
+        transparent 100%);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ベースの 1px 枠線（--glass-border）はホバーでも変えない。色の変化はこの
+   スイープだけで見せる — 先に枠線を即座に変えてしまうと、後から重なる
+   スイープが「もう色が付いた場所をなぞるだけ」になり、変化して見えなくなる。 */
+.clickable-item:hover .timeline-content::before {
+    opacity: 1;
+    animation: timeline-border-sweep 0.1s linear forwards;
+}
+
+@keyframes timeline-border-sweep {
+    from { --timeline-sweep: 0%; }
+    to   { --timeline-sweep: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .clickable-item:hover .timeline-content::before {
+        animation: none;
+        --timeline-sweep: 100%;
+    }
 }
 
 .clickable-item:hover .timeline-dot {
@@ -1185,14 +1434,14 @@ footer {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    border: 1px solid rgba(0, 242, 255, 0.2);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
     border-radius: 4px;
-    background: rgba(0, 242, 255, 0.03);
+    background: rgba(var(--accent-rgb), 0.03);
 }
 
 .mono-link:hover {
-    background: rgba(0, 242, 255, 0.1);
-    box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+    background: rgba(var(--accent-rgb), 0.1);
+    box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.2);
     transform: translateY(-2px);
 }
 
@@ -1409,7 +1658,7 @@ footer {
 
 .note-body a {
     color: var(--accent-primary);
-    border-bottom: 1px solid rgba(0, 242, 255, 0.25);
+    border-bottom: 1px solid rgba(var(--accent-rgb), 0.25);
     transition: border-color 0.2s;
 }
 
@@ -1427,19 +1676,21 @@ footer {
 .note-body code {
     font-family: var(--font-mono);
     font-size: 0.85em;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(var(--ink), 0.06);
     color: var(--accent-primary);
     padding: 0.15em 0.45em;
     border-radius: 4px;
 }
 
+/* コードブロックも暗いまま（.code-window と同じ理由） */
 .note-body pre {
-    background: rgba(10, 10, 12, 0.9);
-    border: 1px solid var(--glass-border);
+    background: rgba(10, 10, 12, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: var(--border-radius-sm);
     padding: 1.5rem;
     overflow-x: auto;
     margin: 1.5rem 0;
+    box-shadow: 0 12px 30px rgba(13, 17, 23, 0.14);
 }
 
 .note-body pre code {
@@ -1505,8 +1756,8 @@ footer {
 }
 
 .btn-accent {
-    background: rgba(0, 242, 255, 0.07);
-    border: 1px solid rgba(0, 242, 255, 0.35);
+    background: rgba(var(--accent-rgb), 0.07);
+    border: 1px solid rgba(var(--accent-rgb), 0.35);
     color: var(--accent-primary);
     padding: 0.65rem 1.4rem;
     border-radius: var(--border-radius-sm);
@@ -1519,24 +1770,30 @@ footer {
 }
 
 .btn-accent:hover {
-    background: rgba(0, 242, 255, 0.15);
-    box-shadow: 0 0 16px rgba(0, 242, 255, 0.15);
+    background: rgba(var(--accent-rgb), 0.15);
+    box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.15);
 }
 
 /* ==========================================================================
    Hero — Three.js Canvas
    ========================================================================== */
 
+/* background は WebGL が使えない環境でのフォールバック。これが無いと
+   コンテキスト生成に失敗したときヒーローが白く抜け、#fafdfe の見出しが消える。
+   値は js/hero.js の scene.background と揃えること。 */
 #hero-canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     z-index: 0;
+    background: var(--hero-dark);
 }
 
-/* ビネット（暗い縁取り）をcanvasの上に重ねる */
-.hero::after {
+/* ビネット（暗い縁取り）をcanvasの上に重ねる。
+   暗色ヒーローを持つトップページ限定。下層ページの small-hero は明色地なので、
+   ここを .hero::after のままにすると白い面が四隅から黒く沈む。 */
+.hero-wrap .hero::after {
     content: '';
     position: absolute;
     inset: 0;

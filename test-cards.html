@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEST — カードデザイン候補（Tech Stack / Timeline / Notes）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <script defer src="js/utils.js"></script>
+
+  <!-- このページ専用の試作スタイル。採用が決まったものだけ style.css に移植する。 -->
+  <style>
+    body { padding-bottom: 6rem; }
+
+    .test-note {
+      max-width: var(--max-width);
+      margin: 4rem auto 1rem;
+      padding: 0 var(--container-padding);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent-primary);
+      letter-spacing: 0.05em;
+    }
+    .test-divider {
+      max-width: var(--max-width);
+      margin: 5rem auto 2rem;
+      padding: 0 var(--container-padding);
+      border-top: 1px dashed var(--glass-border);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+    .test-divider span { display: block; padding-top: 1rem; }
+    .test-divider .desc {
+      font-family: var(--font-main);
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      margin-top: 0.4rem;
+      max-width: 62ch;
+    }
+
+    .test-block {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--container-padding);
+    }
+    .test-row-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      opacity: 0.7;
+      margin: 2rem 0 0.8rem;
+    }
+    .test-grid-skills   { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; }
+    .test-grid-timeline { display: flex; flex-direction: column; gap: 1rem; max-width: 640px; }
+    .test-grid-notes    { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; }
+
+    /* ==========================================================================
+       候補 A: Spec Sheet（データシート風）
+       ========================================================================== */
+    .cardA {
+      background: var(--surface-color);
+      border: 1px solid var(--glass-border);
+      border-radius: 2px;
+      padding: 1.4rem 1.5rem;
+      position: relative;
+      transition: var(--transition);
+    }
+    .cardA:hover {
+      border-color: var(--accent-primary);
+      box-shadow: 4px 4px 0 0 rgba(var(--accent-rgb), 0.15);
+      transform: translate(-2px, -2px);
+    }
+    .cardA .kicker {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      color: var(--accent-primary);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.8rem;
+    }
+    .cardA .kicker::before { content: '// '; opacity: 0.6; }
+    .cardA h3 { font-size: 1.15rem; margin-bottom: 0.7rem; }
+    .cardA hr { border: none; border-top: 1px solid var(--glass-border); margin: 0 0 0.9rem; }
+    .cardA .row {
+      display: flex; justify-content: space-between; gap: 1rem;
+      font-size: 0.82rem; padding: 0.3rem 0;
+      border-bottom: 1px dotted var(--glass-border);
+    }
+    .cardA .row:last-child { border-bottom: none; }
+    .cardA .row .k { color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .cardA .row .v { color: var(--text-primary); text-align: right; }
+    .cardA p.desc { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.9rem; line-height: 1.6; }
+    .cardA .tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.9rem; }
+    .cardA .icon-box { width: 44px; height: 44px; margin-bottom: 0; flex-shrink: 0; }
+    .cardA .prog-lang-img { width: 24px; height: 24px; }
+    .cardA .head-row { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 0.9rem; }
+    .cardA .head-meta { flex: 1; min-width: 0; }
+
+    /* ==========================================================================
+       候補 B: Terminal Log（端末ウィンドウ風）
+       ========================================================================== */
+    .cardB {
+      background: #0d1117;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+    .cardB:hover { border-color: var(--accent-glow); box-shadow: 0 10px 26px rgba(13,17,23,0.14); transform: translateY(-4px); }
+    .cardB .term-head {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.55rem 0.9rem;
+      background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .cardB .term-head .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .cardB .term-head .dot:nth-child(1) { background: #ff5f56; }
+    .cardB .term-head .dot:nth-child(2) { background: #ffbd2e; }
+    .cardB .term-head .dot:nth-child(3) { background: #27c93f; }
+    .cardB .term-head .path {
+      margin-left: 0.5rem; font-family: var(--font-mono); font-size: 0.68rem;
+      color: #6b7684; letter-spacing: 0.02em;
+    }
+    .cardB .term-body { padding: 1.1rem 1.2rem 1.3rem; font-family: var(--font-mono); }
+    .cardB .prompt { color: var(--accent-glow); font-size: 0.75rem; }
+    .cardB .prompt .path-part { color: #6b7684; }
+    .cardB h3 { font-family: var(--font-main); font-size: 1.05rem; color: #f0f3f6; margin: 0.6rem 0 0.5rem; }
+    .cardB p.desc { color: #9aa4ad; font-size: 0.82rem; line-height: 1.7; font-family: var(--font-main); }
+    .cardB .tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.8rem; }
+    .cardB .tags span { font-size: 0.68rem; color: var(--accent-glow); }
+    .cardB .icon-box { width: 40px; height: 40px; background: rgba(255,255,255,0.06); margin-bottom: 0.7rem; }
+    .cardB .prog-lang-img { width: 22px; height: 22px; }
+    .cardB .meta { color: #6b7684; font-size: 0.72rem; }
+
+    /* ==========================================================================
+       候補 C: Index Card（インデックスカード風）
+       ========================================================================== */
+    .cardC {
+      background: var(--surface-color);
+      border: 1px solid var(--glass-border);
+      border-top: 2px dashed var(--accent-dimmed);
+      border-radius: 0 0 10px 10px;
+      padding: 1.6rem 1.6rem 1.4rem;
+      position: relative;
+      transition: var(--transition);
+    }
+    .cardC::before {
+      content: attr(data-ref);
+      position: absolute; top: -1px; right: 1.2rem;
+      transform: translateY(-100%);
+      font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.08em;
+      color: var(--text-secondary); background: var(--bg-color);
+      padding: 0.1rem 0.5rem; border: 1px solid var(--glass-border); border-bottom: none;
+      border-radius: 4px 4px 0 0;
+    }
+    .cardC:hover { border-top-color: var(--accent-primary); box-shadow: 0 12px 26px var(--shadow-color); transform: translateY(-3px); }
+    .cardC h3 { font-size: 1.1rem; margin: 0.3rem 0 0.6rem; }
+    .cardC .meta { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-primary); margin-bottom: 0.6rem; display: block; }
+    .cardC p.desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.65; }
+    .cardC .icon-box { width: 42px; height: 42px; margin-bottom: 0.8rem; }
+    .cardC .prog-lang-img { width: 22px; height: 22px; }
+    .cardC .tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.8rem; }
+
+    /* ==========================================================================
+       候補 D: Signal Tile（フラット・アクセントバー）
+       ========================================================================== */
+    .cardD {
+      background: var(--glass-bg);
+      border-radius: 4px;
+      padding: 1.3rem 1.5rem 1.3rem 1.6rem;
+      position: relative;
+      transition: var(--transition);
+    }
+    .cardD::before {
+      content: ''; position: absolute; left: 0; top: 0.6rem; bottom: 0.6rem; width: 3px;
+      background: var(--tile-accent, var(--accent-primary)); border-radius: 2px;
+    }
+    .cardD:hover { background: var(--glass-hover); transform: translateX(4px); }
+    .cardD .meta { font-family: var(--font-mono); font-size: 0.72rem; color: var(--tile-accent, var(--accent-primary)); margin-bottom: 0.4rem; display: block; }
+    .cardD h3 { font-size: 1.2rem; margin-bottom: 0.5rem; font-weight: 700; }
+    .cardD p.desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.65; }
+    .cardD .icon-box { width: 0; height: 0; margin: 0; background: none; display: none; }
+    .cardD .tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.7rem; }
+
+    /* ==========================================================================
+       Timeline 再検討 — 候補 A〜D は縦線＋ドットの「繋がっている」意匠を
+       落としてしまっていたため、それを活かした案を別途 3 つ用意する。
+       ========================================================================== */
+    .tl-cat { --cat-c: var(--accent-primary); }
+    .tl-cat.contest { --cat-c: var(--accent-secondary); }
+    .tl-cat.school   { --cat-c: #1f8a4c; }
+
+    /* --- Timeline 案1: Circuit Rail（回路トレース。候補A/資格スキルツリーと同じ語彙） --- */
+    .tl1-list { list-style: none; position: relative; padding-left: 0; max-width: 640px; }
+    .tl1-rail { position: absolute; left: 6px; top: 8px; bottom: 8px; width: 2px; background: var(--accent-dimmed); opacity: 0.4; }
+    .tl1-item { position: relative; padding-left: 38px; margin-bottom: 1.1rem; }
+    .tl1-via {
+      position: absolute; left: 0; top: 14px; width: 13px; height: 13px;
+      border: 2px solid var(--accent-dimmed); background: var(--bg-color);
+      transform: rotate(45deg); transition: var(--transition);
+    }
+    .tl1-item:hover .tl1-via { border-color: var(--accent-primary); background: var(--accent-primary); }
+    .tl1-card {
+      background: var(--surface-color); border: 1px solid var(--glass-border); border-radius: 2px;
+      padding: 0.9rem 1.2rem; transition: var(--transition);
+    }
+    .tl1-item:hover .tl1-card { border-color: var(--accent-primary); box-shadow: 4px 4px 0 0 rgba(var(--accent-rgb), 0.15); transform: translate(-2px, -2px); }
+    .tl1-kicker { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.66rem; color: var(--tl-c, var(--accent-primary)); margin-bottom: 0.35rem; }
+    .tl1-card h3 { font-size: 1rem; }
+    .tl1-cat { font-family: var(--font-mono); font-size: 0.68rem; color: var(--cat-c); margin-top: 0.3rem; display: block; }
+
+    /* --- Timeline 案2: Terminal History（git log 風。候補Bと同じ語彙） --- */
+    .tl2-window { background: #0d1117; border: 1px solid rgba(255,255,255,0.10); border-radius: 8px; overflow: hidden; max-width: 640px; }
+    .tl2-head { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.9rem; background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .tl2-head .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .tl2-head .dot:nth-child(1) { background: #ff5f56; } .tl2-head .dot:nth-child(2) { background: #ffbd2e; } .tl2-head .dot:nth-child(3) { background: #27c93f; }
+    .tl2-head .path { margin-left: 0.5rem; font-family: var(--font-mono); font-size: 0.68rem; color: #6b7684; }
+    .tl2-body { padding: 0.5rem 1.2rem 0.9rem; font-family: var(--font-mono); font-size: 0.82rem; }
+    .tl2-row { display: flex; align-items: baseline; gap: 0.7rem; padding: 0.55rem 0; border-bottom: 1px dashed rgba(255,255,255,0.08); transition: var(--transition); }
+    .tl2-row:last-child { border-bottom: none; }
+    .tl2-row:hover { padding-left: 0.4rem; }
+    .tl2-star { color: var(--accent-glow); flex-shrink: 0; }
+    .tl2-date { color: #6b7684; flex-shrink: 0; }
+    .tl2-title { color: #f0f3f6; font-family: var(--font-main); flex: 1; }
+    .tl2-cat { color: #6b7684; font-size: 0.72rem; flex-shrink: 0; }
+
+    /* --- Timeline 案3: Perforated Rail（破線＋パンチ穴。候補C=Notesと同じ語彙で統一感を出す） --- */
+    .tl3-list { list-style: none; position: relative; padding-left: 0; max-width: 640px; }
+    .tl3-rail { position: absolute; left: 7px; top: 6px; bottom: 6px; border-left: 2px dashed var(--accent-dimmed); opacity: 0.6; }
+    .tl3-item { position: relative; padding-left: 38px; margin-bottom: 1.1rem; }
+    .tl3-punch {
+      position: absolute; left: 0; top: 10px; width: 15px; height: 15px; border-radius: 50%;
+      border: 2px dashed var(--accent-dimmed); background: var(--bg-color); transition: var(--transition);
+    }
+    .tl3-item:hover .tl3-punch { border-color: var(--accent-primary); }
+    .tl3-card {
+      background: var(--surface-color); border: 1px solid var(--glass-border);
+      border-top: 2px dashed var(--accent-dimmed); border-radius: 0 0 8px 8px;
+      padding: 0.9rem 1.2rem; position: relative; transition: var(--transition);
+    }
+    .tl3-card::before {
+      content: attr(data-ref); position: absolute; top: -1px; right: 1rem; transform: translateY(-100%);
+      font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-secondary); background: var(--bg-color);
+      padding: 0.05rem 0.4rem; border: 1px solid var(--glass-border); border-bottom: none; border-radius: 3px 3px 0 0;
+    }
+    .tl3-item:hover .tl3-card { border-top-color: var(--accent-primary); box-shadow: 0 8px 20px var(--shadow-color); }
+    .tl3-date { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-primary); display: block; margin-bottom: 0.3rem; }
+  </style>
+</head>
+
+<body>
+  <header class="header glass">
+    <div class="header-container">
+      <a href="index.html" class="logo" id="header-logo">
+        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+      </a>
+      <nav class="nav">
+        <ul>
+          <li><a href="index.html#skills">Skills</a></li>
+          <li><a href="index.html#timeline">Timeline</a></li>
+          <li><a href="myworks.html">Works</a></li>
+          <li><a href="notes.html">Notes</a></li>
+          <li><a href="index.html#profile">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="test-note" style="margin-top:6rem">// test-cards.html — Tech Stack / Timeline / Notes カードの候補比較。採用したものだけ style.css へ移植する。</p>
+    <p class="test-note" style="color:var(--text-secondary)">// Tech Stack = 候補D、Latest Notes = 候補C は決定・本移植済み。以下は Timeline の再検討分。</p>
+
+    <!-- ============================================================ -->
+    <!-- Timeline 再検討 -->
+    <!-- ============================================================ -->
+    <div class="test-divider" style="margin-top:3rem">
+      <span>Timeline 再検討 — 案1: Circuit Rail</span>
+      <p class="desc">回路トレースの縦線に、菱形の「ビア」ノード。カードは候補A（Spec Sheet）と同じ角丸なし・ヘアライン罫線。資格スキルツリーや境界線のグリッチと同じ回路図言語で、Timeline も繋げる方向。</p>
+    </div>
+    <div class="test-block">
+      <ul class="tl1-list" id="tl1-list"></ul>
+    </div>
+
+    <div class="test-divider">
+      <span>Timeline 再検討 — 案2: Terminal History</span>
+      <p class="desc">縦線・ドットの代わりに、<code>git log --oneline</code> 風の履歴として読ませる方向。ターミナル窓の中に1行1件、先頭の <code>*</code> が繋がりを表す。候補B（Terminal Log）と対になる。</p>
+    </div>
+    <div class="test-block">
+      <div class="tl2-window">
+        <div class="tl2-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="path">~$ git log --oneline --graph timeline</span></div>
+        <div class="tl2-body" id="tl2-body"></div>
+      </div>
+    </div>
+
+    <div class="test-divider">
+      <span>Timeline 再検討 — 案3: Perforated Rail（推奨）</span>
+      <p class="desc">縦線を破線にし、ドットをミシン目のパンチ穴に。カードは候補C（Index Card、採用済みの Latest Notes）と同じ破線罫・参照タブを踏襲する。すでに決めた Notes の意匠とページ内で呼応するため、これを推す。</p>
+    </div>
+    <div class="test-block">
+      <ul class="tl3-list" id="tl3-list"></ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 候補 A〜D（参考: 既出の比較） -->
+    <!-- ============================================================ -->
+    <!-- ============================================================ -->
+    <!-- 候補 A -->
+    <!-- ============================================================ -->
+    <div class="test-divider">
+      <span>候補 A — Spec Sheet</span>
+      <p class="desc">角丸なし、細いヘアライン罫線。左上に英数字のキッカー、タイトル下に横罫、本文はラベル:値のデータシート風グリッド。境界線のグリッチや資格スキルツリーと同じ「回路図」の語彙をカードにも通す方向。</p>
+    </div>
+    <div class="test-block">
+      <div class="test-row-label">Tech Stack</div>
+      <div class="test-grid-skills" id="A-skills"></div>
+      <div class="test-row-label">Timeline</div>
+      <div class="test-grid-timeline" id="A-timeline"></div>
+      <div class="test-row-label">Latest Notes</div>
+      <div class="test-grid-notes" id="A-notes"></div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 候補 B -->
+    <!-- ============================================================ -->
+    <div class="test-divider">
+      <span>候補 B — Terminal Log</span>
+      <p class="desc">各カードをミニターミナル窓に。ヘッダーに信号灯とコマンド行、本文は monospace。イースターエッグやブートログの「端末的な人格」をカードにも持ち込む方向。</p>
+    </div>
+    <div class="test-block">
+      <div class="test-row-label">Tech Stack</div>
+      <div class="test-grid-skills" id="B-skills"></div>
+      <div class="test-row-label">Timeline</div>
+      <div class="test-grid-timeline" id="B-timeline"></div>
+      <div class="test-row-label">Latest Notes</div>
+      <div class="test-grid-notes" id="B-notes"></div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 候補 C -->
+    <!-- ============================================================ -->
+    <div class="test-divider">
+      <span>候補 C — Index Card</span>
+      <p class="desc">上端が破線、右上に控えめな参照番号タブ。余白を多めに取った、パソコン通信／カード目録を思わせる方向。lite.html のトーンに近い。</p>
+    </div>
+    <div class="test-block">
+      <div class="test-row-label">Tech Stack</div>
+      <div class="test-grid-skills" id="C-skills"></div>
+      <div class="test-row-label">Timeline</div>
+      <div class="test-grid-timeline" id="C-timeline"></div>
+      <div class="test-row-label">Latest Notes</div>
+      <div class="test-grid-notes" id="C-notes"></div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 候補 D -->
+    <!-- ============================================================ -->
+    <div class="test-divider">
+      <span>候補 D — Signal Tile</span>
+      <p class="desc">枠を持たず、カテゴリ色の左端バーだけで区切る。最もフラットでダッシュボード的。回路モチーフからは離れるが、いちばん現代的で情報密度に強い。</p>
+    </div>
+    <div class="test-block">
+      <div class="test-row-label">Tech Stack</div>
+      <div class="test-grid-skills" id="D-skills"></div>
+      <div class="test-row-label">Timeline</div>
+      <div class="test-grid-timeline" id="D-timeline"></div>
+      <div class="test-row-label">Latest Notes</div>
+      <div class="test-grid-notes" id="D-notes"></div>
+    </div>
+  </main>
+
+  <footer class="glass-top">
+    <div class="footer-content">
+      <p class="mono">© 2026 Altena. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    'use strict';
+
+    // 4 候補すべてに同じサンプルデータを流し込んで見比べる。
+    // 実データは .claude/dev-server.js のサンプルと揃えてある（存在すれば fetch に差し替え可）。
+    const SKILLS = [
+      { icon: 'blender-logo.svg',    name: 'Blender',    description: 'モデリングからレンダリングまで。最近いちばん触っている。', level: 'Intermediate', since: '2026' },
+      { icon: 'typescript-logo.svg', name: 'TypeScript', description: 'フロントの実装はだいたいこれ。型があると夜よく眠れる。',       level: 'Advanced',     since: '2023' },
+      { icon: 'nodejs-logo.svg',     name: 'Node.js',    description: 'このサイトの API も Express で書いている。',                 level: 'Advanced',     since: '2023' },
+      { icon: 'python-logo.svg',     name: 'Python',     description: '雑務の自動化と検証スクリプト。',                             level: 'Intermediate', since: '2022' },
+    ];
+
+    const TIMELINE = [
+      { date: '2023-04', title: '高専 入学',           category: 'school'  },
+      { date: '2024-05', title: '基本情報技術者 合格',   category: 'cert'    },
+      { date: '2025-04', title: '応用情報技術者 合格',   category: 'cert'    },
+      { date: '2025-06', title: '学内コンテスト 最優秀',  category: 'contest' },
+      { date: '2025-11', title: 'LPIC-1 合格',          category: 'cert'    },
+      { date: '2026-06', title: '校外ハッカソン 参加',    category: 'contest' },
+    ];
+
+    const NOTES = [
+      { date: '2026-08-10', title: 'Blender のノードで手を動かして覚えたこと', excerpt: 'シェーダーノードを触りはじめて三週間。詰まった箇所と、そのとき何を見て解いたかを残しておく。', tags: ['Blender', '3DCG'] },
+      { date: '2026-07-28', title: 'nginx を Cloudflare の後ろに置いたときの実IP', excerpt: 'アクセスログが全部 Cloudflare の IP になっていた。realip モジュールの設定でつまずいた点。', tags: ['nginx', 'Infra'] },
+      { date: '2026-07-02', title: '応用情報の午後は結局どう選んだか', excerpt: '選択問題の決め方を、当日の時間配分とあわせて振り返る。', tags: ['資格'] },
+    ];
+
+    const CAT_ACCENT = { cert: 'var(--accent-primary)', contest: 'var(--accent-secondary)', school: '#1f8a4c' };
+    const CAT_LABEL  = { cert: 'Certification', contest: 'Contest', school: 'School' };
+
+    // ── Timeline 再検討: 案1 Circuit Rail ──────────────────────────
+    function renderTimeline1(root) {
+      root.innerHTML = `<div class="tl1-rail"></div>` + TIMELINE.map((t, i) => `
+        <li class="tl1-item">
+          <span class="tl1-via"></span>
+          <div class="tl1-card">
+            <div class="tl1-kicker" style="--tl-c:${CAT_ACCENT[t.category] || 'var(--accent-primary)'}">
+              <span>EVT_${String(i + 1).padStart(2, '0')}</span><span>${escHtml(t.date)}</span>
+            </div>
+            <h3>${escHtml(t.title)}</h3>
+            <span class="tl1-cat tl-cat ${escHtml(t.category)}">${escHtml(CAT_LABEL[t.category] || t.category)}</span>
+          </div>
+        </li>`).join('');
+    }
+
+    // ── Timeline 再検討: 案2 Terminal History ──────────────────────
+    function renderTimeline2(root) {
+      root.innerHTML = TIMELINE.map(t => `
+        <div class="tl2-row">
+          <span class="tl2-star">*</span>
+          <span class="tl2-date">${escHtml(t.date)}</span>
+          <span class="tl2-title">${escHtml(t.title)}</span>
+          <span class="tl2-cat">${escHtml(t.category)}</span>
+        </div>`).join('');
+    }
+
+    // ── Timeline 再検討: 案3 Perforated Rail ────────────────────────
+    function renderTimeline3(root) {
+      root.innerHTML = `<div class="tl3-rail"></div>` + TIMELINE.map((t, i) => `
+        <li class="tl3-item">
+          <span class="tl3-punch"></span>
+          <div class="tl3-card" data-ref="EVT-${String(i + 1).padStart(3, '0')}">
+            <span class="tl3-date">${escHtml(t.date)}</span>
+            <h3 style="font-size:1rem">${escHtml(t.title)}</h3>
+            <span class="tl-cat ${escHtml(t.category)}" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--cat-c)">${escHtml(CAT_LABEL[t.category] || t.category)}</span>
+          </div>
+        </li>`).join('');
+    }
+
+    function renderSkillsA(root) {
+      root.innerHTML = SKILLS.map((s, i) => `
+        <div class="cardA">
+          <div class="head-row">
+            <div class="icon-box"><img src="img/${escHtml(s.icon)}" class="prog-lang-img" alt=""></div>
+            <div class="head-meta">
+              <div class="kicker"><span>SKILL_${String(i + 1).padStart(2, '0')}</span><span>${escHtml(s.since)}</span></div>
+              <h3>${escHtml(s.name)}</h3>
+            </div>
+          </div>
+          <hr>
+          <div class="row"><span class="k">Level</span><span class="v">${escHtml(s.level)}</span></div>
+          <div class="row"><span class="k">Since</span><span class="v">${escHtml(s.since)}</span></div>
+          <p class="desc">${escHtml(s.description)}</p>
+        </div>`).join('');
+    }
+    function renderSkillsB(root) {
+      root.innerHTML = SKILLS.map(s => `
+        <div class="cardB">
+          <div class="term-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="path">~/skills/${escHtml(s.name.toLowerCase())}</span></div>
+          <div class="term-body">
+            <div class="icon-box"><img src="img/${escHtml(s.icon)}" class="prog-lang-img" alt=""></div>
+            <div class="prompt"><span class="path-part">altena@dev</span>:~$ whoami --skill</div>
+            <h3>${escHtml(s.name)}</h3>
+            <p class="desc">${escHtml(s.description)}</p>
+            <div class="meta">level: ${escHtml(s.level)} · since ${escHtml(s.since)}</div>
+          </div>
+        </div>`).join('');
+    }
+    function renderSkillsC(root) {
+      root.innerHTML = SKILLS.map((s, i) => `
+        <div class="cardC" data-ref="SKL-${String(i + 1).padStart(3, '0')}">
+          <div class="icon-box"><img src="img/${escHtml(s.icon)}" class="prog-lang-img" alt=""></div>
+          <span class="meta">${escHtml(s.level)} · ${escHtml(s.since)}〜</span>
+          <h3>${escHtml(s.name)}</h3>
+          <p class="desc">${escHtml(s.description)}</p>
+        </div>`).join('');
+    }
+    function renderSkillsD(root) {
+      root.innerHTML = SKILLS.map(s => `
+        <div class="cardD">
+          <span class="meta">${escHtml(s.level)} · ${escHtml(s.since)}〜</span>
+          <h3>${escHtml(s.name)}</h3>
+          <p class="desc">${escHtml(s.description)}</p>
+        </div>`).join('');
+    }
+
+    function renderTimelineA(root) {
+      root.innerHTML = TIMELINE.map((t, i) => `
+        <div class="cardA">
+          <div class="kicker"><span>EVT_${String(i + 1).padStart(2, '0')}</span><span>${escHtml(t.date)}</span></div>
+          <h3 style="font-size:1.05rem">${escHtml(t.title)}</h3>
+          <hr>
+          <div class="row"><span class="k">Category</span><span class="v">${escHtml(t.category)}</span></div>
+        </div>`).join('');
+    }
+    function renderTimelineB(root) {
+      root.innerHTML = TIMELINE.map(t => `
+        <div class="cardB">
+          <div class="term-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="path">~/log/${escHtml(t.date)}</span></div>
+          <div class="term-body">
+            <div class="prompt"><span class="path-part">altena@dev</span>:~$ git log --oneline -1</div>
+            <h3 style="font-size:1rem">${escHtml(t.title)}</h3>
+            <div class="meta">${escHtml(t.date)} · ${escHtml(t.category)}</div>
+          </div>
+        </div>`).join('');
+    }
+    function renderTimelineC(root) {
+      root.innerHTML = TIMELINE.map((t, i) => `
+        <div class="cardC" data-ref="EVT-${String(i + 1).padStart(3, '0')}">
+          <span class="meta">${escHtml(t.date)}</span>
+          <h3 style="font-size:1.05rem">${escHtml(t.title)}</h3>
+          <p class="desc">${escHtml(t.category)}</p>
+        </div>`).join('');
+    }
+    function renderTimelineD(root) {
+      root.innerHTML = TIMELINE.map(t => `
+        <div class="cardD" style="--tile-accent:${CAT_ACCENT[t.category] || 'var(--accent-primary)'}">
+          <span class="meta">${escHtml(t.date)}</span>
+          <h3 style="font-size:1.05rem">${escHtml(t.title)}</h3>
+        </div>`).join('');
+    }
+
+    function renderNotesA(root) {
+      root.innerHTML = NOTES.map((n, i) => `
+        <div class="cardA">
+          <div class="kicker"><span>LOG_${String(i + 1).padStart(2, '0')}</span><span>${escHtml(n.date)}</span></div>
+          <h3>${escHtml(n.title)}</h3>
+          <hr>
+          <p class="desc">${escHtml(n.excerpt)}</p>
+          <div class="tags">${n.tags.map(t => `<span class="tag-link">#${escHtml(t)}</span>`).join('')}</div>
+        </div>`).join('');
+    }
+    function renderNotesB(root) {
+      root.innerHTML = NOTES.map(n => `
+        <div class="cardB">
+          <div class="term-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="path">~/notes/${escHtml(n.date)}.md</span></div>
+          <div class="term-body">
+            <div class="prompt"><span class="path-part">altena@dev</span>:~$ less notes/${escHtml(n.date)}.md</div>
+            <h3>${escHtml(n.title)}</h3>
+            <p class="desc">${escHtml(n.excerpt)}</p>
+            <div class="tags">${n.tags.map(t => `<span>#${escHtml(t)}</span>`).join(' ')}</div>
+          </div>
+        </div>`).join('');
+    }
+    function renderNotesC(root) {
+      root.innerHTML = NOTES.map((n, i) => `
+        <div class="cardC" data-ref="LOG-${String(i + 1).padStart(3, '0')}">
+          <span class="meta">${escHtml(n.date)}</span>
+          <h3>${escHtml(n.title)}</h3>
+          <p class="desc">${escHtml(n.excerpt)}</p>
+          <div class="tags">${n.tags.map(t => `<span class="tag-link">#${escHtml(t)}</span>`).join('')}</div>
+        </div>`).join('');
+    }
+    function renderNotesD(root) {
+      root.innerHTML = NOTES.map(n => `
+        <div class="cardD">
+          <span class="meta">${escHtml(n.date)}</span>
+          <h3 style="font-size:1.1rem">${escHtml(n.title)}</h3>
+          <p class="desc">${escHtml(n.excerpt)}</p>
+          <div class="tags">${n.tags.map(t => `<span class="tag-link">#${escHtml(t)}</span>`).join('')}</div>
+        </div>`).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTimeline1(document.getElementById('tl1-list'));
+      renderTimeline2(document.getElementById('tl2-body'));
+      renderTimeline3(document.getElementById('tl3-list'));
+
+      renderSkillsA(document.getElementById('A-skills'));
+      renderSkillsB(document.getElementById('B-skills'));
+      renderSkillsC(document.getElementById('C-skills'));
+      renderSkillsD(document.getElementById('D-skills'));
+
+      renderTimelineA(document.getElementById('A-timeline'));
+      renderTimelineB(document.getElementById('B-timeline'));
+      renderTimelineC(document.getElementById('C-timeline'));
+      renderTimelineD(document.getElementById('D-timeline'));
+
+      renderNotesA(document.getElementById('A-notes'));
+      renderNotesB(document.getElementById('B-notes'));
+      renderNotesC(document.getElementById('C-notes'));
+      renderNotesD(document.getElementById('D-notes'));
+    });
+  </script>
+</body>
+
+</html>

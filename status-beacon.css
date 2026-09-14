@@ -1,0 +1,187 @@
+.divider-status-beacon {
+    position: absolute;
+    right: clamp(1.5rem, 5vw, 5rem);
+    bottom: calc(var(--divider-bleed, 72px) + clamp(1rem, 2vw, 2rem));
+    z-index: 8;
+    display: grid;
+    justify-items: end;
+    gap: 0.28rem;
+    width: min(42rem, 56vw);
+    max-width: calc(100vw - 2 * clamp(1.5rem, 5vw, 5rem));
+    color: var(--text-secondary);
+    font-size: clamp(0.62rem, 0.72vw, 0.72rem);
+    line-height: 1.45;
+    letter-spacing: 0.08em;
+    opacity: 0.72;
+    overflow: hidden;   /* 最終防衛線。個々の行が右にあふれても画面外へは出さない */
+}
+
+/* .status-source が行ごと隠す。#sys-status 単体のルールは、この要素だけを
+   別の文脈で再利用した場合の保険として残す。 */
+.status-source {
+    display: none;
+}
+
+#sys-status {
+    display: none;
+}
+
+.divider-status-line {
+    --line-width: 18%;
+    --line-size: clamp(0.5rem, 0.52vw, 0.64rem);
+    display: flex;
+    justify-content: flex-end;
+    align-items: baseline;
+    gap: 0.8rem;
+    width: var(--line-width);
+    max-width: 100%;
+    font-size: var(--line-size);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;   /* 値が --line-width に収まらないときはここで切る（後述のellipsisと対） */
+}
+
+/* white-space:nowrap の値テキストは折り返せないため、コンテナ(--line-width)より
+   長いと flex の既定 min-width:auto でボックスごと外へ押し広げてしまう。
+   キーは常にフル表示（縮めない）、値の方だけ縮めて省略記号を出す。 */
+.divider-status-key {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.divider-status-line > *:not(.divider-status-key) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.divider-status-detail {
+    --line-width: 100%;
+    --line-size: clamp(0.72rem, 1vw, 1.12rem);
+}
+
+#divider-status-detail {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.divider-status-summary  { --line-width: 18%; --line-size: clamp(0.5rem, 0.52vw, 0.64rem); }
+.divider-status-domain   { --line-width: 25%; --line-size: clamp(0.52rem, 0.56vw, 0.68rem); }
+.divider-status-protocol { --line-width: 32%; --line-size: clamp(0.54rem, 0.6vw, 0.72rem); }
+.divider-status-tls      { --line-width: 39%; --line-size: clamp(0.56rem, 0.64vw, 0.76rem); }
+.divider-status-mode     { --line-width: 46%; --line-size: clamp(0.58rem, 0.68vw, 0.8rem); }
+.divider-status-node     { --line-width: 53%; --line-size: clamp(0.6rem, 0.72vw, 0.84rem); }
+.divider-status-render   { --line-width: 60%; --line-size: clamp(0.62rem, 0.76vw, 0.88rem); }
+.divider-status-runtime  { --line-width: 67%; --line-size: clamp(0.64rem, 0.8vw, 0.92rem); }
+.divider-status-server   { --line-width: 75%; --line-size: clamp(0.66rem, 0.84vw, 0.96rem); }
+.divider-status-uptime   { --line-width: 83%; --line-size: clamp(0.68rem, 0.88vw, 1rem); }
+.divider-status-endpoint { --line-width: 91%; --line-size: clamp(0.7rem, 0.92vw, 1.06rem); }
+
+#divider-status-value[data-state="online"],
+#divider-status-tls[data-state="valid"],
+.divider-status-detail {
+    color: var(--accent-primary);
+}
+
+/* [TEXT MODE] は他行と違い実際のリンク。[SYSTEM STATUS] の直下、同じ全幅で
+   一段小さく置き、ホバー/フォーカスでアクセント色にしてクリック可能だと分かるようにする。 */
+.divider-status-textmode {
+    --line-width: 100%;
+    --line-size: clamp(0.64rem, 0.86vw, 0.94rem);
+    color: var(--text-secondary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.divider-status-textmode:hover,
+.divider-status-textmode:focus-visible {
+    color: var(--accent-primary);
+}
+
+.divider-status-textmode:focus-visible {
+    outline: 1px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+#divider-status-value[data-state="checking"],
+#divider-status-tls[data-state="checking"] {
+    color: var(--accent-secondary);
+}
+
+#divider-status-value[data-state="unknown"],
+#divider-status-tls[data-state="unknown"],
+#divider-status-tls[data-state="expired"] {
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .divider-status-beacon {
+        right: 1rem;
+        /* 境界は画面が狭いほど浅くなる（js/main.js が算出する --divider-drop が
+           width に比例して小さくなる）。bottom を固定値のままにすると、狭い画面で
+           ビーコンの上側の行が境界の下（明色側）へはみ出す。
+           --divider-drop は .hero（100vh）の下端から境界までの距離であって、
+           .hero-wrap の下端（.hero の下にさらに --divider-bleed ぶん続く、
+           破片がはみ出すための余白）からの距離ではない。bottom は .hero-wrap
+           基準なので、境界の内側に収めるには drop に bleed を足した位置まで
+           沈める必要がある（引くのではなく足す — 一度引く式で実装して、狭い画面で
+           ビーコンごとビューポート外に消える不具合を作った失敗あり）。 */
+        bottom: calc(var(--divider-drop, 220px) + var(--divider-bleed, 72px) + 0.75rem);
+        width: min(22rem, calc(100vw - 2rem));
+        max-width: calc(100vw - 2rem);
+        font-size: 0.6rem;
+    }
+
+    .divider-status-protocol,
+    .divider-status-mode,
+    .divider-status-render,
+    .divider-status-runtime,
+    .divider-status-server,
+    .divider-status-endpoint {
+        display: none;
+    }
+
+    .divider-status-line {
+        font-size: var(--line-size);
+    }
+
+    /* 狭い画面では「上から下へ幅が階段状に増える」演出より確実に収まることを
+       優先し、残した行はすべて同じ全幅・同じ大きさに揃える。18〜91% の個別幅は
+       広い画面だけの飾りで、モバイルでは短い語（"ONLINE" 等）すら省略される
+       ほど窮屈だったため。 */
+    .divider-status-summary,
+    .divider-status-domain,
+    .divider-status-tls,
+    .divider-status-node,
+    .divider-status-uptime,
+    .divider-status-detail,
+    .divider-status-textmode {
+        --line-width: 100%;
+        --line-size: clamp(0.6rem, 2.6vw, 0.72rem);
+    }
+}
+
+@media (max-width: 420px) {
+    .divider-status-beacon {
+        right: 0.75rem;
+        width: calc(100vw - 1.5rem);
+        /* 計算の考え方は 768px 版と同じ（drop + bleed を足した位置に沈める）。 */
+        bottom: calc(var(--divider-drop, 150px) + var(--divider-bleed, 72px) + 0.75rem);
+    }
+
+    /* さらに狭い画面では行の大きさではなく情報量そのものを絞る。
+       稼働状況の要約と Text Mode への導線だけ残す。 */
+    .divider-status-tls,
+    .divider-status-node {
+        display: none;
+    }
+
+    .divider-status-summary,
+    .divider-status-domain,
+    .divider-status-uptime,
+    .divider-status-detail,
+    .divider-status-textmode {
+        --line-size: clamp(0.58rem, 3vw, 0.68rem);
+    }
+}

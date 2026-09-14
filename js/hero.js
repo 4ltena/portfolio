@@ -34,11 +34,16 @@ const matWire  = [
   new THREE.LineBasicMaterial({ color:0x003344, transparent:true, opacity:0.13 }),
 ];
 
+// 斜線でヒーローの可視領域が削られたぶん立方体が小さく見えるため、見かけの大きさを
+// まとめて持ち上げる。数を変えずに寸法だけ倍にしているので、上げすぎると近景が
+// 埋まる。密度が気になるときは下の count を減らす。
+const CUBE_SCALE = 2.0;
+
 const ZONES = [
   { zMin:-70, zMax:-20, szMin:0.12, szMax:0.40, count:65, solidRate:0.00, collide:false, speed:0.00040 },
   { zMin:-20, zMax: -6, szMin:0.15, szMax:1.00, count:35, solidRate:0.25, collide:true,  speed:0.00150 },
   { zMin: -6, zMax:  2, szMin:0.35, szMax:2.20, count:18, solidRate:0.35, collide:true,  speed:0.00090 },
-];
+].map(z => ({ ...z, szMin: z.szMin * CUBE_SCALE, szMax: z.szMax * CUBE_SCALE }));
 
 const rng = (a,b) => a + Math.random()*(b-a);
 const cubes=[], hitBoxes=[], hitToCube=new Map();

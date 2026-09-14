@@ -2,7 +2,14 @@ console.log("%c[SYSTEM] Kernel Loaded. Identity: Guest. Monitoring activity...",
 
 // escHtml / buildNoteCard は js/utils.js（main.js より前に読み込む）で定義。
 
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 document.addEventListener('DOMContentLoaded', async () => {
+
+    // ── Hero divider (最初の描画に間に合わせるため先頭で) ────
+    initDivider();
+    initHeaderTheme();
 
     // ── Logo animation (starts immediately) ──────────────────
     initLogoAnimation();
@@ -17,21 +24,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ── Timeline filters ─────────────────────────────────────
     initFilters();
-
-    // ── Hero background mouse tracking ───────────────────────
-    const hero = document.querySelector('.hero');
-    if (hero) {
-        hero.addEventListener('mousemove', (e) => {
-            const x = (e.clientX / window.innerWidth)  * 100;
-            const y = (e.clientY / window.innerHeight) * 100;
-            const placeholder = document.querySelector('.hero-placeholder');
-            if (placeholder) {
-                placeholder.style.background =
-                    `radial-gradient(circle at ${x}% ${y}%, rgba(112,0,255,0.15), transparent 40%),` +
-                    `radial-gradient(circle at ${100-x}% ${100-y}%, rgba(0,242,255,0.1), transparent 50%)`;
-            }
-        });
-    }
 
     // ── System status (live clock — placeholder の "Upgrading..." が固定表示になる問題の解消) ──
     initSystemStatus();
@@ -100,11 +92,10 @@ async function renderSkills() {
         const r = await fetch('/portfolio/api/skills');
         if (!r.ok) return;
         const items = await r.json();
+        // Signal Tile デザイン（採用: 2026-08-19）はロゴアイコンを持たない。
+        // 必要になったら item.icon から再度 <img> を組み込める。
         grid.innerHTML = items.map(item => `
-            <div class="prog-lang-tile-item glass">
-              <div class="icon-box">
-                <img src="img/${escHtml(item.icon)}" alt="${escHtml(item.name)} logo" class="prog-lang-img">
-              </div>
+            <div class="prog-lang-tile-item">
               <h3>${escHtml(item.name)}</h3>
               <p>${escHtml(item.description)}</p>
             </div>`).join('');
@@ -131,7 +122,7 @@ async function initSystemStatus() {
     const el = document.getElementById('sys-status');
     if (!el) return;
 
-    // サーバーの稼働情報（nginx バージョン・uptime）を取得。
+    // サーバーの稼働情報（nginx バージョン・uptime・TLS証明書の状態）を取得。
     // 失敗してもライブ時計だけは動かす。
     let server = '';
     try {
@@ -141,6 +132,10 @@ async function initSystemStatus() {
             const parts = [];
             if (s.nginx) parts.push(`nginx ${s.nginx}`);
             if (s.uptime) parts.push(`up ${s.uptime.days}d ${s.uptime.hours}h`);
+            // js/status-beacon.js 側が \bTLS\b(valid|expired|unknown) を正規表現で
+            // 拾って [TLS] 行に反映する。API は値を返しているのにここで素通りさせて
+            // いたため、[TLS] が常に UNKNOWN 表示のままになるバグがあった。
+            if (s.tls) parts.push(`tls ${s.tls}`);
             if (parts.length) server = ` · ${parts.join(' · ')}`;
         }
     } catch {}
@@ -158,6 +153,208 @@ async function initSystemStatus() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Hero divider (Glitch Slice)
+// ─────────────────────────────────────────────────────────────
+
+const DIVIDER_ANGLE_DEG = 18;
+
+// 破片の散らばりを決める種。値を変えると配置が丸ごと入れ替わるので、
+// 気に入らない散らばりに当たったら別の数字を試す。
+const DIVIDER_SEED = 20260819;
+
+// mulberry32。毎回同じ配置を出すために Math.random() は使わない。
+function makeRng(seed) {
+    let a = seed >>> 0;
+    return () => {
+        a = (a + 0x6D2B79F5) >>> 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+// 破片のかたまり（＝境界の裂け目）の強さ。3 が大きく抉れるもの、1 が小さいもの。
+// 強さを確率で引くと「強いものが等間隔に何個か」という並びが出やすいので、
+// 内訳を固定して順番だけ入れ替える。数と比率はここを直せば変えられる。
+const DIVIDER_TEARS = [3, 3, 2, 2, 1, 1, 1];
+
+// 破片を [x%, width%, y(px), height(px), kind] の配列で組み立てる。
+// y は境界からの距離。負 = 暗色側へ削り込む / 正 = 明色側へ切り離す。
+//
+// 位置は「前の裂け目からの間隔」を積むのではなく、0〜100% から一様に引いて
+// 最小距離だけ課す。逐次的に間隔を積むとどうしても均されるが、一様乱数の点は
+// 自然に固まったり大きく空いたりするので、狙わなくても粗密が出る。
+function buildDividerShards(rng) {
+    const shards = [];
+    const push = (x, w, y, h, kind) =>
+        shards.push([+x.toFixed(2), +w.toFixed(2), +y.toFixed(1), +h.toFixed(1), kind]);
+
+    // 強さの並びをシャッフル（Fisher-Yates）
+    const strengths = DIVIDER_TEARS.slice();
+    for (let i = strengths.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [strengths[i], strengths[j]] = [strengths[j], strengths[i]];
+    }
+
+    // 位置を一様に引く。近すぎるものだけ捨てる。
+    const MIN_GAP = 4;
+    const xs = [];
+    for (let tries = 0; xs.length < strengths.length && tries < 400; tries++) {
+        const cx = -3 + rng() * 103;
+        if (xs.every(v => Math.abs(v - cx) >= MIN_GAP)) xs.push(cx);
+    }
+
+    xs.forEach((x0, i) => {
+        const s = strengths[i] ?? 1;
+
+        // 強い裂け目ほど幅を詰めて、破片を一箇所に集める。散らすと迫力が出ない。
+        const span  = s === 3 ? 3 + rng() * 2.5
+                    : s === 2 ? 2.5 + rng() * 3
+                    :           1.8 + rng() * 2.2;
+        const place = w => x0 + rng() * Math.max(0.1, span - w);
+
+        // 暗色側への削り込み
+        const cuts = s === 3 ? 1 + (rng() < 0.6 ? 1 : 0) : 1;
+        for (let c = 0; c < cuts; c++) {
+            const w = 1.2 + rng() * (s === 3 ? 6.5 : s === 2 ? 4.2 : 2.6);
+            const h = s === 3 ? 5 + rng() * 5.5
+                    : s === 2 ? 2.75 + rng() * 2.75
+                    :           1.5 + rng() * 1.5;
+            const cx = place(w);
+            push(cx, w, -h, h, 'cut');
+            // 削り込みの縁に、面のずれ目の色収差を模したスリットを乗せる
+            if (rng() < 0.55) push(cx, w, -h - 1.5, 1.5, rng() < 0.5 ? 'glow' : 'violet');
+        }
+
+        // 明色側へ切り離された破片
+        // 明色側の破片は tear ごとに別の乱数列を使い、cut の座標から独立させる。
+        const fragRng = makeRng((DIVIDER_SEED ^ Math.floor(rng() * 0xffffffff)) >>> 0);
+        const frags = s === 3 ? 4 + Math.floor(fragRng() * 3)
+                    : s === 2 ? 3 + Math.floor(fragRng() * 2)
+                    :           1 + Math.floor(fragRng() * 2);
+        for (let f = 0; f < frags; f++) {
+            const w = 0.8 + fragRng() * (s === 3 ? 5 : s === 2 ? 3.5 : 2.2);
+            const h = s === 3 ? 1.5 + fragRng() * 4.5
+                    : s === 2 ? 1.5 + fragRng() * 3
+                    :           1 + fragRng() * 2;
+            const fy = 2 + fragRng() * fragRng() * (s === 3 ? 20 : 14);  // 境界寄りに多く、たまに遠くへ飛ぶ
+            const fx = fragRng() * Math.max(0, 100 - w);
+            const tone = fragRng();
+            const kind = tone < 0.14 ? 'glow'
+                       : tone < 0.34 ? 'violet'
+                       :               'frag';
+            push(fx, w, fy, h, kind);
+        }
+
+        if (s >= 2 && rng() < 0.5) {
+            const w = 1.5 + rng() * 4;
+            push(place(w), w, 4 + rng() * 18, 1.5, rng() < 0.6 ? 'glow' : 'violet');
+        }
+    });
+
+    return shards;
+}
+
+function initDivider() {
+    const group = document.getElementById('shard-group');
+    if (!group) return;
+
+    for (const [x, w, y, h, kind] of buildDividerShards(makeRng(DIVIDER_SEED))) {
+        const el = document.createElement('span');
+        el.className = `shard ${kind}`;
+        el.style.left   = `${x}%`;
+        el.style.width  = `${w}%`;
+        el.style.top    = `${y}px`;
+        el.style.height = `${h}px`;
+        group.appendChild(el);
+    }
+
+    // 落差は「実測幅 × tan(角度)」。CSS 側の 100vw は縦スクロールバーぶん実要素幅と
+    // ズレるため、そのままだと clip-path の切断角と破片レイヤーの回転角が食い違う。
+    // clientWidth で測り直して両者を一致させる。
+    const update = () => {
+        const w    = document.documentElement.clientWidth;
+        const drop = w * Math.tan(DIVIDER_ANGLE_DEG * Math.PI / 180);
+        document.documentElement.style.setProperty('--divider-drop', `${drop.toFixed(1)}px`);
+    };
+    update();
+    window.addEventListener('resize', update);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Header theme
+// ヒーローの暗色プレートに載っている部分だけ暗色にする。一括の on/off ではなく、
+// 境界と同じ角度の対角線でヘッダーを横切って連続的に切り替わる — スクロールに
+// つれて ABOUT → NOTES → … と右の項目から順に反転していく。
+// ─────────────────────────────────────────────────────────────
+
+function initHeaderTheme() {
+    const header = document.querySelector('.header');
+    if (!header || !document.getElementById('hero-canvas')) return;
+
+    // 暗色の帯を境界と同じ傾きで切り抜いてヘッダーに重ねる層
+    let plate = header.querySelector('.header-plate');
+    if (!plate) {
+        plate = document.createElement('div');
+        plate.className = 'header-plate';
+        plate.setAttribute('aria-hidden', 'true');
+        header.insertBefore(plate, header.firstChild);
+    }
+
+    const navEl = document.querySelector('.nav');
+    const watched = [
+        document.getElementById('header-logo'),
+        document.querySelector('.hamburger'),
+        ...document.querySelectorAll('.nav a'),
+    ].filter(Boolean);
+
+    // 境界の画面上の高さ（px、ヘッダーを基準に上が 0）。境界は左端で最も低く
+    // （＝暗色が深い）、右端に向かって浅くなる — .hero-wrap の clip-path と同じ式。
+    const boundaryY = (x, heroH, drop, viewW, scrollY) =>
+        heroH - (x / viewW) * drop - scrollY;
+
+    const update = () => {
+        const viewW   = document.documentElement.clientWidth;
+        const heroH   = window.innerHeight;   // .hero は 100vh
+        const drop    = viewW * Math.tan(DIVIDER_ANGLE_DEG * Math.PI / 180);
+        const headerH = header.offsetHeight;
+        const sy      = window.scrollY;
+        const clamp   = v => Math.max(0, Math.min(headerH, v));
+
+        // header に置けば子の .header-plate が継承して使う
+        header.style.setProperty('--hdr-left',  `${clamp(boundaryY(0,     heroH, drop, viewW, sy))}px`);
+        header.style.setProperty('--hdr-right', `${clamp(boundaryY(viewW, heroH, drop, viewW, sy))}px`);
+
+        // モバイルではナビが閉時オフキャンバス・開時は明色の全面オーバーレイになり、
+        // どちらでも境界の対角線とは無関係になる。position:fixed になるのは
+        // その切り替えが起きる幅だけなので、判定に使う。
+        const navOffLayout = navEl && getComputedStyle(navEl).position === 'fixed';
+
+        for (const el of watched) {
+            if (navOffLayout && navEl.contains(el)) {
+                el.classList.remove('over-dark');
+                continue;
+            }
+            const r = el.getBoundingClientRect();
+            const cx = r.left + r.width / 2;
+            el.classList.toggle('over-dark', boundaryY(cx, heroH, drop, viewW, sy) > headerH / 2);
+        }
+    };
+
+    let ticking = false;
+    const onFrame = () => { ticking = false; update(); };
+    const request = () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(onFrame);
+    };
+
+    update();
+    window.addEventListener('scroll', request, { passive: true });
+    window.addEventListener('resize', request);
+}
+
+// ─────────────────────────────────────────────────────────────
 // Logo typing animation
 // ─────────────────────────────────────────────────────────────
 
@@ -167,8 +364,6 @@ function initLogoAnimation() {
 
     const slashIcon = '<span class="slash-icon">//</span>';
     logo.innerHTML = '<span class="slash-icon"></span><span class="logo-cursor"></span>';
-
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
     (async () => {
         await delay(200);
@@ -212,29 +407,41 @@ function initRevealObserver() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Title typing (one-time)
+// Title typing (one-time, 2 行)
 // ─────────────────────────────────────────────────────────────
 
-function initTitleTyping() {
-    return new Promise(resolve => {
-        const target = document.querySelector('.title-typing');
-        if (!target) { resolve(); return; }
+const TITLE_LINES = ['Altena', 'Works'];
 
-        const text = 'Altena Portfolio';
-        let index = 0;
+async function typeInto(el, text, speed) {
+    for (const char of text) {
+        el.textContent += char;
+        await delay(speed);
+    }
+}
 
-        const type = () => {
-            if (index < text.length) {
-                target.textContent += text.charAt(index++);
-                setTimeout(type, 100);
-            } else {
-                const cursor = document.getElementById('title-cursor');
-                if (cursor) cursor.style.display = 'none';
-                resolve();
-            }
-        };
-        type();
-    });
+async function initTitleTyping() {
+    const line1 = document.querySelector('.title-line-1');
+    const line2 = document.querySelector('.title-line-2');
+    if (!line1 || !line2) return;
+
+    const cursor1 = document.getElementById('title-cursor-1');
+    const cursor2 = document.getElementById('title-cursor-2');
+
+    if (REDUCED_MOTION) {
+        line1.textContent = TITLE_LINES[0];
+        line2.textContent = TITLE_LINES[1];
+        if (cursor1) cursor1.hidden = true;
+        return;
+    }
+
+    // カーソルは打っている行にだけ出す（行末追従）
+    await typeInto(line1, TITLE_LINES[0], 105);
+    if (cursor1) cursor1.hidden = true;
+    if (cursor2) cursor2.hidden = false;
+
+    await delay(260);
+    await typeInto(line2, TITLE_LINES[1], 105);
+    if (cursor2) cursor2.hidden = true;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -242,14 +449,13 @@ function initTitleTyping() {
 // ─────────────────────────────────────────────────────────────
 
 function initSubtitleTyping() {
-    const prefixTarget    = document.querySelector('.prefix');
-    const typingTarget    = document.querySelector('.typing-animation');
-    const subtitleContainer = document.getElementById('subtitle-container');
-    const subtitleCursor  = document.getElementById('subtitle-cursor');
+    const prefixTarget   = document.querySelector('.prefix');
+    const typingTarget   = document.querySelector('.typing-animation');
+    const subtitleCursor = document.getElementById('subtitle-cursor');
 
     if (!typingTarget || !prefixTarget) return;
 
-    const prefixText = "I'm ";
+    const prefixText = "I'm";
     const phrases = [
         'Unity & Blender Developer',
         'Frontend Engineer',
@@ -292,8 +498,13 @@ function initSubtitleTyping() {
         setTimeout(typePhrases, speed);
     };
 
-    if (subtitleContainer) subtitleContainer.style.visibility = 'visible';
-    if (subtitleCursor)    subtitleCursor.style.display = 'inline-block';
+    if (REDUCED_MOTION) {
+        prefixTarget.textContent = prefixText;
+        typingTarget.textContent = phrases[1];
+        return;
+    }
+
+    if (subtitleCursor) subtitleCursor.hidden = false;
     typePrefix();
 }
 
@@ -337,12 +548,10 @@ function drawCircuits() {
     const svg     = document.getElementById('circuit-overlay');
     const wrapper = document.querySelector('.content-wrapper');
     const profile = document.getElementById('profile');
-    if (!svg || !wrapper || !profile) return;
+    const footer  = document.querySelector('footer.glass-top');
+    if (!svg || !wrapper || !profile || !footer) return;
 
-    const rect = wrapper.getBoundingClientRect();
-    svg.setAttribute('width',  rect.width);
-    svg.setAttribute('height', rect.height);
-    svg.innerHTML = '';
+    const wrapperRect = wrapper.getBoundingClientRect();
 
     const getCoords = el => {
         const r  = el.getBoundingClientRect();
@@ -356,6 +565,19 @@ function drawCircuits() {
         return { x: r.left - wr.left - tx, y: r.top - wr.top - ty, w: r.width, h: r.height };
     };
 
+    // footer は .content-wrapper の外（main の外側の兄弟要素）にあるため、
+    // その y 座標は wrapper 自身の高さより大きい。SVG の描画範囲を wrapper の
+    // 高さのままにしていると、斜線が footer まで届く前に切れてしまう。
+    // svg の高さ（属性・インラインスタイル双方）を footer の位置まで広げる。
+    // .content-wrapper 側に overflow は掛かっていないので、こう伸ばしても
+    // 見た目上そのまま footer の手前まで描画される。
+    const targetY = getCoords(footer).y;
+    const svgHeight = Math.max(wrapperRect.height, targetY);
+    svg.setAttribute('width',  wrapperRect.width);
+    svg.setAttribute('height', svgHeight);
+    svg.style.height = `${svgHeight}px`;
+    svg.innerHTML = '';
+
     const lineEnd = (el, margin) => {
         if (!el) return null;
         const c = getCoords(el);
@@ -366,23 +588,32 @@ function drawCircuits() {
     const p2 = lineEnd(document.querySelector('#timeline .section-title'), -40);
     const p3 = lineEnd(document.querySelector('#works .section-title'),    -20);
 
-    const worksMore = document.querySelector('.works-more');
-    if (!worksMore) return;
-    const wm = getCoords(worksMore);
-    const baseY = wm.y + wm.h + 40;
-
-    const drawPath = (pStart, bendY) => {
+    // 斜め区間は常に 45° 固定（水平に進んだ分だけ垂直にも進む）なので、
+    // x=0 での到達点は "bendY + pStart.x" になる。3 本とも footer の上端
+    // （targetY）にちょうど届くよう、staggerY（0/30/60px）だけずらした点に
+    // 着地するよう bendY を逆算する。
+    // ただし works（Latest Notes）のように着地点までの縦距離が横距離
+    // （pStart.x）より短いと、逆算した bendY が pStart.y より上に出てしまい、
+    // 「垂直区間」が上向きに描かれて折り返って見えるバグがあった
+    // （目視デスクトップ幅 ~1100px 以上で再現）。bendY が pStart.y を
+    // 下回るときは 45° 二段構成をやめ、start から着地点まで一直線で結ぶ
+    // （常に単調に下へ・左へ進むことを保証する）。
+    const drawPath = (pStart, staggerY) => {
         if (!pStart) return;
-        const d = `M ${pStart.x} ${pStart.y} L ${pStart.x} ${bendY} L 0 ${bendY + pStart.x}`;
+        const landY = targetY - staggerY;
+        const bendY = landY - pStart.x;
+        const d = bendY >= pStart.y
+            ? `M ${pStart.x} ${pStart.y} L ${pStart.x} ${bendY} L 0 ${landY}`
+            : `M ${pStart.x} ${pStart.y} L 0 ${landY}`;
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('class', 'circuit-path');
         path.setAttribute('d', d);
         svg.appendChild(path);
     };
 
-    drawPath(p1, baseY);
-    drawPath(p2, baseY + 30);
-    drawPath(p3, baseY + 60);
+    drawPath(p1, 0);
+    drawPath(p2, 30);
+    drawPath(p3, 60);
 }
 
 // ─────────────────────────────────────────────────────────────

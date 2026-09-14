@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEST — ヒーロー境界（斜め区切り）候補</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <script type="importmap">
+  { "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165/examples/jsm/"
+  }}
+  </script>
+
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/main.js"></script>
+  <script type="module" src="js/hero.js"></script>
+
+  <!-- このページ専用の試作スタイル。採用が決まったものだけ style.css に移植する。 -->
+  <style>
+    /* ==========================================================================
+       ライトテーマのトークン試案（本採用時は style.css の :root を差し替える）
+       ========================================================================== */
+    :root {
+      --bg-color: #fafdfe;
+      --surface-color: #ffffff;
+      --glass-bg: rgba(13, 17, 23, 0.025);
+      --glass-border: rgba(13, 17, 23, 0.10);
+      --text-primary: #0d1117;
+      --text-secondary: #5b6670;
+      --accent-primary: #0a7d8c;   /* 4.8:1 — 本文リンクにも使える濃ティール */
+      --accent-dimmed: #02939b;    /* 3.7:1 — 罫線・回路線。現行値を据え置き */
+      --accent-glow: #00f2ff;      /* 発光・ホバー・暗色面の上でのみ使う */
+      --hero-dark: #020810;        /* Three.js シーンの背景と同値 */
+    }
+
+    /* 暗色面の上ではトークンを局所反転する */
+    .on-dark {
+      --text-primary: #fafdfe;
+      --text-secondary: #9aa4ad;
+      --accent-primary: var(--accent-glow);
+      --glass-border: rgba(255, 255, 255, 0.12);
+    }
+
+    body { background: var(--bg-color); color: var(--text-primary); }
+
+    /* ==========================================================================
+       ヘッダー（暗色ヒーローの上では透過、スクロール後に明色ガラスへ）
+       ========================================================================== */
+    .header {
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-bottom-color: transparent;
+      color: #fafdfe;
+    }
+    .header .logo { color: #fafdfe; }
+    .header .logo .ena { color: var(--accent-glow); }
+    .header .nav a { color: rgba(250, 253, 254, 0.72); }
+    .header .nav a:hover { color: var(--accent-glow); }
+    .header .hamburger .bar { background-color: #fafdfe; }
+
+    .header.scrolled {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom-color: var(--glass-border);
+    }
+    .header.scrolled .logo { color: var(--text-primary); }
+    .header.scrolled .logo .ena { color: var(--accent-primary); }
+    .header.scrolled .nav a { color: var(--text-secondary); }
+    .header.scrolled .nav a:hover { color: var(--accent-primary); }
+    .header.scrolled .hamburger .bar { background-color: var(--text-primary); }
+
+    /* ==========================================================================
+       ヒーロー — 暗色を維持し、下端を斜めに切る
+       --drop / --angle は JS が実測幅から算出して :root に流し込む
+       ========================================================================== */
+    .hero-wrap {
+      position: relative;
+      background: var(--bg-color);
+      padding-bottom: 72px;   /* 境界線の下に走る補助線のための余白 */
+      overflow: hidden;
+    }
+
+    .hero {
+      height: 100vh;
+      padding: 0 var(--container-padding);
+      justify-content: flex-start;
+      background: transparent;
+    }
+
+    /* 暗色プレートの切り抜き。左が深く、右へ向かって浅くなる（＝境界は右上がり） */
+    #hero-canvas,
+    .hero::after {
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--drop)), 0 100%);
+    }
+    [data-flip="1"] #hero-canvas,
+    [data-flip="1"] .hero::after {
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 calc(100% - var(--drop)));
+    }
+
+    .hero-inner {
+      width: 100%;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .hero-title {
+      font-family: var(--font-mono);
+      font-weight: 200;
+      font-size: clamp(3.25rem, 9vw, 8rem);
+      line-height: 0.92;
+      letter-spacing: -0.02em;
+      color: #fafdfe;
+      text-shadow: 0 0 32px rgba(0, 0, 0, 0.45);
+    }
+    .hero-title .row { display: block; white-space: nowrap; }
+
+    .hero-sub {
+      margin-top: 1.75rem;
+      font-size: clamp(0.85rem, 1.6vw, 1.05rem);
+      letter-spacing: 0.08em;
+      color: #9aa4ad;
+    }
+
+    .tcur {
+      display: inline-block;
+      width: 0;
+      overflow: visible;
+      margin-left: 4px;
+      font-weight: 200;
+      animation: blink 1s step-end infinite;
+    }
+    .tcur[hidden] { display: none; }
+
+    /* ==========================================================================
+       境界の装飾レイヤー
+       .tg を境界の左端（＝回転の支点）に置き、角度ぶんだけ回す。
+       子要素はすべて「境界に平行な座標系」で置けるので、線も帯も点も自動で平行になる。
+       ========================================================================== */
+    .divider-lines {
+      position: absolute;
+      left: 0;
+      top: 100vh;
+      width: 100%;
+      height: 0;
+      pointer-events: none;
+      z-index: 3;
+    }
+    [data-flip="1"] .divider-lines { top: calc(100vh - var(--drop)); }
+
+    .tg {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 240vw;
+      height: 0;
+      transform-origin: 0 0;
+      transform: rotate(calc(-1 * var(--angle)));
+    }
+    [data-flip="1"] .tg { transform: rotate(var(--angle)); }
+
+    .tg > * { position: absolute; left: 0; }
+
+    /* --- 案1: Circuit Trace（基板配線） --------------------------------- */
+    .v1 .ln { height: 2px; background: var(--accent-dimmed); }
+    .v1 .ln-a { top: 9px;  width: 100%; opacity: 0.9; }
+    .v1 .ln-b { top: 22px; width: 100%; height: 1px; opacity: 0.55; }
+    .v1 .ln-c { top: 31px; width: 62%;  height: 1px; opacity: 0.35; }
+    .v1 .ln-d { top: 44px; width: 34%;  height: 1px; opacity: 0.22; }
+    .v1 .via {
+      width: 9px; height: 9px; border-radius: 50%;
+      border: 2px solid var(--accent-dimmed);
+      background: var(--bg-color);
+      transform: translate(-50%, -50%);
+    }
+    .v1 .via-1 { top: 10px; left: 26%; }
+    .v1 .via-2 { top: 10px; left: 71%; }
+    .v1 .via-3 { top: 31.5px; left: 62%; opacity: 0.5; }
+    .v1 .pad {
+      width: 22px; height: 6px; border-radius: 1px;
+      background: var(--accent-dimmed); opacity: 0.3;
+      transform: translateY(-50%);
+    }
+    .v1 .pad-1 { top: 22px; left: 44%; }
+
+    /* --- 案2: Glitch Slice（ずらし切り） -------------------------------- */
+    /* 破片は JS の SHARDS 配列から生成する。1行1破片なので密度と粒を調整しやすい。
+       cut  = 明色。暗色プレートを上へ削り込む
+       frag = 暗色。境界の下へ切り離された破片
+       glow / violet = 色収差を模した 1〜2px のスリット */
+    .v2 .sh { position: absolute; }
+    .v2 .sh.cut    { background: var(--bg-color); }
+    .v2 .sh.frag   { background: var(--hero-dark); }
+    .v2 .sh.glow   { background: var(--accent-glow); }
+    .v2 .sh.violet { background: var(--accent-secondary); }
+    .v2 .ln-a { top: 30px; width: 100%; height: 1px;
+                background: var(--accent-dimmed); opacity: 0.35; }
+    .v2 .ln-b { top: 37px; left: 33%; width: 40%; height: 1px;
+                background: var(--accent-glow); opacity: 0.4; }
+
+    /* --- 案3: Gradient Rule（静かなグラデ帯＋ヘアライン） ----------------- */
+    .v3 .fade {
+      top: -160px; width: 100%; height: 160px;
+      background: linear-gradient(to bottom, transparent, var(--bg-color));
+    }
+    .v3 .ln-a { top: 7px;  width: 100%; height: 1px;
+                background: var(--accent-dimmed); opacity: 0.55; }
+    .v3 .ln-b { top: 14px; width: 100%; height: 1px;
+                background: var(--accent-dimmed); opacity: 0.22; }
+
+    /* --- 案4: Scanline Band（走査線帯） --------------------------------- */
+    .v4 .band {
+      top: 4px; width: 100%; height: 96px;
+      background: repeating-linear-gradient(
+        to bottom,
+        var(--accent-dimmed) 0 1px,
+        transparent 1px 7px
+      );
+      -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+      mask-image: linear-gradient(to bottom, #000, transparent);
+      opacity: 0.5;
+    }
+    .v4 .ln-a { top: 0; width: 100%; height: 2px; background: var(--accent-dimmed); }
+
+    /* 表示中の候補だけ出す */
+    .tg { display: none; }
+    [data-variant="1"] .v1,
+    [data-variant="2"] .v2,
+    [data-variant="3"] .v3,
+    [data-variant="4"] .v4 { display: block; }
+
+    /* ==========================================================================
+       境界より下（明色）— 移行の見え方を確認するためのサンプル
+       ========================================================================== */
+    .header.scrolled,
+    .light-body .glass {
+      background: rgba(13, 17, 23, 0.02);
+    }
+    .light-body .prog-lang-tile-item:hover {
+      background: rgba(13, 17, 23, 0.045);
+      border-color: var(--accent-primary);
+      box-shadow: 0 20px 40px rgba(13, 17, 23, 0.08);
+    }
+    .light-body .icon-box { background: rgba(13, 17, 23, 0.05); }
+    .light-body .prog-lang-tile-item:hover .icon-box {
+      background: rgba(13, 17, 23, 0.08);
+      box-shadow: 0 0 15px rgba(10, 125, 140, 0.18);
+    }
+    .light-body h3 { color: var(--text-primary); }
+    footer.glass-top { background: rgba(13, 17, 23, 0.015); }
+
+    /* ==========================================================================
+       比較用コントロール
+       ========================================================================== */
+    .ctl {
+      position: fixed;
+      right: 1.25rem;
+      bottom: 1.25rem;
+      z-index: 2000;
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 12px 34px rgba(13, 17, 23, 0.14);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      width: 232px;
+    }
+    .ctl h4 {
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 0.7rem;
+      font-weight: 600;
+    }
+    .ctl-row { display: flex; gap: 0.4rem; margin-bottom: 0.8rem; }
+    .ctl button {
+      flex: 1;
+      padding: 0.45rem 0;
+      border-radius: 6px;
+      border: 1px solid var(--glass-border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .ctl button:hover { border-color: var(--accent-primary); color: var(--text-primary); }
+    .ctl button.on {
+      background: rgba(10, 125, 140, 0.12);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      font-weight: 700;
+    }
+    .ctl label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-secondary);
+      margin-bottom: 0.35rem;
+    }
+    .ctl input[type="range"] { width: 100%; accent-color: var(--accent-primary); }
+    .ctl .readout { color: var(--accent-primary); font-weight: 700; }
+    .ctl .flip { margin-top: 0.7rem; cursor: pointer; }
+    .ctl .name {
+      margin-top: 0.75rem;
+      padding-top: 0.7rem;
+      border-top: 1px solid var(--glass-border);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .ctl { right: 0.75rem; bottom: 0.75rem; width: 190px; padding: 0.8rem; }
+      .hero-title { font-size: clamp(2.75rem, 13vw, 4.5rem); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tcur { animation: none; }
+    }
+  </style>
+</head>
+
+<body class="light-body" data-variant="1" data-flip="0">
+  <header class="header glass" id="site-header">
+    <div class="header-container">
+      <a href="index.html" class="logo" id="header-logo">
+        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+      </a>
+      <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <nav class="nav">
+        <ul>
+          <li><a href="index.html#skills">Skills</a></li>
+          <li><a href="index.html#timeline">Timeline</a></li>
+          <li><a href="myworks.html">Works</a></li>
+          <li><a href="notes.html">Notes</a></li>
+          <li><a href="index.html#profile">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero-wrap">
+      <section class="hero on-dark">
+        <canvas id="hero-canvas" aria-hidden="true"></canvas>
+        <div class="hero-content">
+          <div class="hero-inner">
+            <h1 class="hero-title">
+              <span class="row"><span id="hl1"></span><span class="tcur" id="hc1">|</span></span>
+              <span class="row"><span id="hl2"></span><span class="tcur" id="hc2" hidden>|</span></span>
+            </h1>
+            <p class="hero-sub mono"><span id="hsub"></span><span class="tcur" id="hc3" hidden>|</span></p>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider-lines" aria-hidden="true">
+        <!-- 案1: Circuit Trace -->
+        <div class="tg v1">
+          <span class="ln ln-a"></span>
+          <span class="ln ln-b"></span>
+          <span class="ln ln-c"></span>
+          <span class="ln ln-d"></span>
+          <span class="pad pad-1"></span>
+          <span class="via via-1"></span>
+          <span class="via via-2"></span>
+          <span class="via via-3"></span>
+        </div>
+        <!-- 案2: Glitch Slice（破片は JS が SHARDS から生成） -->
+        <div class="tg v2" id="v2">
+          <span class="ln-a"></span>
+          <span class="ln-b"></span>
+        </div>
+        <!-- 案3: Gradient Rule -->
+        <div class="tg v3">
+          <span class="fade"></span>
+          <span class="ln-a"></span>
+          <span class="ln-b"></span>
+        </div>
+        <!-- 案4: Scanline Band -->
+        <div class="tg v4">
+          <span class="ln-a"></span>
+          <span class="band"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-wrapper">
+      <section class="skills-section reveal" style="margin-top: 2rem;">
+        <h2 class="section-title">
+          <div class="title-wrapper">
+            <span class="sub-title">SKILLS &amp; TOOLS</span>
+            <span class="main-title">Tech Stack</span>
+          </div>
+        </h2>
+        <div class="prog-lang-tile-container">
+          <div class="prog-lang-tile-item glass">
+            <div class="icon-box"><img src="img/blender-logo.svg" alt="Blender logo" class="prog-lang-img"></div>
+            <h3>Blender</h3>
+            <p>モデリングからレンダリングまで。最近いちばん触っている。</p>
+          </div>
+          <div class="prog-lang-tile-item glass">
+            <div class="icon-box"><img src="img/typescript-logo.svg" alt="TypeScript logo" class="prog-lang-img"></div>
+            <h3>TypeScript</h3>
+            <p>フロントの実装はだいたいこれ。型があると夜よく眠れる。</p>
+          </div>
+          <div class="prog-lang-tile-item glass">
+            <div class="icon-box"><img src="img/nodejs-logo.svg" alt="Node.js logo" class="prog-lang-img"></div>
+            <h3>Node.js</h3>
+            <p>このサイトの API も Express で書いている。</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="glass-top">
+    <div class="footer-content">
+      <p class="mono">© 2026 Altena. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <div class="ctl">
+    <h4>Divider</h4>
+    <div class="ctl-row" id="variant-row">
+      <button data-v="1">1</button>
+      <button data-v="2" class="on">2</button>
+      <button data-v="3">3</button>
+      <button data-v="4">4</button>
+    </div>
+    <label>angle <span class="readout" id="readout">—</span></label>
+    <input type="range" id="angle" min="8" max="26" step="0.5" value="18">
+    <div class="flip">
+      <label style="cursor:pointer">
+        <span>暗色を右に深く</span>
+        <input type="checkbox" id="flip">
+      </label>
+    </div>
+    <p class="name" id="vname">案2 — Glitch Slice（ずらし切り）</p>
+  </div>
+
+  <script>
+    'use strict';
+
+    const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ── 境界のジオメトリ ────────────────────────────────────────────
+    // 角度を固定し、落差は画面幅から導く（drop = width * tan(angle)）。
+    // 18° の場合 1440px 幅で 468px、1920px 幅で 624px 落ちる。落差はヒーロー
+    // (100vh) の内側で吸収されるので、浅い側の暗色が早く終わるだけで
+    // 下のコンテンツは押し下がらない。
+    const angleInput = document.getElementById('angle');
+    const readout    = document.getElementById('readout');
+
+    function updateGeometry() {
+      const w   = document.documentElement.clientWidth;
+      const deg = Number(angleInput.value);
+      const drop = w * Math.tan(deg * Math.PI / 180);
+
+      document.documentElement.style.setProperty('--drop', drop.toFixed(1) + 'px');
+      document.documentElement.style.setProperty('--angle', deg.toFixed(2) + 'deg');
+      readout.textContent = deg.toFixed(1) + '° / ' + Math.round(drop) + 'px';
+    }
+
+    angleInput.addEventListener('input', updateGeometry);
+    addEventListener('resize', updateGeometry);
+    updateGeometry();
+
+    // ── 案2 の破片 ──────────────────────────────────────────────────
+    // [x%, width%, y(px), height(px), kind]
+    // y は境界からの距離。負 = 暗色側へ削り込む / 正 = 明色側へ切り離す。
+    // 4 箇所にまとまりを作り、そのあいだは静かにしてグリッチらしい粗密を出す。
+    const SHARDS = [
+      // cluster A
+      [ 5.0, 4.5, -11,  11, 'cut'   ],
+      [ 9.8, 2.2,  -6,   6, 'cut'   ],
+      [12.6, 5.4, -16,  16, 'cut'   ],
+      [ 7.2, 3.0,   4,   6, 'frag'  ],
+      [11.0, 1.6,  13,   3, 'frag'  ],
+      [12.6, 5.4,   2, 1.5, 'glow'  ],
+      [15.4, 2.4,   6,   4, 'frag'  ],
+      [ 3.4, 1.2,  19,   2, 'frag'  ],
+      // cluster B
+      [28.5, 3.2,  -7,   7, 'cut'   ],
+      [33.0, 6.0, -13,  13, 'cut'   ],
+      [30.4, 4.6,   3,   8, 'frag'  ],
+      [36.2, 2.0,  11,   3, 'frag'  ],
+      [39.0, 5.2,   5,   5, 'frag'  ],
+      [36.2, 6.4,  16, 1.5, 'violet'],
+      [42.6, 1.4,  21,   2, 'frag'  ],
+      [26.8, 1.0,   8, 1.5, 'glow'  ],
+      // cluster C
+      [55.8, 2.6,  -5,   5, 'cut'   ],
+      [58.4, 7.2, -19,  19, 'cut'   ],
+      [58.4, 7.2, -20, 1.5, 'glow'  ],
+      [57.0, 3.4,   4,   7, 'frag'  ],
+      [62.8, 2.2,  10,   3, 'frag'  ],
+      [65.6, 4.0,   3,   5, 'frag'  ],
+      [67.4, 1.2,  18,   2, 'frag'  ],
+      [61.0, 3.0,  24, 1.5, 'violet'],
+      // cluster D
+      [76.4, 4.0,  -9,   9, 'cut'   ],
+      [82.0, 2.4,  -4,   4, 'cut'   ],
+      [86.6, 6.6, -14,  14, 'cut'   ],
+      [78.8, 5.0,   5,   6, 'frag'  ],
+      [84.2, 1.8,  14,   3, 'frag'  ],
+      [86.6, 4.2,   3, 1.5, 'glow'  ],
+      [90.4, 3.0,   8,   4, 'frag'  ],
+      [93.2, 1.6,  16,   2, 'frag'  ],
+      [88.0, 1.0,  23,   2, 'frag'  ],
+    ];
+
+    const v2 = document.getElementById('v2');
+    for (const [x, w, y, h, kind] of SHARDS) {
+      const el = document.createElement('span');
+      el.className = 'sh ' + kind;
+      el.style.left   = x + '%';
+      el.style.width  = w + '%';
+      el.style.top    = y + 'px';
+      el.style.height = h + 'px';
+      v2.appendChild(el);
+    }
+
+    // ── 候補の切り替え ──────────────────────────────────────────────
+    const NAMES = {
+      1: '案1 — Circuit Trace（基板配線）',
+      2: '案2 — Glitch Slice（ずらし切り）',
+      3: '案3 — Gradient Rule（グラデ帯＋ヘアライン）',
+      4: '案4 — Scanline Band（走査線帯）',
+    };
+    const vname = document.getElementById('vname');
+
+    document.getElementById('variant-row').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-v]');
+      if (!btn) return;
+      document.querySelectorAll('#variant-row button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      document.body.dataset.variant = btn.dataset.v;
+      vname.textContent = NAMES[btn.dataset.v];
+    });
+
+    // 1〜4 の数字キーでも切り替えられるようにする
+    addEventListener('keydown', e => {
+      if (e.target.matches('input, textarea')) return;
+      if (!'1234'.includes(e.key)) return;
+      document.querySelector(`#variant-row button[data-v="${e.key}"]`)?.click();
+    });
+
+    document.getElementById('flip').addEventListener('change', e => {
+      document.body.dataset.flip = e.target.checked ? '1' : '0';
+    });
+
+    // ── ヘッダーの明暗切り替え ──────────────────────────────────────
+    const header = document.getElementById('site-header');
+    const onScroll = () => {
+      header.classList.toggle('scrolled', scrollY > innerHeight * 0.85);
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    // ── ヒーローのタイピング ────────────────────────────────────────
+    const LINE1  = 'Altena';
+    const LINE2  = 'Works';
+    const PHRASES = [
+      'Unity & Blender Developer',
+      'Frontend Engineer',
+      'Backend Engineer',
+      'Embedded Systems Tinkerer',
+      'Certification Hunter',
+    ];
+
+    const hl1 = document.getElementById('hl1');
+    const hl2 = document.getElementById('hl2');
+    const hc1 = document.getElementById('hc1');
+    const hc2 = document.getElementById('hc2');
+    const hc3 = document.getElementById('hc3');
+    const hsub = document.getElementById('hsub');
+
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+
+    async function typeInto(el, text, speed) {
+      for (let i = 0; i < text.length; i++) {
+        el.textContent += text[i];
+        await delay(speed);
+      }
+    }
+
+    async function runHero() {
+      if (REDUCED) {
+        hl1.textContent = LINE1;
+        hl2.textContent = LINE2;
+        hsub.textContent = "I'm " + PHRASES[1];
+        hc1.hidden = true;
+        hc3.hidden = false;
+        return;
+      }
+
+      await delay(400);
+      await typeInto(hl1, LINE1, 105);
+      hc1.hidden = true;
+      hc2.hidden = false;
+      await delay(260);
+      await typeInto(hl2, LINE2, 105);
+      hc2.hidden = true;
+      await delay(700);
+
+      hc3.hidden = false;
+      await typeInto(hsub, "I'm ", 100);
+      loopPhrases();
+    }
+
+    function loopPhrases() {
+      const PREFIX = "I'm ";
+      let phrase = 0, chars = 0, deleting = false;
+
+      const step = () => {
+        const current = PHRASES[phrase];
+        let speed = deleting ? 50 : 100;
+
+        chars += deleting ? -1 : 1;
+        hsub.textContent = PREFIX + current.substring(0, chars);
+
+        if (!deleting && chars === current.length) {
+          deleting = true; speed = 2000;
+        } else if (deleting && chars === 0) {
+          deleting = false;
+          phrase = (phrase + 1) % PHRASES.length;
+          speed = 500;
+        }
+        setTimeout(step, speed);
+      };
+      step();
+    }
+
+    runHero();
+  </script>
+</body>
+
+</html>
