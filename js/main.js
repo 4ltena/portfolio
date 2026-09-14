@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ── Reveal observer (now all elements are in the DOM) ────
     initRevealObserver();
+    initHomeSectionReveal();
 
     // ── Timeline filters ─────────────────────────────────────
     initFilters();
@@ -400,21 +401,40 @@ function initLogoAnimation() {
     const logo = document.getElementById('header-logo');
     if (!logo) return;
 
-    const slashIcon = '<span class="slash-icon">//</span>';
-    logo.innerHTML = '<span class="slash-icon"></span><span class="logo-cursor"></span>';
+    logo.setAttribute('aria-label', 'Altena — Home');
+    logo.innerHTML = '<span class="slash-icon" aria-hidden="true"></span><span class="logo-wordmark" aria-hidden="true">Alt<span class="ena">ena</span></span>';
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    logo.querySelector('.logo-wordmark').animate([
+        { clipPath: 'inset(0 100% 0 0)' },
+        { clipPath: 'inset(0 0 0 0)' },
+    ], { duration: 360, delay: 100, easing: 'steps(6, end)', fill: 'backwards' });
+}
 
-    (async () => {
-        await delay(200);
-        logo.innerHTML = '<span class="slash-icon">/</span>';
-        await delay(50);
-        logo.innerHTML = '<span class="slash-icon">//</span>';
-        await delay(50);
-        logo.innerHTML = '<span class="slash-icon">///</span>';
-        await delay(150);
-        logo.innerHTML = slashIcon + 'Alt';
-        await delay(100);
-        logo.innerHTML = slashIcon + 'Alt<span class="ena">ena</span>';
-    })();
+function initHomeSectionReveal() {
+    const sections = document.querySelectorAll('.home-section');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!sections.length || reducedMotion.matches) return;
+
+    const observer = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            entry.target.classList.remove('section-pending');
+            observer.unobserve(entry.target);
+        }
+    }, { threshold: 0.05, rootMargin: '0px 0px -24px 0px' });
+    for (const section of sections) {
+        // 既に表示中の内容は隠し直さず、次に入ってくるセクションだけを演出する。
+        const bounds = section.getBoundingClientRect();
+        if (bounds.top < window.innerHeight && bounds.bottom > 0) {
+            continue;
+        }
+        section.classList.add('section-reveal', 'section-pending');
+        observer.observe(section);
+    }
+    reducedMotion.addEventListener('change', () => {
+        sections.forEach(section => section.classList.remove('section-pending'));
+        observer.disconnect();
+    }, { once: true });
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -623,7 +643,15 @@ function initFilters() {
 
     updateFilters();
     filterCheckboxes.forEach(cb => cb.addEventListener('change', () => updateFilters(true)));
-    if (toggle) toggle.addEventListener('click', () => { expanded = !expanded; updateFilters(true); });
+    if (toggle) toggle.addEventListener('click', () => {
+        expanded = !expanded;
+        updateFilters(true);
+        const heading = document.getElementById('timeline-heading');
+        if (heading) {
+            heading.focus({ preventScroll: true });
+            heading.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'start' });
+        }
+    });
     reducedMotion.addEventListener('change', () => updateFilters(false));
 }
 

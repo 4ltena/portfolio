@@ -1,0 +1,33 @@
+Contact icons embedded in index.html
+Retrieved from the upstream projects on 2026-09-15.
+Only presentation attributes (size, currentColor and accessibility) are adapted.
+
+Mail — Lucide
+https://lucide.dev/icons/mail
+https://github.com/lucide-icons/lucide/blob/main/icons/mail.svg
+
+ISC License
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+X and GitHub — Simple Icons
+https://simpleicons.org/
+https://github.com/simple-icons/simple-icons/blob/develop/icons/x.svg
+https://github.com/simple-icons/simple-icons/blob/develop/icons/github.svg
+Project license: CC0 1.0 Universal
+https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Brand names and marks remain the property of their respective owners.
+The icons identify links to the corresponding profiles; no endorsement is implied.
