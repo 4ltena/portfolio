@@ -242,7 +242,7 @@ function esc(s) {
 }
 
 function generateHtml(a) {
-    const tagsHtml = a.tags.map(t => `<span class="tag-link">#${esc(t)}</span>`).join('\n                  ');
+    const tagsHtml = a.tags.map(t => `<a class="tag-link" href="../../notes.html?tag=${encodeURIComponent(t)}">#${esc(t)}</a>`).join('\n                  ');
     return `<!doctype html>
 <html lang="ja">
 
@@ -258,16 +258,15 @@ function generateHtml(a) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
-  <link rel="stylesheet" href="../../style.css">
-  <script src="../../js/main.js"></script>
+  <link rel="stylesheet" href="../../style.css?v=20260916-controls">
+  <link rel="stylesheet" href="../../archive-pages.css?v=20260916-controls">
+  <script defer src="../../js/main.js?v=20260915-terminal"></script>
 </head>
 
-<body>
+<body class="reading-page">
   <header class="header glass">
     <div class="header-container">
-      <a href="../../index.html" class="logo" id="header-logo">
-        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
-      </a>
+      <a href="../../index.html" class="logo" id="header-logo" aria-label="Altena — Home"><svg class="logo-wordmark" viewBox="0 0 3329 840" width="114" height="28" aria-hidden="true" focusable="false"><use href="/portfolio/img/altena-logo.svg#wordmark"></use></svg></a>
       <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
         <span class="bar"></span>
         <span class="bar"></span>
@@ -286,15 +285,7 @@ function generateHtml(a) {
   </header>
 
   <main>
-    <section class="hero small-hero">
-      <div class="hero-content">
-        <div class="hero-placeholder"></div>
-        <div class="hero-text">
-          <h1 class="reveal">${esc(a.title)}</h1>
-          <p class="reveal delay-1">${esc(a.date)}</p>
-        </div>
-      </div>
-    </section>
+    <section class="reading-heading"><a class="reading-back" href="../../notes.html">← Notes</a><h1>${esc(a.title)}</h1><p>${esc(a.date)}</p></section>
 
     <div class="content-wrapper">
       <article class="note-detail reveal">

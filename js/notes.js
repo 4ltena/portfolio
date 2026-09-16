@@ -10,7 +10,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const adminBar     = document.getElementById('admin-bar');
 
     let allArticles = [];
-    let activeTag   = null;
+    const initialQuery = new URLSearchParams(location.search);
+    let activeTag = initialQuery.get('tag')?.toLowerCase() || null;
+    if (searchInput) searchInput.value = initialQuery.get('search') || '';
+    if (clearBtn) clearBtn.style.opacity = searchInput?.value ? '1' : '0';
 
     // --- Admin bar visibility ---
     const token = localStorage.getItem('admin_token');
@@ -35,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (totalCount) totalCount.textContent = allArticles.length;
 
     buildTagCloud(allArticles);
-    renderCards(allArticles);
+    applyFilters();
 
     // --- Search ---
     searchInput?.addEventListener('input', () => {
@@ -52,6 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         activeTag = null;
         document.querySelectorAll('.tag-cloud-chip').forEach(c => c.classList.remove('active'));
         applyFilters();
+        searchInput.focus();
     });
 
     function applyFilters() {
@@ -66,6 +70,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 (a.tags || []).some(t => t.toLowerCase().includes(q))
             );
         });
+        document.querySelectorAll('.tag-cloud-chip').forEach(chip => {
+            const selected = chip.dataset.tag === activeTag;
+            chip.classList.toggle('active', selected);
+            chip.setAttribute('aria-pressed', String(selected));
+        });
         renderCards(filtered);
     }
 
@@ -76,8 +85,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
         tagCloud.innerHTML = '';
         sorted.forEach(([tag, count]) => {
-            const chip = document.createElement('span');
+            const chip = document.createElement('button');
+            chip.type = 'button';
             chip.className = 'tag-cloud-chip';
+            chip.dataset.tag = tag.toLowerCase();
             chip.textContent = `#${tag} (${count})`;
             chip.addEventListener('click', () => {
                 const isActive = chip.classList.contains('active');
@@ -106,5 +117,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // buildNoteCard / escHtml は js/utils.js（notes.js より前に読み込む）で定義。
         grid.replaceChildren(...articles.map(buildNoteCard));
+        HomeBanners.decorateNotes(grid, articles);
     }
 });
