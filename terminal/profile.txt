@@ -1,0 +1,10 @@
+
+        / / /|       Altena @ altena.me
+       / / / |       ------------------------------
+      / / /  |       Role    Software & Infrastructure Engineer
+     / / /   |               Frontend Developer / 3D Artist
+    / / /____|__     Focus   Infrastructure / Web / 3DCG
+   / / /     |       Tools   Linux / TypeScript / Blender
+  / / /      |       Web     https://altena.me/portfolio/
+                     GitHub  https://github.com/4ltena
+                     Mail    contact@altena.me
