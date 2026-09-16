@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
-  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../style.css?v=20260915-menu-date">
   <style>
     /* 管理エディタは暗色のまま据え置く。公開側は style.css で明色テーマに移行したが、
        このページ独自のスタイルは rgba(255,255,255,…) 前提で書かれているため、
@@ -534,6 +534,39 @@
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
+    // 8桁の日付だけを整形し、既存の年・月精度の入力は維持する。
+    function formatCompactDate(value) {
+      const raw = value.trim();
+      if (!/^\d{8}$/.test(raw)) return value;
+      const year = Number(raw.slice(0, 4));
+      const month = Number(raw.slice(4, 6));
+      const day = Number(raw.slice(6, 8));
+      const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+      const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      if (year < 1 || month < 1 || month > 12 || day < 1 || day > days[month - 1]) return null;
+      return raw.slice(0, 4) + '/' + raw.slice(4, 6) + '/' + raw.slice(6, 8);
+    }
+
+    function normalizeDateField(field) {
+      const formatted = formatCompactDate(field.value);
+      field.setCustomValidity(formatted === null ? '存在する日付を入力してください（例：20260811）。' : '');
+      if (formatted !== null) field.value = formatted;
+      return formatted !== null;
+    }
+
+    for (const id of ['date-input', 'tl-date']) {
+      const field = document.getElementById(id);
+      field.inputMode = 'numeric';
+      field.addEventListener('input', event => {
+        field.setCustomValidity('');
+        if (!event.isComposing) normalizeDateField(field);
+      });
+      field.addEventListener('compositionend', () => normalizeDateField(field));
+      field.addEventListener('blur', () => {
+        if (!normalizeDateField(field)) field.reportValidity();
+      });
+    }
+
     // Today default
     const today = new Date();
     const pad = n => String(n).padStart(2, '0');
@@ -848,6 +881,8 @@
 
     document.getElementById('article-form').addEventListener('submit', async e => {
       e.preventDefault();
+      const dateField = document.getElementById('date-input');
+      if (!normalizeDateField(dateField)) { dateField.reportValidity(); return; }
       if (!await verifyAuth()) return;
       const id = editingId.value;
       const title   = document.getElementById('title-input').value.trim();
@@ -951,6 +986,8 @@
 
     document.getElementById('tl-form').addEventListener('submit', async e => {
       e.preventDefault();
+      const dateField = document.getElementById('tl-date');
+      if (!normalizeDateField(dateField)) { dateField.reportValidity(); return; }
       if (!await verifyAuth()) return;
       const id = tlEditId.value;
       const date     = document.getElementById('tl-date').value.trim();
@@ -1193,6 +1230,8 @@
               <option value="lang"   ${meta.node_category==='lang'   ?'selected':''}>lang — 言語文化</option>
               <option value="math"   ${meta.node_category==='math'   ?'selected':''}>math — 数学統計</option>
               <option value="design" ${meta.node_category==='design' ?'selected':''}>design — デザイン</option>
+              <option value="elec" ${meta.node_category==='elec' ?'selected':''}>elec — 電気電子</option>
+              <option value="other" ${meta.node_category==='other' ?'selected':''}>other — その他</option>
             </select>
             <select class="form-input cert-parent" data-id="${cert.id}"
               style="width:auto;min-width:160px;max-width:220px;padding:0.35rem 0.5rem;font-size:0.75rem;flex-shrink:0;">
@@ -1309,6 +1348,8 @@
               <option value="lang"   ${editing?.node_category==='lang'   ?'selected':''}>lang — 言語文化</option>
               <option value="math"   ${editing?.node_category==='math'   ?'selected':''}>math — 数学統計</option>
               <option value="design" ${editing?.node_category==='design' ?'selected':''}>design — デザイン</option>
+              <option value="elec" ${editing?.node_category==='elec' ?'selected':''}>elec — 電気電子</option>
+              <option value="other" ${editing?.node_category==='other' ?'selected':''}>other — その他</option>
             </select>
           </div>
           <div class="form-field">
