@@ -1,0 +1,78 @@
+(() => {
+    'use strict';
+    const banner = document.querySelector('[data-banner-motion]');
+    if (!banner || !Element.prototype.animate) return;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const navigation = performance.getEntriesByType('navigation')[0];
+    if (reduced.matches || navigation?.type === 'back_forward') return;
+    const svg = banner.querySelector('svg');
+    const title = banner.querySelector('h1');
+    if (!svg || !title) return;
+    const shapes = [...svg.children].slice(1);
+    const animations = [], outlines = [], wrappers = [];
+    let played = false;
+    let observer;
+    function finish() {
+        animations.splice(0).forEach(animation => animation.cancel());
+        outlines.splice(0).forEach(outline => outline.remove());
+        wrappers.splice(0).forEach(group => group.replaceWith(...group.childNodes));
+    }
+    function animate(element, keyframes, delay, duration) {
+        const animation = element.animate(keyframes, {
+            delay, duration, fill: 'both', easing: 'cubic-bezier(.22,.7,.2,1)'
+        });
+        animations.push(animation);
+        return animation;
+    }
+    function play() {
+        if (played) return;
+        played = true;
+        observer?.disconnect();
+        if (reduced.matches) return;
+        try {
+            shapes.forEach((shape, i) => {
+                if (banner.dataset.bannerMotion === 'notes-stack') {
+                    // Move the wrapper so the original SVG rotation stays intact.
+                    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    shape.before(group); group.append(shape); wrappers.push(group);
+                    animate(group, [
+                        { opacity: 0, transform: 'translate(-36px,10px)' },
+                        { opacity: 1, transform: 'translate(0,0)' }
+                    ], i * 65, 520);
+                } else if (shape.getAttribute('fill') === 'none' || !shape.getAttribute('fill')) {
+                    const length = shape.getTotalLength();
+                    animate(shape, [
+                        { strokeDasharray: length, strokeDashoffset: length },
+                        { strokeDasharray: length, strokeDashoffset: 0 }
+                    ], i * 36, 670);
+                } else {
+                    const outline = shape.cloneNode(true);
+                    outline.removeAttribute('id');
+                    outline.setAttribute('fill', 'none');
+                    outline.setAttribute('stroke', '#273850');
+                    outline.setAttribute('stroke-width', '1.3');
+                    shape.after(outline); outlines.push(outline);
+                    const length = outline.getTotalLength();
+                    animate(outline, [
+                        { strokeDasharray: length, strokeDashoffset: length, opacity: .65 },
+                        { strokeDasharray: length, strokeDashoffset: 0, opacity: .65, offset: .75 },
+                        { strokeDasharray: length, strokeDashoffset: 0, opacity: 0 }
+                    ], i * 38, 1000);
+                    animate(shape, [{ opacity: 0 }, { opacity: 1 }], 440 + i * 40, 500);
+                }
+            });
+            const duration = banner.dataset.bannerMotion === 'notes-stack' ? 1100 : 1500;
+            animate(title, [{ opacity: 0 }, { opacity: 1 }], duration - 370, 370);
+            Promise.all(animations.map(animation => animation.finished)).then(finish, finish);
+        } catch (_) { finish(); }
+    }
+    observer = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) play();
+    }, { threshold: .25 });
+    observer.observe(banner);
+    // Leave a complete banner in the back/forward cache and on preference changes.
+    addEventListener('pagehide', () => { played = true; observer.disconnect(); finish(); }, { once: true });
+    reduced.addEventListener('change', () => {
+        if (reduced.matches) { played = true; observer.disconnect(); finish(); }
+    });
+})();
