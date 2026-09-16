@@ -123,3 +123,17 @@
     .reading-page .note-body,
     .reading-page .project-desc { font-size: 15px; }
 }
+
+/* Keep the first paint aligned with the animation's first frame. */
+@media (prefers-reduced-motion: no-preference) {
+    .archive-motion-pending [data-banner-motion] > svg > :not(:first-child),
+    .archive-motion-pending [data-banner-motion] > h1 { visibility: hidden; }
+}
+
+/* Card tags use the same quiet palette as the filter buttons. */
+.archive-page .tag-link {
+    color: #526779; background: transparent; border: 1px solid #d5dfe6;
+    border-radius: 4px; padding: 2px 6px; font: inherit; font-size: 12px;
+    box-shadow: none; transform: none;
+}
+.archive-page .tag-link:hover { background: #edf3f6; border-color: #afc5d0; }

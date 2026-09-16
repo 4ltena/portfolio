@@ -20,13 +20,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // works セクションの高さが確定し、circuit の縦線がズレない。
     await Promise.all([renderTimeline(), renderSkills(), renderLatestNotes()]);
 
-    // ── Reveal observer (now all elements are in the DOM) ────
+    // Settle layout and fragment position before any section reveal can start.
+    initFilters();
+    await finishSectionNavigation();
     initRevealObserver();
     initHomeSectionReveal();
-
-    // ── Timeline filters ─────────────────────────────────────
-    initFilters();
-    finishSectionNavigation();
+    document.documentElement.classList.remove('section-entry-pending');
 
     // ── System status (live clock — placeholder の "Upgrading..." が固定表示になる問題の解消) ──
     initSystemStatus();
@@ -790,22 +789,41 @@ function initSectionNavigation() {
     const ids = new Set(['skills', 'timeline', 'profile']);
     if (!document.getElementById('scroll-bridge')) return () => {};
     let ready = false;
-    let pending = ids.has(location.hash.slice(1)) ? location.hash : '';
+    const navigationType = performance.getEntriesByType('navigation')[0]?.type;
+    let savedPosition = null;
+    try { savedPosition = JSON.parse(sessionStorage.getItem('portfolio:scroll-position')); } catch {}
+    let restoreY = navigationType === 'reload' && savedPosition?.href === location.href && Number.isFinite(savedPosition.y)
+        ? Math.max(0, savedPosition.y) : null;
+    let pending = navigationType !== 'back_forward' && navigationType !== 'reload' && ids.has(location.hash.slice(1)) ? location.hash : '';
+    // pagehide storage survives reload; history.replaceState here is too late for its snapshot.
+    window.addEventListener('pagehide', () => {
+        if (!ready) return;
+        try { sessionStorage.setItem('portfolio:scroll-position', JSON.stringify({ href: location.href, y: scrollY })); } catch {}
+    });
+    let destination = null;
     const announce = active => window.dispatchEvent(new CustomEvent('portfolio:section-navigation', { detail: { active } }));
-    if (pending) announce(true);
+    if (pending || restoreY !== null) announce(true);
     function align(hash, smooth = false) {
         const target = document.getElementById(hash.slice(1));
         if (!target) return;
         announce(true);
         const header = document.querySelector('header');
         const offset = (header?.getBoundingClientRect().height || 72) + 24;
-        window.scrollTo({ top: Math.max(0, target.getBoundingClientRect().top + scrollY - offset), behavior: smooth && !REDUCED_MOTION ? 'smooth' : 'instant' });
-        announce(false);
+        const top = Math.max(0, target.getBoundingClientRect().top + scrollY - offset);
+        const animated = smooth && !REDUCED_MOTION && Math.abs(top - scrollY) > 1;
+        destination = animated ? top : null;
+        window.scrollTo({ top, behavior: animated ? 'smooth' : 'instant' });
+        if (!animated) announce(false);
     }
     function cancelPending() {
-        if (!pending) return;
-        pending = ''; announce(false);
+        if (!pending && destination === null && restoreY === null) return;
+        restoreY = null;
+        pending = ''; destination = null; announce(false);
+        document.documentElement.classList.remove('section-entry-pending');
     }
+    window.addEventListener('scrollend', () => {
+        if (destination !== null && Math.abs(scrollY - destination) <= 2) { destination = null; announce(false); }
+    });
     window.addEventListener('wheel', cancelPending, { passive: true });
     window.addEventListener('touchstart', cancelPending, { passive: true });
     window.addEventListener('keydown', cancelPending);
@@ -815,11 +833,13 @@ function initSectionNavigation() {
         const url = new URL(link.href, location.href);
         if (url.origin !== location.origin || url.pathname !== location.pathname || !ids.has(url.hash.slice(1))) return;
         event.preventDefault();
+        restoreY = null;
         history.pushState(null, '', url.hash);
         if (ready) align(url.hash, true);
         else { pending = url.hash; announce(true); }
     });
     window.addEventListener('hashchange', () => {
+        restoreY = null;
         if (!ids.has(location.hash.slice(1))) { cancelPending(); return; }
         if (ready) align(location.hash);
         else { pending = location.hash; announce(true); }
@@ -828,6 +848,11 @@ function initSectionNavigation() {
         await document.fonts.ready;
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         ready = true;
+        if (restoreY !== null) {
+            window.scrollTo({ top: restoreY, behavior: 'instant' });
+            restoreY = null;
+            announce(false);
+        }
         if (pending) { const hash = pending; pending = ''; align(hash); }
     };
 }

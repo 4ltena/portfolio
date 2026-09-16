@@ -5,6 +5,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Altena Portfolio</title>
+  <script>
+    if (['#skills', '#timeline', '#profile'].includes(location.hash) &&
+        !['back_forward', 'reload'].includes(performance.getEntriesByType('navigation')[0]?.type))
+      document.documentElement.classList.add('section-entry-pending');
+  </script>
+  <style>html.section-entry-pending main { visibility: hidden; }</style>
   <link rel="icon" href="img/favicon.ico?v=20260915-offset" sizes="any">
   <link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260915-offset">
   <meta name="description" content="Personal portfolio of Altena, 3DCG & Frontend Developer.">
@@ -33,7 +39,7 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
-  <link rel="stylesheet" href="style.css?v=20260915-ideas">
+  <link rel="stylesheet" href="style.css?v=20260916-title-rows">
 
   <!-- Three.js importmap（ヒーローCanvas用） -->
   <script type="importmap">
@@ -47,13 +53,14 @@
   <script defer src="js/utils.js"></script>
   <script defer src="js/cover-art.js?v=20260914-ui2"></script>
   <script defer src="js/home-banners.js?v=20260914-ui2"></script>
-  <script defer src="js/main.js?v=20260916-navigation"></script>
+  <script defer src="js/main.js?v=20260917-reload-position" onerror="document.documentElement.classList.remove('section-entry-pending')"></script>
   <!-- ヒーロー背景の Three.js（importmap を使うため type=module。module は defer 相当で実行される） -->
   <script type="module" src="js/hero.js"></script>
-  <link rel="stylesheet" href="status-beacon.css">
+  <link rel="stylesheet" href="status-beacon.css?v=20260917-mobile-divider">
   <link rel="stylesheet" href="pastel-homepage.css?v=20260915-mobile-top">
-  <link rel="stylesheet" href="ideas-transition.css?v=20260916-lite-fragments">
-  <script defer src="js/ideas-transition.js?v=20260916-navigation"></script>
+  <link rel="stylesheet" href="ideas-transition.css?v=20260917-ideas-gap">
+  <script defer src="js/ideas-transition.js?v=20260917-ideas-gap"></script>
+  <script defer src="js/divider-intro.js?v=20260917-mobile-divider"></script>
   <script defer src="/portfolio/js/console-easter-egg.js?v=20260915-terminal"></script>
 </head>
 

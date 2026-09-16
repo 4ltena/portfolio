@@ -46,17 +46,17 @@ function harness(y = 0, direction = 1) {
     cancelSettle() { timers.length = 0; frames.length = 0; state.settling = false; }
   };
   vm.createContext(state);
-  vm.runInContext(snapSource + drawSource + eventSource, state);
+  vm.runInContext(fragment(' const STRIPE_SPEED=', ' let w=') + snapSource + drawSource + eventSource, state);
   function runSnap() { state.queueSettle(); timers.splice(0).forEach(fn => fn()); }
   function finishSnap() { frames.splice(0).forEach(fn => fn(1460)); }
   return { state, timers, frames, calls, events, runSnap, finishSnap };
 }
 for (const [name, y, direction, armed] of [
   ['above', 800, 1, false], ['forward overshoot', 1080, 1, false],
-  ['below', 1350, -1, true], ['reverse overshoot', 930, -1, true]
+  ['below', 1250, -1, true], ['reverse overshoot', 930, -1, true]
 ]) test('snap from ' + name + ' and release on next gesture', () => {
   const h = harness(y, direction); h.state.returnArmed = armed; h.runSnap();
-  assert.equal(h.frames.length, 1); h.finishSnap(); assert.equal(h.state.scrollY, 1000);
+  assert.equal(h.frames.length, 1); h.finishSnap(); assert.equal(h.state.scrollY, h.state.scrollGeometry().target);
   assert.equal(h.calls[0].behavior, 'instant');
   h.state.scrollY += direction * 60; h.runSnap(); assert.equal(h.frames.length, 0);
 });
@@ -66,13 +66,13 @@ test('outside, reduced motion, active pointer and top return do not snap', () =>
   }
 });
 test('invisible logs defer rebuilding; completed canvas is not redrawn', () => {
-  const h = harness(2000); h.state.draw(); assert.equal(h.state.clears, 1);
+  const h = harness(2200); h.state.draw(); assert.equal(h.state.clears, 1);
   h.state.logDirty = true; h.state.scrollY = 2400; h.state.draw();
   assert.equal(h.state.clears, 1); assert.equal(h.state.rebuilds, 0);
   h.state.scrollY = 0; h.state.draw(); assert.equal(h.state.rebuilds, 1);
   assert.equal(h.state.textMode.inert, false);
 });
-test('mobile hidden logs are not built; arrow still updates with reduced motion', () => {
+test('mobile logs stay hidden; arrow still updates with reduced motion', () => {
   const h = harness(0); h.state.w = 390; h.state.draw(); assert.equal(h.state.rebuilds, 0);
   h.state.enabled = false; h.state.scrollY = 600; h.state.draw(); assert.equal(h.state.controlVisible, true);
   h.state.scrollY = 0; h.state.draw(); assert.equal(h.state.controlVisible, false);
@@ -94,8 +94,16 @@ test('wheel interrupts native return and restores normal scrolling', () => {
   assert.equal(h.state.returningToTop, false); assert.equal(h.calls.at(-1).behavior, 'instant');
   assert.equal(h.calls.at(-1).top, 2400);
 });
-test('scrollend clears return state', () => {
-  const h = harness(5000); click(h); h.events.scrollend(); assert.equal(h.state.returningToTop, false);
+test('scrollend only clears top return after reaching the top', () => {
+  const h = harness(5000); click(h);
+  h.state.scrollY = 800; h.events.scrollend();
+  assert.equal(h.state.returningToTop, true);
+  h.state.performance.now = () => 10000;
+  h.events.scroll(); h.runSnap();
+  assert.equal(h.frames.length, 0);
+  h.state.scrollY = 0; h.events.scrollend();
+  assert.equal(h.state.returningToTop, false);
+  assert.notEqual(h.state.suppressUntil, Infinity);
 });
 test('reduced motion returns instantly; modified links retain browser behavior', () => {
   const h = harness(5000); h.state.reduced.matches = true; click(h);
@@ -105,21 +113,22 @@ test('reduced motion returns instantly; modified links retain browser behavior',
 });
 
 test('wide approach windows catch both directions', () => {
-  for(const [y,d] of [[600,1],[1500,-1]]) {
-    const h=harness(y,d);h.state.returnArmed=d<0;h.runSnap();
-    assert.equal(h.frames.length,1);h.finishSnap();assert.equal(h.state.scrollY,1000);
+  for(const d of [1,-1]) {
+    const h=harness(0,d),g=h.state.scrollGeometry();
+    h.state.scrollY=d>0?g.complete-50:g.end+50;h.state.returnArmed=d<0;h.runSnap();
+    assert.equal(h.frames.length,1);h.finishSnap();assert.equal(h.state.scrollY,h.state.scrollGeometry().target);
   }
 });
 test('a fast scroll crossing the target is caught outside the proximity window', () => {
   for(const [from,to,d] of [[200,2200,1],[2200,200,-1]]) {
     const h=harness(from,d);h.state.returnArmed=d<0;h.state.scrollY=to;
     h.events.scroll();h.timers.splice(0).forEach(fn=>fn());
-    assert.equal(h.frames.length,1);h.finishSnap();assert.equal(h.state.scrollY,1000);
+    assert.equal(h.frames.length,1);h.finishSnap();assert.equal(h.state.scrollY,h.state.scrollGeometry().target);
     h.state.scrollY+=d*60;h.runSnap();assert.equal(h.frames.length,0);
   }
 });
-test('Ideas completes earlier and Lite remains operable during character erasure', () => {
-  const h=harness(720);h.state.draw();assert.equal(h.state.copy.style.opacity,1);
+test('Ideas completes after the bands pass; Lite remains operable during character erasure', () => {
+  const h=harness(2080);h.state.draw();assert.equal(h.state.copy.style.opacity,1);
   h.state.scrollY=150;h.state.draw();assert.equal(h.state.textMode.inert,false);
 });
 
@@ -141,4 +150,30 @@ test('section links bypass snapping without leaving a pending crossing', () => {
  h.events['portfolio:section-navigation']({ detail: { active: false } });
  h.state.queueSettle(200);
  assert.equal(h.state.crossedTarget, false);
+});
+
+test('divider displacement uses the selected 3.5x speed', () => {
+ const h=harness(100);const values={};h.state.hero.style.setProperty=(key,value)=>values[key]=value;h.state.draw();assert.equal(values['--bridge-rise'],'350px');
+ h.state.scrollY=400;h.state.draw();assert.equal(values['--bridge-rise'],'1400px');
+});
+
+test('the selected geometry has no gap and holds the completed Ideas view for 60vh',()=>{
+ const h=harness();const g=h.state.scrollGeometry();
+ assert.equal(g.stripeEnd,g.travel/3.5);
+ assert.equal(g.revealStart,g.stripeEnd);
+ assert.ok(Math.abs(g.end-g.complete-600)<1e-9);
+ for(const y of [g.complete,g.target,g.end]){
+  h.state.scrollY=y;h.state.draw();
+  assert.equal(h.state.copy.style.opacity,1);assert.equal(h.state.prose.style.opacity,1);
+ }
+});
+test('the hold distance scales with the viewport, including compact screens',()=>{
+ const h=harness();h.state.h=640;h.state.w=390;h.state.slope=127;
+ const g=h.state.scrollGeometry();
+ assert.ok(Math.abs(g.end-g.complete-384)<1e-9);
+ h.state.scrollY=g.target;h.state.draw();assert.equal(h.state.copy.style.opacity,1);
+});
+test('Ideas stays hidden until the final stripe clears',()=>{
+ const h=harness();h.state.scrollY=h.state.scrollGeometry().stripeEnd-1;h.state.draw();
+ assert.equal(h.state.copy.style.opacity,0);assert.equal(h.state.art.style.opacity,0);
 });
