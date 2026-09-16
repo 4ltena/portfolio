@@ -1,4 +1,3 @@
-console.log("%c[SYSTEM] Kernel Loaded. Identity: Guest. Monitoring activity...", "color: #00f2ff; font-weight: bold; background: #111; padding: 5px 10px; border-radius: 4px;");
 
 // escHtml / buildNoteCard は js/utils.js（main.js より前に読み込む）で定義。
 
@@ -6,6 +5,8 @@ const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').mat
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 document.addEventListener('DOMContentLoaded', async () => {
+
+    const finishSectionNavigation = initSectionNavigation();
 
     // ── Hero divider (最初の描画に間に合わせるため先頭で) ────
     initDivider();
@@ -25,6 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ── Timeline filters ─────────────────────────────────────
     initFilters();
+    finishSectionNavigation();
 
     // ── System status (live clock — placeholder の "Upgrading..." が固定表示になる問題の解消) ──
     initSystemStatus();
@@ -419,6 +421,7 @@ function initHomeSectionReveal() {
         for (const entry of entries) {
             if (!entry.isIntersecting) continue;
             entry.target.classList.remove('section-pending');
+            entry.target.classList.add('banner-play');
             observer.unobserve(entry.target);
         }
     }, { threshold: 0.05, rootMargin: '0px 0px -24px 0px' });
@@ -426,13 +429,14 @@ function initHomeSectionReveal() {
         // 既に表示中の内容は隠し直さず、次に入ってくるセクションだけを演出する。
         const bounds = section.getBoundingClientRect();
         if (bounds.top < window.innerHeight && bounds.bottom > 0) {
+            section.classList.add('banner-play');
             continue;
         }
         section.classList.add('section-reveal', 'section-pending');
         observer.observe(section);
     }
     reducedMotion.addEventListener('change', () => {
-        sections.forEach(section => section.classList.remove('section-pending'));
+        sections.forEach(section => section.classList.remove('section-pending', 'banner-play'));
         observer.disconnect();
     }, { once: true });
 }
@@ -468,7 +472,7 @@ function initRevealObserver() {
 // Title typing (one-time, 2 行)
 // ─────────────────────────────────────────────────────────────
 
-const TITLE_LINES = ['Altena', 'Works'];
+const TITLE_LINES = ['Altena', 'Portfolio'];
 
 async function typeInto(el, text, speed) {
     for (const char of text) {
@@ -648,13 +652,31 @@ function initFilters() {
         const update = ++viewportUpdate;
         const root = document.documentElement;
         const heading = document.getElementById('timeline-heading');
-        // 行の縮小による自動スクロール補正と、見出しへの移動を競合させない。
+        // 行の高さを変える前に目的地を確定し、ブラウザーの再計算と競合させない。
+        const startY = window.scrollY;
+        const padding = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
+        const targetY = heading ? Math.max(0, startY + heading.getBoundingClientRect().top - padding) : startY;
+        const upward = targetY <= startY;
         root.classList.add('timeline-resizing');
+        window.scrollTo({ top: startY, behavior: 'instant' });
         heading?.focus({ preventScroll: true });
         expanded = !expanded;
         updateFilters(true);
-        heading?.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'start' });
-        Promise.allSettled([...timelineItems].map(item => transitions.get(item)?.animation?.finished))
+        const viewportFinished = new Promise(resolve => {
+            const startTime = performance.now();
+            const step = now => {
+                if (viewportUpdate !== update) { resolve(); return; }
+                const progress = reducedMotion.matches ? 1 : Math.min(1, (now - startTime) / 360);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const nextY = startY + (targetY - startY) * eased;
+                // 文書の縮小で先に上へ補正されても、そこから下へ引き戻さない。
+                window.scrollTo({ top: upward ? Math.min(window.scrollY, nextY) : nextY, behavior: 'instant' });
+                if (progress < 1) requestAnimationFrame(step);
+                else resolve();
+            };
+            step(startTime);
+        });
+        Promise.allSettled([viewportFinished, ...[...timelineItems].map(item => transitions.get(item)?.animation?.finished)])
             .then(() => {
                 if (viewportUpdate === update) root.classList.remove('timeline-resizing');
             });
@@ -761,4 +783,51 @@ function initMobileMenu() {
             document.body.style.overflow = '';
         });
     });
+}
+
+// Fragment navigation waits for the dynamic home layout, not its placeholders.
+function initSectionNavigation() {
+    const ids = new Set(['skills', 'timeline', 'profile']);
+    if (!document.getElementById('scroll-bridge')) return () => {};
+    let ready = false;
+    let pending = ids.has(location.hash.slice(1)) ? location.hash : '';
+    const announce = active => window.dispatchEvent(new CustomEvent('portfolio:section-navigation', { detail: { active } }));
+    if (pending) announce(true);
+    function align(hash, smooth = false) {
+        const target = document.getElementById(hash.slice(1));
+        if (!target) return;
+        announce(true);
+        const header = document.querySelector('header');
+        const offset = (header?.getBoundingClientRect().height || 72) + 24;
+        window.scrollTo({ top: Math.max(0, target.getBoundingClientRect().top + scrollY - offset), behavior: smooth && !REDUCED_MOTION ? 'smooth' : 'instant' });
+        announce(false);
+    }
+    function cancelPending() {
+        if (!pending) return;
+        pending = ''; announce(false);
+    }
+    window.addEventListener('wheel', cancelPending, { passive: true });
+    window.addEventListener('touchstart', cancelPending, { passive: true });
+    window.addEventListener('keydown', cancelPending);
+    document.addEventListener('click', event => {
+        const link = event.target.closest('.nav a');
+        if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const url = new URL(link.href, location.href);
+        if (url.origin !== location.origin || url.pathname !== location.pathname || !ids.has(url.hash.slice(1))) return;
+        event.preventDefault();
+        history.pushState(null, '', url.hash);
+        if (ready) align(url.hash, true);
+        else { pending = url.hash; announce(true); }
+    });
+    window.addEventListener('hashchange', () => {
+        if (!ids.has(location.hash.slice(1))) { cancelPending(); return; }
+        if (ready) align(location.hash);
+        else { pending = location.hash; announce(true); }
+    });
+    return async () => {
+        await document.fonts.ready;
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        ready = true;
+        if (pending) { const hash = pending; pending = ''; align(hash); }
+    };
 }

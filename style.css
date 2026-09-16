@@ -217,7 +217,7 @@ a {
     opacity: 0.7;
 }
 
-.logo-wordmark { display: block; width: 114px; height: 28px; overflow: visible; }
+.logo-wordmark { display: block; width: 69.12px; height: 17.28px; overflow: visible; }
 
 .nav ul {
     list-style: none;
@@ -243,11 +243,12 @@ a {
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 0.5rem;
+    padding: 10px;
+    margin-block: -6px;
     z-index: 1100;
     position: relative;
-    width: 30px;
-    height: 30px;
+    width: 44px;
+    height: 44px;
 }
 
 .hamburger .bar {
@@ -262,7 +263,7 @@ a {
 
 /* Hamburger Animation to X */
 .hamburger.active .bar:nth-child(1) {
-    transform: translateY(8px) rotate(45deg);
+    transform: translateY(7.64px) rotate(45deg);
     background-color: var(--accent-primary);
 }
 
@@ -271,7 +272,7 @@ a {
 }
 
 .hamburger.active .bar:nth-child(3) {
-    transform: translateY(-8px) rotate(-45deg);
+    transform: translateY(-7.64px) rotate(-45deg);
     background-color: var(--accent-primary);
 }
 
@@ -1187,17 +1188,29 @@ footer {
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
-    /* flex 中央寄せ + gap でバー群をボタン中心に揃える。
-       従来の .bar { margin:6px 0 } はボタン下端をはみ出しバー群が約8px 下寄りになっていた。 */
+    /* ぼかしを別レイヤーに分け、fixed のメニューを画面全体に配置する。 */
+    .header {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+
+    .header::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        backdrop-filter: blur(24px) saturate(150%);
+        -webkit-backdrop-filter: blur(24px) saturate(150%);
+        pointer-events: none;
+    }
+
+    /* 三本線の外寸はロゴと同じ17.28px高。操作領域44pxと線幅24pxは維持する。 */
     .hamburger {
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        gap: 6px;
+        gap: 5.64px;
     }
-    /* flex-shrink:0 がないと、ボタン内寸(14px) < gap+バー(18px) のため
-       バーが約0.67px まで潰れる。0 にして 2px 厚・中心間隔8px を維持する。 */
     .hamburger .bar { margin: 0; flex-shrink: 0; }
 
     .nav {
@@ -1206,27 +1219,32 @@ footer {
            ずれて下端に隙間が出る。オーバーレイが明色になった以上その隙間から暗色の
            ヒーローが覗いてしまうので、高さ指定ではなく inset で覆い切る。 */
         inset: 0;
-        /* right:-100% だと fixed 要素が overflow-x:hidden に無視され横スクロールを生む。
-           transform なら layout box は画面内に留まり、はみ出さない。 */
-        transform: translateX(100%);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
         background: rgba(250, 253, 254, 0.97);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        transform: translateY(-12px);
+        transition: opacity 220ms ease, transform 260ms cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 220ms;
         z-index: 1050;
     }
 
     .nav.active {
-        transform: translateX(0);
+        opacity: 1;
+        transform: translateY(0);
+        visibility: visible;
+        pointer-events: auto;
+        transition-delay: 0s;
     }
 
     /* メニューを開くと明色のオーバーレイが全画面を覆う。トップページ最上部では
        ヘッダーが白文字トークンに切り替わっているため、ここで明色側へ戻さないと
        リンクとハンバーガーが背景に沈む。 */
-    .nav.active,
+    .nav,
     .hamburger.active {
         --text-primary: #0d1117;
         --text-secondary: #5b6670;
@@ -1242,6 +1260,35 @@ footer {
     .nav a {
         font-size: 1.5rem;
         letter-spacing: 0.2em;
+    }
+
+    .nav li {
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .nav.active li {
+        opacity: 1;
+        transform: translateY(0);
+        transition-duration: 320ms;
+        transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+        transition-delay: calc(60ms + var(--menu-delay, 0ms));
+    }
+
+    .nav li:nth-child(2) { --menu-delay: 80ms; }
+    .nav li:nth-child(3) { --menu-delay: 160ms; }
+    .nav li:nth-child(4) { --menu-delay: 240ms; }
+    .nav li:nth-child(5) { --menu-delay: 320ms; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .nav,
+        .nav li,
+        .nav.active li {
+            transition: none;
+        }
+
+        .nav, .nav li { transform: none; }
     }
 
     .page-tile-container { grid-template-columns: 1fr; }
@@ -1521,6 +1568,8 @@ footer {
 .node-header.lang { background: #a64de6; }     /* 言語・文化 - Purple */
 .node-header.math { background: #e64d4d; }     /* 数学・統計 - Red */
 .node-header.design { background: #4de680; }   /* デザイン - Green */
+.node-header.elec { background: #40b8bf; }     /* 電気電子 - Teal */
+.node-header.other { background: #8a94a6; }    /* その他 - Slate */
 
 /* Legacy Node Header Colors (Blender Style) */
 .node-header.input { background: #e6994d; }

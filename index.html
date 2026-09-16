@@ -5,9 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Altena Portfolio</title>
-  <link rel="icon" href="img/favicon.ico?v=20260915-brand" sizes="any">
-  <link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260915-brand">
+  <link rel="icon" href="img/favicon.ico?v=20260915-offset" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260915-offset">
   <meta name="description" content="Personal portfolio of Altena, 3DCG & Frontend Developer.">
+
 
   <!-- fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +19,7 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
-  <link rel="stylesheet" href="style.css?v=20260915-brand">
+  <link rel="stylesheet" href="style.css?v=20260915-ideas">
 
   <!-- Three.js importmap（ヒーローCanvas用） -->
   <script type="importmap">
@@ -32,14 +33,17 @@
   <script defer src="js/utils.js"></script>
   <script defer src="js/cover-art.js?v=20260914-ui2"></script>
   <script defer src="js/home-banners.js?v=20260914-ui2"></script>
-  <script defer src="js/main.js?v=20260915-brand"></script>
+  <script defer src="js/main.js?v=20260916-navigation"></script>
   <!-- ヒーロー背景の Three.js（importmap を使うため type=module。module は defer 相当で実行される） -->
   <script type="module" src="js/hero.js"></script>
   <link rel="stylesheet" href="status-beacon.css">
-  <link rel="stylesheet" href="pastel-homepage.css?v=20260914-ui2">
+  <link rel="stylesheet" href="pastel-homepage.css?v=20260915-mobile-top">
+  <link rel="stylesheet" href="ideas-transition.css?v=20260916-lite-fragments">
+  <script defer src="js/ideas-transition.js?v=20260916-navigation"></script>
+  <script defer src="/portfolio/js/console-easter-egg.js?v=20260915-terminal"></script>
 </head>
 
-<body class="pastel-home">
+<body class="pastel-home" id="top" tabindex="-1">
   <header class="header glass">
     <div class="header-container">
       <a href="index.html" class="logo" id="header-logo" aria-label="Altena — Home">
@@ -63,7 +67,8 @@
   </header>
 
   <main>
-    <div class="hero-wrap">
+    <section id="scroll-bridge" aria-label="Ideas take shape."><div class="bridge-stage">
+<div class="hero-wrap">
       <section class="hero on-dark">
         <canvas id="hero-canvas" aria-hidden="true"></canvas>
         <div class="hero-content">
@@ -145,6 +150,11 @@
         </a>
       </div>
     </div>
+<canvas id="bridge-canvas" aria-hidden="true"></canvas>
+<div class="bridge-copy"><h2>Ideas take shape.</h2></div>
+<div class="idea-art"><svg viewBox="0 0 1000 420" role="img" aria-label="一本の線が幾何学の形を結ぶ図"><style>.ink{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 4s cubic-bezier(.58,0,.42,1) forwards}.paper{opacity:0;animation:colorIn .45s ease-out var(--delay) forwards}@keyframes draw{to{stroke-dashoffset:0}}@keyframes colorIn{to{opacity:1}}@media(prefers-reduced-motion:reduce){.ink{animation:none;stroke-dashoffset:0}.paper{animation:none;opacity:1}}</style><path class="paper" d="M161 218L220 116L279 218Z" fill="#e8baa6" style="--delay:1.36s"/><path class="paper" d="M366 125H461V230H366Z" fill="#b7bee5" style="--delay:1.86s"/><path class="paper" d="M538 189C489 189 503 284 563 284C580 250 579 189 538 189Z" fill="#bfd8ca" style="--delay:2.36s"/><path class="paper" d="M651 193C651 99 788 99 788 193V283H651Z" fill="#90d7e2" style="--delay:2.93s"/><path class="ink" d="M77 259C124 259 146 243 161 218L220 116L279 218C296 248 278 278 250 278C218 278 208 244 230 223C256 198 288 230 323 230H366V125H461V230H415C381 230 376 284 415 284H524C580 284 579 189 538 189C489 189 503 284 563 284C621 284 651 242 651 193C651 99 788 99 788 193V283H853C896 283 918 264 933 237" pathLength="1" fill="none" stroke="#273850" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<div class="idea-prose"><p>学んだことは、思いがけないところでつながる。</p><p>分野を越えて知識を重ね、まだ見たことのない形を探していく。</p></div>
+</div></section>
 
     <div class="content-wrapper">
       <!-- #sys-status は表示テキストを持たない。js/main.js?v=20260915-brand の initSystemStatus() が更新し、
@@ -155,28 +165,45 @@
 
       <!-- SECTION 1: 技術スタック -->
       <section id="skills" class="home-section">
-        <div class="home-heading"><h2>Tech Stack</h2></div>
-        <div class="tech-stack-banner" aria-hidden="true">
-          <img src="img/tech-stack-banner.svg" width="1200" height="180" alt="" decoding="async">
-          <div class="tech-banner-caption">
-            <span>SKILLS &amp; TOOLS</span>
-            <span>Code, form &amp; systems.</span>
-          </div>
+        <div class="tech-stack-banner heading-banner">
+          <svg class="banner-art" viewBox="0 0 1200 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+            <rect width="1200" height="180" fill="#F1F6F8"/>
+            <path class="banner-layer" style="--draw-delay:80ms" d="M-50 20H493L330 108H-50Z" fill="#BFD8CA"/>
+            <path class="banner-layer" style="--draw-delay:240ms" d="M168 54H756L593 142H5Z" fill="#B7BEE5"/>
+            <path class="banner-layer" style="--draw-delay:400ms" d="M391 88H979L816 176H228Z" fill="#90D7E2"/>
+            <g class="tech-banner-accent"><path class="banner-layer" style="--draw-delay:560ms" d="M596 142H835L816 153H576Z" fill="#273850"/></g>
+            <path class="banner-layer" style="--draw-delay:640ms" d="M956 -20H1060V21H1109V62H1158V103H1220V-20Z" fill="#BFD8CA"/>
+            <g class="banner-detail" style="--draw-delay:680ms" fill="none" stroke="#477E91" stroke-width="1" opacity=".68">
+              <path d="M0 27H493M75 61H756M295 95H979M816 176H1200"/>
+              <path d="M493 20V135M756 54V165M979 88V176" stroke-dasharray="3 6"/>
+            </g>
+
+          </svg>
+          <svg class="heading-dots banner-detail" style="--draw-delay:820ms" viewBox="0 0 36 36" aria-hidden="true" focusable="false"><circle cx="4" cy="4" r="2.1" fill="#273850"/><circle cx="18" cy="4" r="2.1" fill="#273850"/><circle cx="32" cy="4" r="2.1" fill="#273850"/><circle cx="4" cy="18" r="2.1" fill="#273850"/><circle cx="18" cy="18" r="2.1" fill="#273850"/><circle cx="32" cy="18" r="2.1" fill="#273850"/><circle cx="4" cy="32" r="2.1" fill="#273850"/><circle cx="18" cy="32" r="2.1" fill="#273850"/><circle cx="32" cy="32" r="2.1" fill="#273850"/></svg>
+          <span class="heading-rail" aria-hidden="true">SKILL &amp; TOOLS</span><h2 class="banner-heading">TECH STACK</h2><span class="heading-caption" aria-hidden="true">Build with intent.</span>
         </div>
         <div class="skills-columns" id="skills-grid"></div>
       </section>
 
       <!-- SECTION 2: タイムライン -->
       <section id="timeline" class="home-section">
-        <div class="home-heading"><h2 id="timeline-heading" tabindex="-1">Timeline</h2><a href="certifications.html">資格一覧</a></div>
-        <div class="timeline-banner" aria-hidden="true">
-          <img src="img/timeline-banner.svg" width="1200" height="180" alt="" decoding="async">
-          <div class="timeline-banner-caption">
-            <span>TIME &amp; EXPERIENCE</span>
-            <span>A path in progress.</span>
-          </div>
+        <div class="timeline-banner heading-banner">
+          <svg class="banner-art" viewBox="0 0 1200 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+            <rect width="1200" height="180" fill="#f1f6f8"/>
+            <circle class="banner-layer" style="--draw-delay:260ms" cx="24" cy="178" r="150" fill="#bfd8ca"/>
+            <rect class="banner-layer" style="--draw-delay:340ms" x="119" y="-14" width="241" height="105" fill="#b7bee5"/>
+            <rect class="banner-layer" style="--draw-delay:440ms" x="290" y="60" width="306" height="86" fill="#90d7e2"/>
+            <rect class="banner-layer" style="--draw-delay:540ms" x="543" y="100" width="170" height="95" fill="#e8baa6"/>
+            <path class="banner-layer" style="--draw-delay:640ms" d="M733 180V72H800V180Z" fill="#efe59b"/>
+
+
+
+          </svg>
+          <svg class="timeline-measure banner-detail" style="--draw-delay:180ms" viewBox="0 0 1000 14" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M0 8H1000M0 0V14M20 7V12M40 7V12M60 7V12M80 7V12M100 0V14M120 7V12M140 7V12M160 7V12M180 7V12M200 0V14M220 7V12M240 7V12M260 7V12M280 7V12M300 0V14M320 7V12M340 7V12M360 7V12M380 7V12M400 0V14M420 7V12M440 7V12M460 7V12M480 7V12M500 0V14M520 7V12M540 7V12M560 7V12M580 7V12M600 0V14M620 7V12M640 7V12M660 7V12M680 7V12M700 0V14M720 7V12M740 7V12M760 7V12M780 7V12M800 0V14M820 7V12M840 7V12M860 7V12M880 7V12M900 0V14M920 7V12M940 7V12M960 7V12M980 7V12M1000 0V14" fill="none" stroke="#273850" stroke-width=".8" vector-effect="non-scaling-stroke"/></svg><div class="timeline-tags banner-detail" style="--draw-delay:780ms" aria-hidden="true"><span></span><span></span><span></span></div>
+          <span class="heading-rail" aria-hidden="true">CHRONICLE</span><h2 class="banner-heading" id="timeline-heading" tabindex="-1">TIMELINE</h2><span class="heading-caption" aria-hidden="true">A path in progress.</span>
         </div>
 
+        <div class="banner-actions"><a href="certifications.html">資格一覧 <span aria-hidden="true">↗</span></a></div>
         <!-- Timeline Filters -->
         <div class="filter-controls">
           <div class="chips-group">
@@ -257,6 +284,9 @@
       <p class="mono">© 2026 <a href="/portfolio/admin/login.html" style="color:inherit;text-decoration:none;">Altena</a>. All rights reserved.</p>
     </div>
   </footer>
+  <a class="back-to-top" href="#top" aria-label="トップへ戻る">
+    <svg viewBox="0 0 24 36" fill="none" aria-hidden="true" focusable="false"><path d="M14 31V5L5 14" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
   <script src="js/status-beacon.js"></script>
 </body>
 
