@@ -20,7 +20,8 @@ function database(filename = ':memory:') {
     };
     db.exec(`CREATE TABLE IF NOT EXISTS articles (
         id TEXT PRIMARY KEY, title TEXT NOT NULL, date TEXT NOT NULL,
-        tags TEXT NOT NULL, excerpt TEXT, content TEXT NOT NULL, created_at INTEGER NOT NULL
+        tags TEXT NOT NULL, excerpt TEXT, content TEXT NOT NULL, created_at INTEGER NOT NULL,
+        visibility TEXT NOT NULL DEFAULT 'public', published_at INTEGER, share_version INTEGER NOT NULL DEFAULT 0
     )`);
     return db;
 }
@@ -28,11 +29,11 @@ function article(id, createdAt = 1) {
     return { id, title: id, date: '2026/09/14', tags: ['Test'], excerpt: '', content: 'content', createdAt };
 }
 function insert(db, value) {
-    db.prepare('INSERT INTO articles VALUES (?,?,?,?,?,?,?)').run(value.id, value.title,
-        value.date, JSON.stringify(value.tags), value.excerpt, value.content, value.createdAt);
+    db.prepare('INSERT INTO articles (id,title,date,tags,excerpt,content,created_at,visibility,published_at) VALUES (?,?,?,?,?,?,?,?,?)').run(value.id, value.title,
+        value.date, JSON.stringify(value.tags), value.excerpt, value.content, value.createdAt, 'public', value.createdAt);
 }
 
-test('new assignments exclude the last three and current latest three', () => {
+test('new public assignments exclude the current public latest three', () => {
     const db = database();
     let seed = 42;
     const covers = createArticleCovers(db, length => {
@@ -48,7 +49,7 @@ test('new assignments exclude the last three and current latest three', () => {
         history.push(pattern);
         used.add(pattern);
         const latest = db.prepare(`SELECT c.cover_pattern FROM articles a JOIN article_covers c
-            ON c.article_id=a.id ORDER BY a.created_at DESC,a.id DESC LIMIT 3`).all();
+            ON c.article_id=a.id WHERE a.visibility='public' ORDER BY a.published_at DESC,a.id DESC LIMIT 3`).all();
         assert.equal(new Set(latest.map(a => a.cover_pattern)).size, latest.length);
         assert.equal(covers.assign(id), pattern);
     }
@@ -74,6 +75,39 @@ test('legacy ties, edits, deletion history and restart preserve assignments', t 
     assert.equal(covers.assign('a'), before[0].cover_pattern);
     assert.throws(() => db.prepare('INSERT INTO article_covers(article_id,cover_pattern) VALUES (?,?)').run('invalid', 10));
     assert.throws(() => db.prepare('INSERT INTO article_covers(article_id,cover_pattern) VALUES (?,?)').run('fraction', 1.5));
+    db.close();
+});
+
+test('reroll keeps a public article outside the other public latest-three patterns', () => {
+    const db = database();
+    let next = 0;
+    const covers = createArticleCovers(db, length => (next++ % length));
+    for (const id of ['one', 'two', 'three', 'four']) {
+        insert(db, article(id, next + 10));
+        covers.assign(id);
+    }
+    const rerolled = covers.reroll('four');
+    const others = db.prepare(`SELECT c.cover_pattern FROM articles a JOIN article_covers c ON c.article_id=a.id
+        WHERE a.visibility='public' AND a.id != 'four' ORDER BY a.published_at DESC,a.id DESC LIMIT 3`).all().map(row => row.cover_pattern);
+    assert(!others.includes(rerolled));
+    db.close();
+});
+
+test('reroll excludes three other public articles before applying the limit', () => {
+    const db = database();
+    const covers = createArticleCovers(db, () => 0);
+    for (const [id, publishedAt, pattern] of [
+        ['oldest-other', 1, 2],
+        ['middle-other', 2, 1],
+        ['latest-other', 3, 0],
+        ['current', 4, 9]
+    ]) {
+        insert(db, article(id, publishedAt));
+        db.prepare('INSERT INTO article_covers (article_id,cover_pattern) VALUES (?,?)').run(id, pattern);
+    }
+    const rerolled = covers.reroll('current');
+    assert.equal(rerolled, 3);
+    assert(![0, 1, 2].includes(rerolled));
     db.close();
 });
 

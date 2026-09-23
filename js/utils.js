@@ -20,7 +20,12 @@ function buildNoteCard(article, index = 0) {
         .join('');
     const ref = `LOG-${String(index + 1).padStart(3, '0')}`;
     const a = document.createElement('a');
-    a.href      = `/portfolio/notes/${escHtml(article.id)}/`;
+    // URL is a server-authoritative publication capability. Never reconstruct it from id.
+    a.href      = typeof article.url === 'string' && article.url ? article.url : '#';
+    if (a.href.endsWith('#')) {
+        a.setAttribute('aria-disabled', 'true');
+        a.addEventListener('click', event => event.preventDefault());
+    }
     a.className = 'note-card';
     a.dataset.ref = ref;
     a.innerHTML = `

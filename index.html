@@ -41,30 +41,20 @@
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
   <link rel="stylesheet" href="style.css?v=20260916-title-rows">
 
-  <!-- Three.js importmap（ヒーローCanvas用） -->
-  <script type="importmap">
-  { "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165/examples/jsm/"
-  }}
-  </script>
-
   <!-- JS -->
   <script defer src="js/utils.js"></script>
   <script defer src="js/cover-art.js?v=20260914-ui2"></script>
   <script defer src="js/home-banners.js?v=20260914-ui2"></script>
   <script defer src="js/main.js?v=20260917-reload-position" onerror="document.documentElement.classList.remove('section-entry-pending')"></script>
-  <!-- ヒーロー背景の Three.js（importmap を使うため type=module。module は defer 相当で実行される） -->
-  <script type="module" src="js/hero.js"></script>
   <link rel="stylesheet" href="status-beacon.css?v=20260917-mobile-divider">
   <link rel="stylesheet" href="pastel-homepage.css?v=20260915-mobile-top">
   <link rel="stylesheet" href="ideas-transition.css?v=20260917-ideas-gap">
-  <script defer src="js/ideas-transition.js?v=20260917-ideas-gap"></script>
-  <script defer src="js/divider-intro.js?v=20260917-mobile-divider"></script>
+  <link rel="stylesheet" href="hero-light.css?v=20260923-light-hero-4">
+  <script defer src="js/ideas-transition-light.js?v=20260923-no-stripes"></script>
   <script defer src="/portfolio/js/console-easter-egg.js?v=20260915-terminal"></script>
 </head>
 
-<body class="pastel-home" id="top" tabindex="-1">
+<body class="pastel-home light-hero-home" id="top" tabindex="-1">
   <header class="header glass">
     <div class="header-container">
       <a href="index.html" class="logo" id="header-logo" aria-label="Altena — Home">
@@ -90,88 +80,94 @@
   <main>
     <section id="scroll-bridge" aria-label="Ideas take shape."><div class="bridge-stage">
 <div class="hero-wrap">
-      <section class="hero on-dark">
-        <canvas id="hero-canvas" aria-hidden="true"></canvas>
-        <div class="hero-content">
-          <div class="hero-inner">
-            <h1 class="hero-title reveal logo-text">
-              <span class="row"><span class="title-line-1"></span><span class="cursor" id="title-cursor-1">|</span></span>
-              <span class="row"><span class="title-line-2"></span><span class="cursor" id="title-cursor-2" hidden>|</span></span>
-            </h1>
-            <p class="hero-sub mono reveal delay-1">
-              <span class="prefix"></span><span class="typing-animation"></span><span class="cursor" id="subtitle-cursor" hidden>|</span>
-            </p>
+      <section class="hero hero-light">
+        <div class="hero-drawing" aria-hidden="true">
+          <svg viewBox="0 0 1440 900" preserveAspectRatio="none">
+            <path class="drawing-grid" d="M0 158H1440M0 366H1440M0 574H1440M248 0V900M760 0V900M1180 0V900"/>
+            <path class="drawing-route" pathLength="1" d="M76 734H248V574H492V366H760V158H1124"/>
+            <path class="drawing-corner" d="M1180 88h116v116M1180 204h-64"/>
+            <g class="drawing-dots">
+              <circle cx="1248" cy="438" r="3"/><circle cx="1270" cy="438" r="3"/><circle cx="1292" cy="438" r="3"/>
+              <circle cx="1248" cy="460" r="3"/><circle cx="1270" cy="460" r="3"/><circle cx="1292" cy="460" r="3"/>
+              <circle cx="1248" cy="482" r="3"/><circle cx="1270" cy="482" r="3"/><circle cx="1292" cy="482" r="3"/>
+            </g>
+          </svg>
+          <span class="drawing-plane plane-cyan"></span>
+          <span class="drawing-plane plane-lavender"></span>
+        </div>
+
+        <div class="hero-layout">
+          <div class="hero-content">
+            <div class="hero-inner">
+              <p class="hero-context mono"><span>Portfolio index</span><span>2026</span></p>
+              <h1 class="hero-title reveal logo-text" aria-label="Altena Portfolio">
+                <span class="row"><span class="title-line-1"></span><span class="cursor" id="title-cursor-1">|</span></span>
+                <span class="row"><span class="title-line-2"></span><span class="cursor" id="title-cursor-2" hidden>|</span></span>
+              </h1>
+              <noscript><style>.hero-title.logo-text,.hero-sub{display:none}</style><p class="hero-title hero-title-fallback" aria-hidden="true"><span class="row">Altena</span><span class="row">Portfolio</span></p></noscript>
+              <p class="hero-sub mono reveal delay-1">
+                <span class="prefix"></span><span class="typing-animation"></span><span class="cursor" id="subtitle-cursor" hidden>|</span>
+              </p>
+              <nav class="hero-actions" aria-label="Primary">
+                <a href="myworks.html">View works</a>
+                <a href="notes.html">Read notes</a>
+              </nav>
+            </div>
           </div>
+
+          <aside class="hero-log" aria-label="Live system index">
+            <div class="hero-log-heading mono"><span>Live index</span><span class="hero-log-pulse">active</span></div>
+            <div class="divider-status-beacon mono">
+              <span class="divider-status-line divider-status-summary">
+                <span class="divider-status-key">[SYS]</span>
+                <span id="divider-status-value" role="status" aria-live="polite" aria-label="System status" data-state="checking">CHECKING</span>
+              </span>
+              <span class="divider-status-line divider-status-domain">
+                <span class="divider-status-key">[DOMAIN]</span><span>ALTENA.ME</span>
+              </span>
+              <span class="divider-status-line divider-status-protocol">
+                <span class="divider-status-key">[PROTOCOL]</span><span>HTTPS / 443</span>
+              </span>
+              <span class="divider-status-line divider-status-tls">
+                <span class="divider-status-key">[TLS]</span><span id="divider-status-tls" data-state="checking">CHECKING</span>
+              </span>
+              <span class="divider-status-line divider-status-mode">
+                <span class="divider-status-key">[MODE]</span><span>VISUAL ARCHIVE</span>
+              </span>
+              <span class="divider-status-line divider-status-node">
+                <span class="divider-status-key">[NODE]</span><span>CREATIVE PORTFOLIO</span>
+              </span>
+              <span class="divider-status-line divider-status-render">
+                <span class="divider-status-key">[RENDER]</span><span>DOM / CSS / SVG</span>
+              </span>
+              <span class="divider-status-line divider-status-runtime">
+                <span class="divider-status-key">[RUNTIME]</span><span>STATIC HTML / CSS / JS</span>
+              </span>
+              <span class="divider-status-line divider-status-server">
+                <span class="divider-status-key">[SERVER]</span><span id="divider-status-server">NGINX / CHECKING</span>
+              </span>
+              <span class="divider-status-line divider-status-uptime">
+                <span class="divider-status-key">[UPTIME]</span><span id="divider-status-uptime">CHECKING</span>
+              </span>
+              <span class="divider-status-line divider-status-endpoint">
+                <span class="divider-status-key">[ENDPOINT]</span><span>/PORTFOLIO/API/STATUS</span>
+              </span>
+              <span class="divider-status-line divider-status-detail">
+                <span class="divider-status-key">[SYSTEM STATUS]</span><span id="divider-status-detail">WAITING FOR TELEMETRY…</span>
+              </span>
+              <a href="lite.html" class="divider-status-line divider-status-textmode">
+                <span class="divider-status-key">[TEXT MODE]</span><span>/LITE.HTML</span>
+              </a>
+            </div>
+          </aside>
+        </div>
+
+        <div class="hero-foot mono" aria-hidden="true">
+          <span>Infrastructure</span><span>Software</span><span>Interfaces</span><span class="hero-scroll">Scroll / explore</span>
         </div>
       </section>
 
-      <!-- ヒーローと本文の境界（Glitch Slice）。破片は js/main.js?v=20260915-brand が生成する。 -->
-      <div class="divider-lines" aria-hidden="true">
-        <div class="shard-group" id="shard-group">
-          <span class="divider-rule"></span>
-          <span class="divider-rule short"></span>
-        </div>
-      </div>
-      <!-- role="status"/aria-live はこのブロック全体ではなく [SYS] の値だけに絞る。
-           #divider-status-detail は js/main.js?v=20260915-brand の毎秒の時計更新を反映するため、
-           ブロック全体を aria-live にすると支援技術に1秒おきの再読み上げが
-           発生してしまう（オンライン/オフラインが実際に変わった時だけ知らせたい）。 -->
-      <div class="divider-status-beacon mono">
-        <span class="divider-status-line divider-status-summary">
-          <span class="divider-status-key">[SYS]</span>
-          <span id="divider-status-value" role="status" aria-live="polite" aria-label="System status" data-state="checking">CHECKING</span>
-        </span>
-        <span class="divider-status-line divider-status-domain">
-          <span class="divider-status-key">[DOMAIN]</span>
-          <span>ALTENA.ME</span>
-        </span>
-        <span class="divider-status-line divider-status-protocol">
-          <span class="divider-status-key">[PROTOCOL]</span>
-          <span>HTTPS / 443</span>
-        </span>
-        <span class="divider-status-line divider-status-tls">
-          <span class="divider-status-key">[TLS]</span>
-          <span id="divider-status-tls" data-state="checking">CHECKING</span>
-        </span>
-        <span class="divider-status-line divider-status-mode">
-          <span class="divider-status-key">[MODE]</span>
-          <span>VISUAL ARCHIVE</span>
-        </span>
-        <span class="divider-status-line divider-status-node">
-          <span class="divider-status-key">[NODE]</span>
-          <span>CREATIVE PORTFOLIO</span>
-        </span>
-        <span class="divider-status-line divider-status-render">
-          <span class="divider-status-key">[RENDER]</span>
-          <span>THREE.JS / WEBGL</span>
-        </span>
-        <span class="divider-status-line divider-status-runtime">
-          <span class="divider-status-key">[RUNTIME]</span>
-          <span>STATIC HTML / CSS / JS</span>
-        </span>
-        <span class="divider-status-line divider-status-server">
-          <span class="divider-status-key">[SERVER]</span>
-          <span id="divider-status-server">NGINX / CHECKING</span>
-        </span>
-        <span class="divider-status-line divider-status-uptime">
-          <span class="divider-status-key">[UPTIME]</span>
-          <span id="divider-status-uptime">CHECKING</span>
-        </span>
-        <span class="divider-status-line divider-status-endpoint">
-          <span class="divider-status-key">[ENDPOINT]</span>
-          <span>/PORTFOLIO/API/STATUS</span>
-        </span>
-        <span class="divider-status-line divider-status-detail">
-          <span class="divider-status-key">[SYSTEM STATUS]</span>
-          <span id="divider-status-detail">WAITING FOR TELEMETRY…</span>
-        </span>
-        <a href="lite.html" class="divider-status-line divider-status-textmode">
-          <span class="divider-status-key">[TEXT MODE]</span>
-          <span>/LITE.HTML</span>
-        </a>
-      </div>
     </div>
-<canvas id="bridge-canvas" aria-hidden="true"></canvas>
 <div class="bridge-copy"><h2>Ideas take shape.</h2></div>
 <div class="idea-art"><svg viewBox="0 0 1000 420" role="img" aria-label="一本の線が幾何学の形を結ぶ図"><style>.ink{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 4s cubic-bezier(.58,0,.42,1) forwards}.paper{opacity:0;animation:colorIn .45s ease-out var(--delay) forwards}@keyframes draw{to{stroke-dashoffset:0}}@keyframes colorIn{to{opacity:1}}@media(prefers-reduced-motion:reduce){.ink{animation:none;stroke-dashoffset:0}.paper{animation:none;opacity:1}}</style><path class="paper" d="M161 218L220 116L279 218Z" fill="#e8baa6" style="--delay:1.36s"/><path class="paper" d="M366 125H461V230H366Z" fill="#b7bee5" style="--delay:1.86s"/><path class="paper" d="M538 189C489 189 503 284 563 284C580 250 579 189 538 189Z" fill="#bfd8ca" style="--delay:2.36s"/><path class="paper" d="M651 193C651 99 788 99 788 193V283H651Z" fill="#90d7e2" style="--delay:2.93s"/><path class="ink" d="M77 259C124 259 146 243 161 218L220 116L279 218C296 248 278 278 250 278C218 278 208 244 230 223C256 198 288 230 323 230H366V125H461V230H415C381 230 376 284 415 284H524C580 284 579 189 538 189C489 189 503 284 563 284C621 284 651 242 651 193C651 99 788 99 788 193V283H853C896 283 918 264 933 237" pathLength="1" fill="none" stroke="#273850" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
 <div class="idea-prose"><p>学んだことは、思いがけないところでつながる。</p><p>分野を越えて知識を重ね、まだ見たことのない形を探していく。</p></div>

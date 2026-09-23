@@ -271,20 +271,12 @@ ${dataRow('Category', escHtml(work.category))}
 
   async function openNoteDetail(index) {
     const article = _notesList[index]; if (!article) return;
-    _state = 'detail'; _detailBackFn = () => openSection('5', true);
-    sectionTitle.textContent = `NOTES > ${numLabel(index+1)}`;
-    backLabel.textContent = '一覧に戻る';
-    sectionBody.innerHTML = '<br><span class="dim">Loading...</span>';
-    try {
-      const data = await fetch(`/portfolio/api/articles/${article.id}`).then(r => r.json());
-      const tags = (data.tags||[]).length ? data.tags.join(', ') : '--';
-      sectionBody.innerHTML = `<br>
-${dataRow('Title', `<span class="hi">${escHtml(data.title)}</span>`)}
-${dataRow('Date', escHtml(data.date))}
-${dataRow('Tags', `<span class="amber">${escHtml(tags)}</span>`)}
-<br><hr><br><pre class="content-pre">${escHtml(stripHtml(data.content||''))}</pre><br>`;
-    } catch { sectionBody.innerHTML = '<br><p class="red">記事の取得に失敗しました</p>'; }
-    window.scrollTo(0, 0);
+    // Public article URLs are supplied by the API; do not derive a static path from ids.
+    if (typeof article.url === 'string' && article.url) {
+      window.location.assign(article.url);
+      return;
+    }
+    sectionBody.innerHTML = '<br><p class="red">記事のURLを取得できませんでした</p>';
   }
 
   function back() {
