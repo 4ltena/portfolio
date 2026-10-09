@@ -4,11 +4,15 @@ const bcrypt       = require('bcryptjs');
 const jwt          = require('jsonwebtoken');
 const fs           = require('fs');
 const path         = require('path');
+const os           = require('os');
 const crypto       = require('crypto');
 const https        = require('https');
+const tls          = require('tls');
 const { execSync } = require('child_process');
+const { execFile } = require('child_process');
 const Database     = require('better-sqlite3');
 const multer       = require('multer');
+const { formatCompactDate } = require('../js/calendar-date');
 const {
     migrateNotesSchema, normalizeArticlePayload, sanitizeHtml, makeShareSignature,
     hasValidShareSignature, makePublicationJob, nextPublishedAt, contentHash, assertArticleId, articleView,
@@ -18,6 +22,8 @@ const {
 } = require('./notes-publication');
 
 const app = express();
+// Only the local nginx hop may supply a forwarded client address.
+app.set('trust proxy', 'loopback');
 app.use(express.json({ limit: '4mb' }));
 
 const ts  = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
@@ -222,7 +228,10 @@ function loadConfig() {
         }
         return readVerifiedConfig();
     }
-    const pw  = process.env.ADMIN_PASSWORD || 'changeme';
+    const pw = process.env.ADMIN_PASSWORD;
+    if (!pw || pw.length < 16) {
+        throw new Error('ADMIN_PASSWORD (at least 16 characters) is required to initialize the admin config');
+    }
     const cfg = {
         passwordHash: bcrypt.hashSync(pw, 12),
         jwtSecret: crypto.randomBytes(48).toString('hex'),
@@ -230,18 +239,23 @@ function loadConfig() {
     };
     atomicWriteConfig(cfg);
     const persisted = readVerifiedConfig(cfg.shareSecret);
-    log('[INIT] Config created. Set ADMIN_PASSWORD env var to change password.');
+    log('[INIT] Config created with explicit ADMIN_PASSWORD.');
     return persisted;
 }
 const config = loadConfig();
 
 // ─── Rate limiter ─────────────────────────────────────────────────────────────
 const loginAttempts = new Map();
+let loginRateChecks = 0;
 function checkRateLimit(ip) {
     const now = Date.now();
+    if (++loginRateChecks % 256 === 0) {
+        for (const [key, value] of loginAttempts) if (now > value.reset) loginAttempts.delete(key);
+    }
     const e   = loginAttempts.get(ip) || { n: 0, reset: now + 15 * 60 * 1000 };
     if (now > e.reset) { e.n = 0; e.reset = now + 15 * 60 * 1000; }
     e.n++;
+    if (!loginAttempts.has(ip) && loginAttempts.size >= 10000) loginAttempts.delete(loginAttempts.keys().next().value);
     loginAttempts.set(ip, e);
     return e.n <= 10;
 }
@@ -262,18 +276,33 @@ const requireAuth = requireAdmin;
 
 // ─── Image upload (multer) ────────────────────────────────────────────────────
 const ALLOWED_IMG = /\.(svg|png|jpg|jpeg|gif|webp|ico)$/i;
+const UPLOADABLE_IMG = /\.(png|jpg|jpeg|gif|webp|ico)$/i;
+
+function hasRasterSignature(filePath, name) {
+    const fd = fs.openSync(filePath, 'r');
+    const header = Buffer.alloc(16);
+    let length;
+    try { length = fs.readSync(fd, header, 0, header.length, 0); }
+    finally { fs.closeSync(fd); }
+    if (/\.png$/i.test(name)) return length >= 8 && header.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    if (/\.jpe?g$/i.test(name)) return length >= 3 && header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+    if (/\.gif$/i.test(name)) return length >= 6 && /^(GIF87a|GIF89a)$/.test(header.toString('ascii', 0, 6));
+    if (/\.webp$/i.test(name)) return length >= 12 && header.toString('ascii', 0, 4) === 'RIFF' && header.toString('ascii', 8, 12) === 'WEBP';
+    if (/\.ico$/i.test(name)) return length >= 4 && header[0] === 0 && header[1] === 0 && header[2] === 1 && header[3] === 0;
+    return false;
+}
 
 const imgStorage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, IMG_DIR),
     filename:    (req, file, cb) => {
         const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-        cb(null, safe);
+        cb(null, `.${safe}.${crypto.randomBytes(8).toString('hex')}.upload`);
     }
 });
 const upload = multer({
     storage:    imgStorage,
     limits:     { fileSize: 10 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => cb(null, ALLOWED_IMG.test(file.originalname))
+    fileFilter: (req, file, cb) => cb(null, UPLOADABLE_IMG.test(file.originalname))
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -371,7 +400,14 @@ function generateHtml(a) {
 
 // ─── Notes publication ────────────────────────────────────────────────────────
 function articleDirectory(id) { return targetDirectory(NOTES_OUT_DIR, id); }
-function renderArticle(row) { return generateHtml({ ...row, tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags, content: sanitizeHtml(row.content) }); }
+function renderArticle(row) {
+    const clean = { ...row, tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags, content: sanitizeHtml(row.content) };
+    const html = generateHtml(clean);
+    if (clean.visibility !== 'public') return html;
+    const { noteDto } = require('./agent-public-service');
+    const { generateJsonLd, embedJsonLd } = require('./agent-jsonld');
+    return embedJsonLd(html, generateJsonLd({ kind: 'note', item: noteDto(clean) }));
+}
 function transientDirectories(id) {
     if (!fs.existsSync(NOTES_OUT_DIR)) return [];
     const prefix = `.${assertArticleId(id)}.`;
@@ -495,6 +531,7 @@ function saveArticle(id, payload, previous = null) {
     previous = snapshot.row;
     const article = normalizeArticlePayload(payload, previous && { ...previous, tags: JSON.parse(previous.tags) });
     const now = Date.now();
+    const publishedAt = nextPublishedAt(previous, article.visibility, now);
     const shareVersion = previous?.visibility === 'unlisted' || article.visibility !== 'unlisted'
         ? (previous?.share_version || 0) : (previous?.share_version || 0) + 1;
     let job;
@@ -508,17 +545,17 @@ function saveArticle(id, payload, previous = null) {
         if (article.visibility === 'public') {
             // Never commit a public URL whose directory belongs to an unknown producer.
             assertPublishTargetManagedOrAbsent(NOTES_OUT_DIR, id);
-            staged = writeStagedArticle(NOTES_OUT_DIR, id, renderArticle({ ...article, id }));
+            staged = writeStagedArticle(NOTES_OUT_DIR, id, renderArticle({ ...article, id, updated_at: now, published_at: publishedAt }));
         }
         else if (previous?.visibility === 'public') quarantine = quarantineManagedDirectory(NOTES_OUT_DIR, id);
         db.transaction(() => {
         if (previous) db.prepare(`UPDATE articles SET title=?,date=?,tags=?,excerpt=?,content=?,visibility=?,published_at=?,share_version=?,updated_at=? WHERE id=?`).run(
             article.title, article.date, JSON.stringify(article.tags), article.excerpt, article.content, article.visibility,
-            nextPublishedAt(previous, article.visibility, now), shareVersion, now, id);
+            publishedAt, shareVersion, now, id);
         else {
             db.prepare(`INSERT INTO articles (id,title,date,tags,excerpt,content,created_at,updated_at,visibility,published_at,share_version) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(
                 id, article.title, article.date, JSON.stringify(article.tags), article.excerpt, article.content, now, now,
-                article.visibility, nextPublishedAt(null, article.visibility, now), shareVersion);
+                article.visibility, publishedAt, shareVersion);
             articleCovers.assign(id);
         }
         const updated = db.prepare('SELECT * FROM articles WHERE id=?').get(id);
@@ -652,7 +689,7 @@ app.delete('/articles/:id', requireAdmin, (req, res) => { const id = req.params.
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 const EASTER_USER    = process.env.EASTER_USER    || 'lunami';
-const EASTER_PASS    = process.env.EASTER_PASS    || 'iroha';
+const EASTER_PASS    = process.env.EASTER_PASS || '';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 app.post('/auth/login', (req, res) => {
@@ -661,7 +698,7 @@ app.post('/auth/login', (req, res) => {
     const { username, password } = req.body || {};
     if (!password) return res.status(400).json({ error: 'Password required' });
 
-    if ((username || '').toLowerCase() === EASTER_USER && password === EASTER_PASS) {
+    if (EASTER_PASS && (username || '').toLowerCase() === EASTER_USER && password === EASTER_PASS) {
         const token = jwt.sign({ easter: true }, config.jwtSecret, { expiresIn: '5m' });
         return res.json({ type: 'easter', token });
     }
@@ -699,7 +736,11 @@ function httpsReq(url, opts, body) {
               headers: opts.headers || {} },
             res => {
                 let buf = '';
-                res.on('data', c => buf += c);
+                res.on('data', c => {
+                    buf += c;
+                    if (buf.length > 1024 * 1024) res.destroy(new Error('Upstream response too large'));
+                });
+                res.on('error', reject);
                 res.on('end', () => {
                     try { resolve({ status: res.statusCode, json: JSON.parse(buf) }); }
                     catch { resolve({ status: res.statusCode, json: null }); }
@@ -707,6 +748,7 @@ function httpsReq(url, opts, body) {
             }
         );
         req.on('error', reject);
+        req.setTimeout(10000, () => req.destroy(new Error('Upstream timeout')));
         if (body) req.write(body);
         req.end();
     });
@@ -736,7 +778,7 @@ async function callGemini(input, sysPrompt) {
                      m.supportedGenerationMethods.includes('generateContent') &&
                      !m.name.includes('thinking') && !m.name.includes('embedding') && !m.name.includes('aqa'))
         .map(m => m.name);
-    for (const model of models) {
+    for (const model of models.slice(0, 2)) {
         try {
             const body = JSON.stringify({
                 system_instruction: { parts: [{ text: sysPrompt }] },
@@ -759,6 +801,10 @@ async function callGemini(input, sysPrompt) {
 }
 
 // ─── Fushi chat proxy ─────────────────────────────────────────────────────────
+const FUSHI_DAILY_LIMIT = 50;
+let fushiWindowStart = Date.now();
+let fushiRequests = 0;
+let fushiInFlight = 0;
 app.post('/fushi/chat', async (req, res) => {
     const h = req.headers.authorization || '';
     if (!h.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
@@ -768,15 +814,25 @@ app.post('/fushi/chat', async (req, res) => {
     } catch { return res.status(401).json({ error: 'Token expired' }); }
     if (!GEMINI_API_KEY) return res.status(503).json({ error: 'API not configured' });
     const { input, systemPrompt } = req.body || {};
-    if (!input || !systemPrompt) return res.status(400).json({ error: 'Missing fields' });
+    if (typeof input !== 'string' || typeof systemPrompt !== 'string' || !input || !systemPrompt) return res.status(400).json({ error: 'Missing fields' });
     if (input.length > 2000 || systemPrompt.length > 30000) return res.status(400).json({ error: 'Too long' });
+    const now = Date.now();
+    if (now - fushiWindowStart >= 24 * 60 * 60 * 1000) {
+        fushiWindowStart = now;
+        fushiRequests = 0;
+    }
+    if (fushiRequests >= FUSHI_DAILY_LIMIT || fushiInFlight >= 2) {
+        return res.status(429).json({ error: 'Chat limit reached. Try again later.' });
+    }
+    fushiRequests++;
+    fushiInFlight++;
     try {
         const text = await callGemini(String(input), String(systemPrompt));
         res.json({ text: text || null });
     } catch (e) {
         err('[fushi/chat]', e.message);
         res.status(500).json({ error: 'Upstream error' });
-    }
+    } finally { fushiInFlight--; }
 });
 
 // ─── System monitoring ────────────────────────────────────────────────────────
@@ -799,9 +855,11 @@ app.get('/timeline', (req, res) => {
 
 app.post('/timeline', requireAuth, (req, res) => {
     const { date, title, category, href } = req.body;
+    const normalizedDate = formatCompactDate(date, true);
+    if (normalizedDate === null) return res.status(400).json({ error: 'A valid date (YYYY/MM/DD) is required' });
     if (!date?.trim() || !title?.trim() || !category?.trim()) return res.status(400).json({ error: 'date, title, category are required' });
     const id   = 'tl-' + Date.now().toString(36);
-    const item = { id, date: date.trim(), title: title.trim(), category: category.trim(), href: href?.trim() || null };
+    const item = { id, date: normalizedDate, title: title.trim(), category: category.trim(), href: href?.trim() || null };
     db.prepare('INSERT INTO timeline (id,date,title,category,href) VALUES (?,?,?,?,?)').run(item.id, item.date, item.title, item.category, item.href);
     res.status(201).json(item);
 });
@@ -810,8 +868,11 @@ app.put('/timeline/:id', requireAuth, (req, res) => {
     const row = db.prepare('SELECT * FROM timeline WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ error: 'Not found' });
     const { date, title, category, href } = req.body;
+    const dateInput = date == null || (typeof date === 'string' && !date.trim()) ? row.date : date;
+    const normalizedDate = formatCompactDate(dateInput, true);
+    if (normalizedDate === null) return res.status(400).json({ error: 'A valid date (YYYY/MM/DD) is required' });
     const updated = {
-        date:     date?.trim()     || row.date,
+        date:     normalizedDate,
         title:    title?.trim()    || row.title,
         category: category?.trim() || row.category,
         href:     href !== undefined ? (href?.trim() || null) : row.href,
@@ -876,7 +937,13 @@ app.get('/images', requireAuth, (req, res) => {
 
 app.post('/images', requireAuth, upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file or type not allowed' });
-    res.status(201).json({ name: req.file.filename, url: `/portfolio/img/${req.file.filename}` });
+    const safeName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    if (!hasRasterSignature(req.file.path, safeName)) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: 'Image content does not match its extension' });
+    }
+    fs.renameSync(req.file.path, path.join(IMG_DIR, safeName));
+    res.status(201).json({ name: safeName, url: `/portfolio/img/${safeName}` });
 });
 
 app.put('/images/:name', requireAuth, (req, res) => {
@@ -884,6 +951,7 @@ app.put('/images/:name', requireAuth, (req, res) => {
     const newName = String(req.body.name || '').replace(/[^a-zA-Z0-9._-]/g, '');
     if (!oldName || !newName) return res.status(400).json({ error: 'Invalid filename' });
     if (!ALLOWED_IMG.test(newName)) return res.status(400).json({ error: 'Extension not allowed' });
+    if (/\.svg$/i.test(newName) && !/\.svg$/i.test(oldName)) return res.status(400).json({ error: 'SVG upload is not allowed' });
     const oldPath = path.join(IMG_DIR, oldName);
     const newPath = path.join(IMG_DIR, newName);
     if (!fs.existsSync(oldPath)) return res.status(404).json({ error: 'Not found' });
@@ -952,30 +1020,63 @@ app.delete('/cert-plans/:id', requireAuth, (req, res) => {
 });
 
 // ─── System Status (public) ───────────────────────────────────────────────────
-app.get('/status', (req, res) => {
-    try {
-        const uptimeSec = parseFloat(fs.readFileSync('/proc/uptime', 'utf8').split(' ')[0]);
-        const days  = Math.floor(uptimeSec / 86400);
-        const hours = Math.floor((uptimeSec % 86400) / 3600);
-
-        const nginxRaw = execSync('nginx -v 2>&1').toString();
-        const nginx = nginxRaw.match(/nginx\/([\d.]+)/)?.[1] ?? 'unknown';
-
-        let tls = 'unknown';
-        try {
-            const enddate = execSync(
-                "echo | openssl s_client -connect altena.me:443 -servername altena.me 2>/dev/null | openssl x509 -noout -enddate",
-                { timeout: 8000 }
-            ).toString();
-            const m = enddate.match(/notAfter=(.+)/);
-            if (m) tls = new Date(m[1]) > new Date() ? 'valid' : 'expired';
-        } catch { /* tls check failed */ }
-
-        res.json({ status: 'ONLINE', uptime: { days, hours }, nginx, tls });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
+let statusSnapshot = null;
+let statusExpires = 0;
+let statusPending = null;
+function readNginxVersion() {
+    return new Promise(resolve => {
+        execFile('nginx', ['-v'], { timeout: 2000 }, (error, stdout, stderr) => {
+            resolve(error ? 'unknown' : (stdout + stderr).match(/nginx\/([\d.]+)/)?.[1] ?? 'unknown');
+        });
+    });
+}
+function readTlsState() {
+    return new Promise(resolve => {
+        const socket = tls.connect({ host: 'altena.me', port: 443, servername: 'altena.me' });
+        let finished = false;
+        const finish = value => {
+            if (finished) return;
+            finished = true;
+            socket.destroy();
+            resolve(value);
+        };
+        socket.setTimeout(4000, () => finish('unknown'));
+        socket.once('error', error => finish(error.code === 'CERT_HAS_EXPIRED' ? 'expired' : 'unknown'));
+        socket.once('secureConnect', () => {
+            const expiry = Date.parse(socket.getPeerCertificate().valid_to || '');
+            finish(Number.isFinite(expiry) ? (expiry > Date.now() ? 'valid' : 'expired') : 'unknown');
+        });
+    });
+}
+async function currentStatus() {
+    if (statusSnapshot && Date.now() < statusExpires) return statusSnapshot;
+    if (!statusPending) {
+        statusPending = (async () => {
+            const [nginx, tlsState] = await Promise.all([readNginxVersion(), readTlsState()]);
+            const uptimeSec = os.uptime();
+            if (!Number.isFinite(uptimeSec)) throw new Error('Uptime unavailable');
+            statusSnapshot = {
+                status: 'ONLINE',
+                uptime: { days: Math.floor(uptimeSec / 86400), hours: Math.floor((uptimeSec % 86400) / 3600) },
+                nginx, tls: tlsState
+            };
+            statusExpires = Date.now() + 5 * 60 * 1000;
+            return statusSnapshot;
+        })().finally(() => { statusPending = null; });
     }
+    return statusPending;
+}
+app.get('/status', async (req, res) => {
+    try { res.json(await currentStatus()); }
+    catch (error) { err('[status]', error.message); res.status(500).json({ error: 'Status unavailable' }); }
 });
+
+// Public Markdown only; nginx maps the public .md/llms.txt URLs to this namespace.
+// JSON endpoints remain local until their separate deployment is requested.
+app.use('/agent/api/public', require('./agent-public').createPublicRouter({
+    service: require('./agent-public-service').createPublicService({ root: PORTFOLIO_ROOT, db })
+}));
+app.use('/agent', require('./agent-markdown').createMarkdownRouter({ root: PORTFOLIO_ROOT, db }));
 
 // ─── Catch-all ────────────────────────────────────────────────────────────────
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));

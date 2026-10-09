@@ -586,8 +586,8 @@
       <div class="admin-section-title">// Upload</div>
       <div class="drop-zone" id="drop-zone">
         <div>Drop images here, or click to select files</div>
-        <div class="drop-zone-hint">SVG · PNG · JPG · GIF · WEBP · ICO &nbsp;|&nbsp; max 10 MB each</div>
-        <input type="file" id="img-file-input" accept=".svg,.png,.jpg,.jpeg,.gif,.webp,.ico" multiple style="display:none">
+        <div class="drop-zone-hint">PNG · JPG · GIF · WEBP · ICO &nbsp;|&nbsp; max 10 MB each</div>
+        <input type="file" id="img-file-input" accept=".png,.jpg,.jpeg,.gif,.webp,.ico" multiple style="display:none">
       </div>
       <div class="img-upload-status" id="img-upload-status"></div>
 
@@ -599,11 +599,12 @@
 
   <!-- Pinned: preview is sanitized locally as a second boundary. The server remains canonical. -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js" integrity="sha384-JEyTNhjM6R1ElGoJns4U2Ln4ofPcqzSsynQkmEc/KGy6336qAZl70tDLufbkla+3" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@18.0.14/lib/marked.umd.js" integrity="sha384-2vpGtuKqJvFlwJqYnf/wUMuzUfhUnYBt9oay0e2yaFcq0Dh6/aEbQ8YAOeKGzlYo" crossorigin="anonymous"></script>
   <script src="../js/cover-art.js?v=20260922-publication-desk"></script>
+  <script src="../js/calendar-date.js?v=20261009-timeline-date"></script>
   <!-- HTML → Markdown 変換（既存記事の編集時に保存済み HTML を Markdown へ戻す） -->
-  <script src="https://cdn.jsdelivr.net/npm/turndown/dist/turndown.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/turndown-plugin-gfm/dist/turndown-plugin-gfm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/turndown@7.2.4/dist/turndown.js" integrity="sha384-VRHmZZ8b5mH5yknWcg48OJS6RmXZmlgvsqhOXJqY0rwvwirs1M12xd+49c3NpW6a" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/turndown-plugin-gfm@1.0.2/dist/turndown-plugin-gfm.js" integrity="sha384-2TroN1N6OfLQ+K4qttptnIfMREzUlMa3hW/nZqDZXv7Sm9BkESfGEupDEqCbzyRl" crossorigin="anonymous"></script>
   <script>
     const TOKEN_KEY = 'admin_token';
     let token = localStorage.getItem(TOKEN_KEY);
@@ -645,22 +646,11 @@
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    // Notesは実在する年月日を必須とし、Timelineの既存の年・月精度は維持する。
-    function formatCompactDate(value, requireFullDate = false) {
-      const raw = value.trim();
-      const compact = /^\d{8}$/.test(raw) ? raw : raw.match(/^(\d{4})\/(\d{2})\/(\d{2})$/)?.slice(1).join('');
-      if (!compact) return requireFullDate ? null : value;
-      const year = Number(compact.slice(0, 4));
-      const month = Number(compact.slice(4, 6));
-      const day = Number(compact.slice(6, 8));
-      const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-      const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-      if (year < 1 || month < 1 || month > 12 || day < 1 || day > days[month - 1]) return null;
-      return compact.slice(0, 4) + '/' + compact.slice(4, 6) + '/' + compact.slice(6, 8);
-    }
+    // Notesの入力形式を保ち、Timelineも実在する年月日を保存する。
+    const { formatCompactDate } = CalendarDate;
 
     function normalizeDateField(field) {
-      const formatted = formatCompactDate(field.value, field.id === 'date-input');
+      const formatted = formatCompactDate(field.value, field.id === 'tl-date');
       field.setCustomValidity(formatted === null ? '存在する日付を入力してください（例：20260811）。' : '');
       if (formatted !== null) field.value = formatted;
       return formatted !== null;
@@ -674,6 +664,7 @@
         if (!event.isComposing) normalizeDateField(field);
       });
       field.addEventListener('compositionend', () => normalizeDateField(field));
+      field.addEventListener('change', () => normalizeDateField(field));
       field.addEventListener('blur', () => {
         if (!normalizeDateField(field)) field.reportValidity();
       });
@@ -1250,6 +1241,7 @@
     function tlStartEdit(item) {
       tlEditId.value = item.id;
       document.getElementById('tl-date').value     = item.date;
+      normalizeDateField(document.getElementById('tl-date'));
       document.getElementById('tl-category').value = item.category;
       document.getElementById('tl-title').value    = item.title;
       document.getElementById('tl-href').value     = item.href || '';
@@ -1292,7 +1284,7 @@
           const row = document.createElement('div');
           row.className = 'item-row';
           row.innerHTML = `
-            <span class="item-row-meta">${escHtml(item.date)}</span>
+            <span class="item-row-meta">${escHtml(formatCompactDate(item.date, true) || item.date)}</span>
             <span class="item-row-title">${escHtml(item.title)}</span>
             <span class="item-row-badge">${escHtml(item.category)}</span>
             <div class="article-actions">

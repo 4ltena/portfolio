@@ -1,0 +1,34 @@
+[Unit]
+Description=Altena public readonly MCP
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+DynamicUser=yes
+ExecStart=/opt/portfolio-mcp/current/portfolio-mcp --transport http --root /usr/share/nginx/html/portfolio --db /usr/share/nginx/html/portfolio/api/data/portfolio.db --port 3318
+Restart=on-failure
+RestartSec=3
+TimeoutStartSec=15
+TimeoutStopSec=10
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ReadOnlyPaths=/usr/share/nginx/html/portfolio
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=96M
+CPUQuota=50%
+TasksMax=32
+Nice=10
+StandardOutput=null
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

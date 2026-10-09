@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Altena / Agent content preview</title><link rel="stylesheet" href="/preview.css"><script defer src="/preview.js"></script></head>
+<body>
+<header><a href="/" class="brand">// Altena</a><span class="status">LOCAL · READ ONLY</span></header>
+<main>
+  <div class="intro"><p class="eyebrow">AGENT CONTENT / PROTOTYPE</p><h1>One source.<br>Different ways to read.</h1><p>公開情報を、画面・Markdown・JSONで読み比べる。<br>本番ページやDBを変更せず、ローカルの公開データを取得します。</p></div>
+  <section class="workspace" aria-label="応答の比較">
+    <aside>
+      <h2>Sources</h2><div id="sources" aria-live="polite"><p>読み込み中…</p></div>
+      <a class="index-link" href="/portfolio/llms.txt">llms.txt ↗</a>
+      <label for="query">Works / Notesを検索</label><form id="search"><input id="query" name="q" placeholder="Blender, インフラ…" maxlength="120"><button type="submit">検索</button></form>
+      <div id="results" aria-live="polite"></div>
+    </aside>
+    <div class="viewer">
+      <nav class="formats" aria-label="表示形式"><button type="button" data-format="html" aria-pressed="true">HTML</button><button type="button" data-format="markdown" aria-pressed="false">Markdown</button><button type="button" data-format="json" aria-pressed="false">JSON</button><button type="button" data-format="schema" aria-pressed="false">JSON-LD</button></nav>
+      <div class="response-meta"><span id="meta">—</span><button type="button" id="copy">コピー</button><a id="open" target="_blank" rel="noopener">応答を開く ↗</a></div>
+      <p id="endpoint" class="endpoint"></p><p id="feedback" role="status"></p>
+      <div id="output" aria-live="polite"></div>
+    </div>
+  </section>
+  <footer><p>Notesは公開記事だけをSELECT。下書き・限定公開の記事と管理情報は配信しません。</p><p>更新日はDBの更新時刻、またはHTMLのファイル更新時刻です。新しい文章や実績は補完していません。</p></footer>
+</main>
+</body></html>

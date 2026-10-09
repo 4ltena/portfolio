@@ -335,6 +335,7 @@
   document.addEventListener('click', event => {
     const target = event.target.closest('a[href="#top"],.back-to-top');
     if (!target) return;
+    event.preventDefault();
     cancelSettle();
     returningToTop = !reduced.matches && scrollY > 1;
     if (returningToTop) suppressUntil = Infinity;

@@ -1,0 +1,23 @@
+{
+  "retrieved": "2026-10-09",
+  "fonts": [
+    {
+      "family": "VT323",
+      "file": "VT323-Regular.woff2",
+      "license": "VT323-OFL.txt",
+      "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/vt323/VT323-Regular.ttf",
+      "sourceSha256": "cf4de751ada78ceac033dbe16a687742939995b77bc2a052ae17a4957958594d",
+      "woff2Sha256": "f4c9169d957f89631f33cc08867870c9675350de821567e02a89b1864966495e",
+      "conversion": "fontTools TTF to WOFF2; original glyph set preserved"
+    },
+    {
+      "family": "DotGothic16",
+      "file": "DotGothic16-Regular.woff2",
+      "license": "DotGothic16-OFL.txt",
+      "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/dotgothic16/DotGothic16-Regular.ttf",
+      "sourceSha256": "3ad9af88726d42b40f7f365f0dcac785af73cf20ea6f1d5b44e57cc21150b8f1",
+      "woff2Sha256": "dc1c5a0745f9328c6c8202549fca0e888673cbad3530511b921e223d41fb5abb",
+      "conversion": "fontTools TTF to WOFF2; original glyph set preserved"
+    }
+  ]
+}
