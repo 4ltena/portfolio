@@ -2,7 +2,7 @@
 
 const express = require('express');
 const { PublicError, publicError, errorEnvelope } = require('./agent-public-service');
-const openapi = require('../docs/superpowers/api/public-openapi.json');
+const openapi = require('./public-openapi.json');
 
 function createPublicRouter({ service }) {
     const router = express.Router();

@@ -243,7 +243,7 @@ test('HTTP rejects duplicate, malformed and unknown query, enforces GET/HEAD and
 });
 
 test('published OpenAPI uses the exact shared schema objects and exposes only retrieval methods', () => {
-    const document = require('../docs/superpowers/api/public-openapi.json');
+    const document = require('./public-openapi.json');
     assert.deepEqual(document.components.schemas.List, LIST_SCHEMA);
     assert.deepEqual(document.components.schemas.Detail, DETAIL_SCHEMA);
     assert.deepEqual(document.components.schemas.Error, ERROR_SCHEMA);
