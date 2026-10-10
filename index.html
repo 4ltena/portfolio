@@ -5,8 +5,30 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Altena Portfolio</title>
+  <script>
+    if (['#skills', '#timeline', '#profile'].includes(location.hash) &&
+        !['back_forward', 'reload'].includes(performance.getEntriesByType('navigation')[0]?.type))
+      document.documentElement.classList.add('section-entry-pending');
+  </script>
+  <style>html.section-entry-pending main { visibility: hidden; }</style>
+  <link rel="icon" href="img/favicon.ico?v=20260915-offset" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260915-offset">
   <meta name="description" content="Personal portfolio of Altena, 3DCG & Frontend Developer.">
-  <link rel="icon" href="img/favicon.ico">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Altena Portfolio">
+  <meta property="og:description" content="Personal portfolio of Altena, 3DCG &amp; Frontend Developer.">
+  <meta property="og:url" content="https://altena.me/portfolio/index.html">
+  <meta property="og:image" content="https://altena.me/portfolio/img/og-portfolio-clean-20260916.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Altena — Software &amp; Infrastructure Engineer / Frontend Developer / 3D Artist. パステルカラーの幾何学模様。">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Altena Portfolio">
+  <meta name="twitter:description" content="Personal portfolio of Altena, 3DCG &amp; Frontend Developer.">
+  <meta name="twitter:image" content="https://altena.me/portfolio/img/og-portfolio-clean-20260916.png">
+  <meta name="twitter:image:alt" content="Altena — Software &amp; Infrastructure Engineer / Frontend Developer / 3D Artist. パステルカラーの幾何学模様。">
 
   <!-- fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,27 +39,26 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
-  <link rel="stylesheet" href="style.css">
-
-  <!-- Three.js importmap（ヒーローCanvas用） -->
-  <script type="importmap">
-  { "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165/examples/jsm/"
-  }}
-  </script>
+  <link rel="stylesheet" href="style.css?v=20260916-title-rows">
 
   <!-- JS -->
-  <script defer src="js/main.js"></script>
-  <!-- ヒーロー背景の Three.js（importmap を使うため type=module。module は defer 相当で実行される） -->
-  <script type="module" src="js/hero.js"></script>
-</head>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/cover-art.js?v=20260914-ui2"></script>
+  <script defer src="js/home-banners.js?v=20260914-ui2"></script>
+  <script defer src="js/main.js?v=20260917-reload-position" onerror="document.documentElement.classList.remove('section-entry-pending')"></script>
+  <link rel="stylesheet" href="status-beacon.css?v=20260917-mobile-divider">
+  <link rel="stylesheet" href="pastel-homepage.css?v=20260915-mobile-top">
+  <link rel="stylesheet" href="ideas-transition.css?v=20260917-ideas-gap">
+  <link rel="stylesheet" href="hero-light.css?v=20260923-light-hero-4">
+  <script defer src="js/ideas-transition-light.js?v=20260923-no-stripes"></script>
+  <script defer src="/portfolio/js/console-easter-egg.js?v=20260915-terminal"></script>
+<script id="portfolio-agent-jsonld" type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://altena.me/portfolio/#website","url":"https://altena.me/portfolio/","name":"Altena Portfolio"},{"@type":"Person","@id":"https://altena.me/portfolio/#altena","name":"Altena","description":"情報系・高専4年 音ゲー・執筆・資格を取ることが趣味。最近は3DCGやインフラばかり触っている。","jobTitle":["Software & Infrastructure Engineer","Frontend Developer / 3D Artist"],"knowsAbout":["Infrastructure","Software","Interfaces"],"sameAs":["https://x.com/4ltena","https://github.com/4ltena"]},{"@type":"WebPage","@id":"https://altena.me/portfolio/index.html#webpage","url":"https://altena.me/portfolio/index.html","name":"Altena Portfolio","isPartOf":{"@id":"https://altena.me/portfolio/#website"},"about":{"@id":"https://altena.me/portfolio/#altena"}}]}</script></head>
 
-<body>
+<body class="pastel-home light-hero-home" id="top" tabindex="-1">
   <header class="header glass">
     <div class="header-container">
-      <a href="index.html" class="logo" id="header-logo">
-        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+      <a href="index.html" class="logo" id="header-logo" aria-label="Altena — Home">
+        <svg class="logo-wordmark" viewBox="0 0 3329 840" width="114" height="28" aria-hidden="true" focusable="false"><use href="/portfolio/img/altena-logo.svg#wordmark"></use></svg>
       </a>
       <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
         <span class="bar"></span>
@@ -57,49 +78,149 @@
   </header>
 
   <main>
-    <section class="hero">
-      <canvas id="hero-canvas" aria-hidden="true"></canvas>
-      <div class="hero-content">
-        <div class="hero-placeholder"></div>
-        <div class="hero-text">
-          <h1 class="reveal logo-text"><span class="title-typing"></span><span class="cursor" id="title-cursor">|</span></h1>
-          <div class="typing-container reveal delay-1" id="subtitle-container">
-            <span class="prefix"></span>
-            <span class="mono typing-animation"></span>
-            <span class="cursor" id="subtitle-cursor">|</span>
-          </div>
+    <section id="scroll-bridge" aria-label="Ideas take shape."><div class="bridge-stage">
+<div class="hero-wrap">
+      <section class="hero hero-light">
+        <div class="hero-drawing" aria-hidden="true">
+          <svg viewBox="0 0 1440 900" preserveAspectRatio="none">
+            <path class="drawing-grid" d="M0 158H1440M0 366H1440M0 574H1440M248 0V900M760 0V900M1180 0V900"/>
+            <path class="drawing-route" pathLength="1" d="M76 734H248V574H492V366H760V158H1124"/>
+            <path class="drawing-corner" d="M1180 88h116v116M1180 204h-64"/>
+            <g class="drawing-dots">
+              <circle cx="1248" cy="438" r="3"/><circle cx="1270" cy="438" r="3"/><circle cx="1292" cy="438" r="3"/>
+              <circle cx="1248" cy="460" r="3"/><circle cx="1270" cy="460" r="3"/><circle cx="1292" cy="460" r="3"/>
+              <circle cx="1248" cy="482" r="3"/><circle cx="1270" cy="482" r="3"/><circle cx="1292" cy="482" r="3"/>
+            </g>
+          </svg>
+          <span class="drawing-plane plane-cyan"></span>
+          <span class="drawing-plane plane-lavender"></span>
         </div>
-      </div>
-    </section>
 
-    <div class="content-wrapper">
-      <!-- SVG Circuit Layer -->
-      <svg id="circuit-overlay" class="circuit-layer" aria-hidden="true"></svg>
-      <section class="under-construction reveal">
-        <p>System Status: <span class="accent-bg" id="sys-status">ONLINE</span></p>
-        <p><a href="lite.html" class="lite-link">[TEXT MODE]</a></p>
+        <div class="hero-layout">
+          <div class="hero-content">
+            <div class="hero-inner">
+              <p class="hero-context mono"><span>Portfolio index</span><span>2026</span></p>
+              <h1 class="hero-title reveal logo-text" aria-label="Altena Portfolio">
+                <span class="row"><span class="title-line-1"></span><span class="cursor" id="title-cursor-1">|</span></span>
+                <span class="row"><span class="title-line-2"></span><span class="cursor" id="title-cursor-2" hidden>|</span></span>
+              </h1>
+              <noscript><style>.hero-title.logo-text,.hero-sub{display:none}</style><p class="hero-title hero-title-fallback" aria-hidden="true"><span class="row">Altena</span><span class="row">Portfolio</span></p></noscript>
+              <p class="hero-sub mono reveal delay-1">
+                <span class="prefix"></span><span class="typing-animation"></span><span class="cursor" id="subtitle-cursor" hidden>|</span>
+              </p>
+              <nav class="hero-actions" aria-label="Primary">
+                <a href="myworks.html">View works</a>
+                <a href="notes.html">Read notes</a>
+              </nav>
+            </div>
+          </div>
+
+          <aside class="hero-log" aria-label="Live system index">
+            <div class="hero-log-heading mono"><span>Live index</span><span class="hero-log-pulse">active</span></div>
+            <div class="divider-status-beacon mono">
+              <span class="divider-status-line divider-status-summary">
+                <span class="divider-status-key">[SYS]</span>
+                <span id="divider-status-value" role="status" aria-live="polite" aria-label="System status" data-state="checking">CHECKING</span>
+              </span>
+              <span class="divider-status-line divider-status-domain">
+                <span class="divider-status-key">[DOMAIN]</span><span>ALTENA.ME</span>
+              </span>
+              <span class="divider-status-line divider-status-protocol">
+                <span class="divider-status-key">[PROTOCOL]</span><span>HTTPS / 443</span>
+              </span>
+              <span class="divider-status-line divider-status-tls">
+                <span class="divider-status-key">[TLS]</span><span id="divider-status-tls" data-state="checking">CHECKING</span>
+              </span>
+              <span class="divider-status-line divider-status-mode">
+                <span class="divider-status-key">[MODE]</span><span>VISUAL ARCHIVE</span>
+              </span>
+              <span class="divider-status-line divider-status-node">
+                <span class="divider-status-key">[NODE]</span><span>CREATIVE PORTFOLIO</span>
+              </span>
+              <span class="divider-status-line divider-status-render">
+                <span class="divider-status-key">[RENDER]</span><span>DOM / CSS / SVG</span>
+              </span>
+              <span class="divider-status-line divider-status-runtime">
+                <span class="divider-status-key">[RUNTIME]</span><span>STATIC HTML / CSS / JS</span>
+              </span>
+              <span class="divider-status-line divider-status-server">
+                <span class="divider-status-key">[SERVER]</span><span id="divider-status-server">NGINX / CHECKING</span>
+              </span>
+              <span class="divider-status-line divider-status-uptime">
+                <span class="divider-status-key">[UPTIME]</span><span id="divider-status-uptime">CHECKING</span>
+              </span>
+              <span class="divider-status-line divider-status-endpoint">
+                <span class="divider-status-key">[ENDPOINT]</span><span>/PORTFOLIO/API/STATUS</span>
+              </span>
+              <span class="divider-status-line divider-status-detail">
+                <span class="divider-status-key">[SYSTEM STATUS]</span><span id="divider-status-detail">WAITING FOR TELEMETRY…</span>
+              </span>
+              <a href="lite.html" class="divider-status-line divider-status-textmode">
+                <span class="divider-status-key">[TEXT MODE]</span><span>/LITE.HTML</span>
+              </a>
+            </div>
+          </aside>
+        </div>
+
+        <div class="hero-foot mono" aria-hidden="true">
+          <span>Infrastructure</span><span>Software</span><span>Interfaces</span><span class="hero-scroll">Scroll / explore</span>
+        </div>
       </section>
 
+    </div>
+<div class="bridge-copy"><h2>Ideas take shape.</h2></div>
+<div class="idea-art"><svg viewBox="0 0 1000 420" role="img" aria-label="一本の線が幾何学の形を結ぶ図"><style>.ink{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 4s cubic-bezier(.58,0,.42,1) forwards}.paper{opacity:0;animation:colorIn .45s ease-out var(--delay) forwards}@keyframes draw{to{stroke-dashoffset:0}}@keyframes colorIn{to{opacity:1}}@media(prefers-reduced-motion:reduce){.ink{animation:none;stroke-dashoffset:0}.paper{animation:none;opacity:1}}</style><path class="paper" d="M161 218L220 116L279 218Z" fill="#e8baa6" style="--delay:1.36s"/><path class="paper" d="M366 125H461V230H366Z" fill="#b7bee5" style="--delay:1.86s"/><path class="paper" d="M538 189C489 189 503 284 563 284C580 250 579 189 538 189Z" fill="#bfd8ca" style="--delay:2.36s"/><path class="paper" d="M651 193C651 99 788 99 788 193V283H651Z" fill="#90d7e2" style="--delay:2.93s"/><path class="ink" d="M77 259C124 259 146 243 161 218L220 116L279 218C296 248 278 278 250 278C218 278 208 244 230 223C256 198 288 230 323 230H366V125H461V230H415C381 230 376 284 415 284H524C580 284 579 189 538 189C489 189 503 284 563 284C621 284 651 242 651 193C651 99 788 99 788 193V283H853C896 283 918 264 933 237" pathLength="1" fill="none" stroke="#273850" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<div class="idea-prose"><p>学んだことは、思いがけないところでつながる。</p><p>分野を越えて知識を重ね、まだ見たことのない形を探していく。</p></div>
+</div></section>
+
+    <div class="content-wrapper">
+      <!-- #sys-status は表示テキストを持たない。js/main.js?v=20260915-brand の initSystemStatus() が更新し、
+           js/status-beacon.js の MutationObserver 経由で境界下のステータスログ（[SYSTEM STATUS] 等）
+           へ反映される、非表示の更新元。status-beacon.css の .status-source で隠す。
+           可視コンテンツだった [TEXT MODE] はステータスログ側（[SYSTEM STATUS] の直下）へ移した。 -->
+      <p class="status-source"><span id="sys-status">ONLINE</span></p>
+
       <!-- SECTION 1: 技術スタック -->
-      <section id="skills" class="skills-section reveal">
-        <h2 class="section-title">
-          <div class="title-wrapper">
-            <span class="sub-title">SKILLS & TOOLS</span>
-            <span class="main-title">Tech Stack</span>
-          </div>
-        </h2>
-        <div class="prog-lang-tile-container" id="skills-grid"></div>
+      <section id="skills" class="home-section">
+        <div class="tech-stack-banner heading-banner">
+          <svg class="banner-art" viewBox="0 0 1200 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+            <rect width="1200" height="180" fill="#F1F6F8"/>
+            <path class="banner-layer" style="--draw-delay:80ms" d="M-50 20H493L330 108H-50Z" fill="#BFD8CA"/>
+            <path class="banner-layer" style="--draw-delay:240ms" d="M168 54H756L593 142H5Z" fill="#B7BEE5"/>
+            <path class="banner-layer" style="--draw-delay:400ms" d="M391 88H979L816 176H228Z" fill="#90D7E2"/>
+            <g class="tech-banner-accent"><path class="banner-layer" style="--draw-delay:560ms" d="M596 142H835L816 153H576Z" fill="#273850"/></g>
+            <path class="banner-layer" style="--draw-delay:640ms" d="M956 -20H1060V21H1109V62H1158V103H1220V-20Z" fill="#BFD8CA"/>
+            <g class="banner-detail" style="--draw-delay:680ms" fill="none" stroke="#477E91" stroke-width="1" opacity=".68">
+              <path d="M0 27H493M75 61H756M295 95H979M816 176H1200"/>
+              <path d="M493 20V135M756 54V165M979 88V176" stroke-dasharray="3 6"/>
+            </g>
+
+          </svg>
+          <svg class="heading-dots banner-detail" style="--draw-delay:820ms" viewBox="0 0 36 36" aria-hidden="true" focusable="false"><circle cx="4" cy="4" r="2.1" fill="#273850"/><circle cx="18" cy="4" r="2.1" fill="#273850"/><circle cx="32" cy="4" r="2.1" fill="#273850"/><circle cx="4" cy="18" r="2.1" fill="#273850"/><circle cx="18" cy="18" r="2.1" fill="#273850"/><circle cx="32" cy="18" r="2.1" fill="#273850"/><circle cx="4" cy="32" r="2.1" fill="#273850"/><circle cx="18" cy="32" r="2.1" fill="#273850"/><circle cx="32" cy="32" r="2.1" fill="#273850"/></svg>
+          <span class="heading-rail" aria-hidden="true">SKILL &amp; TOOLS</span><h2 class="banner-heading">TECH STACK</h2><span class="heading-caption" aria-hidden="true">Build with intent.</span>
+        </div>
+        <div class="skills-columns" id="skills-grid"></div>
       </section>
 
       <!-- SECTION 2: タイムライン -->
-      <section id="timeline" class="timeline-section reveal">
-        <h2 class="section-title">
-          <div class="title-wrapper">
-            <span class="sub-title">EXPERIENCE</span>
-            <span class="main-title">Timeline</span>
-          </div>
-        </h2>
+      <section id="timeline" class="home-section">
+        <div class="timeline-banner heading-banner">
+          <svg class="banner-art" viewBox="0 0 1200 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+            <rect width="1200" height="180" fill="#f1f6f8"/>
+            <circle class="banner-layer" style="--draw-delay:260ms" cx="24" cy="178" r="150" fill="#bfd8ca"/>
+            <rect class="banner-layer" style="--draw-delay:340ms" x="119" y="-14" width="241" height="105" fill="#b7bee5"/>
+            <rect class="banner-layer" style="--draw-delay:440ms" x="290" y="60" width="306" height="86" fill="#90d7e2"/>
+            <rect class="banner-layer" style="--draw-delay:540ms" x="543" y="100" width="170" height="95" fill="#e8baa6"/>
+            <path class="banner-layer" style="--draw-delay:640ms" d="M733 180V72H800V180Z" fill="#efe59b"/>
 
+
+
+          </svg>
+          <svg class="timeline-measure banner-detail" style="--draw-delay:180ms" viewBox="0 0 1000 14" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M0 8H1000M0 0V14M20 7V12M40 7V12M60 7V12M80 7V12M100 0V14M120 7V12M140 7V12M160 7V12M180 7V12M200 0V14M220 7V12M240 7V12M260 7V12M280 7V12M300 0V14M320 7V12M340 7V12M360 7V12M380 7V12M400 0V14M420 7V12M440 7V12M460 7V12M480 7V12M500 0V14M520 7V12M540 7V12M560 7V12M580 7V12M600 0V14M620 7V12M640 7V12M660 7V12M680 7V12M700 0V14M720 7V12M740 7V12M760 7V12M780 7V12M800 0V14M820 7V12M840 7V12M860 7V12M880 7V12M900 0V14M920 7V12M940 7V12M960 7V12M980 7V12M1000 0V14" fill="none" stroke="#273850" stroke-width=".8" vector-effect="non-scaling-stroke"/></svg><div class="timeline-tags banner-detail" style="--draw-delay:780ms" aria-hidden="true"><span></span><span></span><span></span></div>
+          <span class="heading-rail" aria-hidden="true">CHRONICLE</span><h2 class="banner-heading" id="timeline-heading" tabindex="-1">TIMELINE</h2><span class="heading-caption" aria-hidden="true">A path in progress.</span>
+        </div>
+
+        <div class="banner-actions"><a href="certifications.html">資格一覧 <span aria-hidden="true">↗</span></a></div>
         <!-- Timeline Filters -->
         <div class="filter-controls">
           <div class="chips-group">
@@ -112,6 +233,10 @@
               <span>Certification</span>
             </label>
             <label class="filter-chip">
+              <input type="checkbox" name="category" value="cert-other">
+              <span>Non-IT Certs</span>
+            </label>
+            <label class="filter-chip">
               <input type="checkbox" name="category" value="contest" checked>
               <span>Contest</span>
             </label>
@@ -121,49 +246,52 @@
           </div>
         </div>
 
-        <div class="timeline-container">
-          <ul class="timeline" id="timeline-list"></ul>
-        </div>
+        <ul class="timeline-summary" id="timeline-list"></ul>
+        <button class="timeline-expand" id="timeline-expand" type="button" aria-expanded="false" aria-controls="timeline-list" hidden>すべての経歴を表示</button>
       </section>
 
-      <!-- SECTION 3: 最新ノートへのリンク（id/クラスは circuit-overlay の描画依存のため維持） -->
-      <section id="works" class="works-section reveal">
-        <h2 class="section-title">
-          <div class="title-wrapper">
-            <span class="sub-title">SYSTEM LOGS</span>
-            <span class="main-title">Latest Notes</span>
-          </div>
-        </h2>
+      <!-- SECTION 3: 最新ノートへのリンク -->
+      <section id="works" class="home-section">
+        <div class="home-heading"><h2>Latest Notes</h2><a href="notes.html">すべてのノート</a></div>
         <!-- 最新ノートは main.js の renderLatestNotes() が API から動的描画 -->
-        <div class="note-grid" id="latest-notes-grid"></div>
-        <div class="works-more reveal">
-          <a href="notes.html" class="more-link mono">and more</a>
-        </div>
+        <div class="note-grid pastel-notes" id="latest-notes-grid"></div>
       </section>
 
       <!-- SECTION 4: AUTHOR PROFILE -->
-      <section id="profile" class="about-section reveal">
-        <h2 class="section-title">
-          <div class="title-wrapper">
-            <span class="sub-title">AUTHOR</span>
-            <span class="main-title">Profile</span>
-          </div>
-        </h2>
-        <div class="about-container glass">
-          <div class="profile-image">
-            <div class="image-placeholder"></div>
-          </div>
+      <section id="profile" class="home-section">
+        <div class="home-heading"><h2>Profile</h2></div>
+        <div class="home-profile">
           <div class="profile-text">
             <h3><span class="brand">Altena</span></h3>
             <p class="philosophy mono">Alt & Higher Standards</p>
             <div class="bio">
-              <p>情報系・高専4年<br>音ゲー・執筆・資格を取ることが趣味。最近は3DCGばかりやっている。</p>
+              <p>情報系・高専4年<br>音ゲー・執筆・資格を取ることが趣味。最近は3DCGやインフラばかり触っている。</p>
               <div class="profile-links">
-                <a href="certifications.html" class="mono-link arrow-link">Certifications</a>
+                <a href="certifications.html" class="home-text-link">Certifications</a>
               </div>
             </div>
           </div>
+          <svg class="profile-composition" viewBox="0 0 200 180" aria-hidden="true">
+            <path d="M10 160V20A140 140 0 0 1 150 160Z" fill="#90d7e2"/>
+            <path d="M70 20H190V140Z" fill="#b7bee5"/>
+            <path d="M110 160h80v-35h-80Z" fill="#273850"/>
+          </svg>
         </div>
+        <nav class="profile-social" aria-label="Contact links">
+          <!-- Icons: Simple Icons (X, GitHub), Lucide (Mail). See THIRD_PARTY_NOTICES.txt. -->
+          <a class="home-text-link" href="https://x.com/4ltena" target="_blank" rel="noopener noreferrer">
+            <svg class="contact-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z"/></svg>
+            <span>X</span>
+          </a>
+          <a class="home-text-link" href="https://github.com/4ltena" target="_blank" rel="noopener noreferrer">
+            <svg class="contact-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+            <span>GitHub</span>
+          </a>
+          <a class="home-text-link" href="mailto:contact@altena.me">
+            <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+            <span>contact@altena.me</span>
+          </a>
+        </nav>
       </section>
     </div>
   </main>
@@ -173,6 +301,10 @@
       <p class="mono">© 2026 <a href="/portfolio/admin/login.html" style="color:inherit;text-decoration:none;">Altena</a>. All rights reserved.</p>
     </div>
   </footer>
+  <a class="back-to-top" href="#top" aria-label="トップへ戻る">
+    <svg viewBox="0 0 24 36" fill="none" aria-hidden="true" focusable="false"><path d="M14 31V5L5 14" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
+  <script src="js/status-beacon.js"></script>
 </body>
 
 </html>

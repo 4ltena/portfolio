@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#20262d">
+  <meta name="robots" content="noindex">
+  <title>Altena | Business Card</title>
+  <meta name="description" content="Altenaの名刺。ポートフォリオと連絡先をまとめています。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --paper: #fafdfe;
+      --ink: #17283a;
+      --cyan: #66c9dc;
+      --lilac: #c4caeb;
+      --mint: #cce7dd;
+      --peach: #efc0ac;
+      --yellow: #f4e99b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 280px;
+      background: #20262d;
+      color: #e9eff2;
+      font-family: Outfit, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; }
+    .preview { width: min(100% - 40px, 744px); margin: 0 auto; padding: 32px 0 48px; }
+    .preview-header { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 27px; }
+    .preview-title { margin: 0; font-size: 15px; font-weight: 500; letter-spacing: .015em; }
+    .preview-note { margin: 6px 0 0; color: #a3afb8; font-size: 11px; }
+    .print-button {
+      padding: 8px 12px;
+      border: 1px solid #64717c;
+      background: transparent;
+      color: #e9eff2;
+      border-radius: 0;
+      font: inherit;
+      font-size: 11px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .print-button:hover { border-color: var(--cyan); color: var(--cyan); }
+    .card-shell + .card-shell { margin-top: 31px; }
+    .side-label { margin: 0 0 10px; color: #aeb9c2; font-size: 11px; letter-spacing: .04em; }
+    .card {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 91 / 55;
+      overflow: hidden;
+      isolation: isolate;
+      container-type: inline-size;
+      box-shadow: 0 15px 36px rgba(0, 0, 0, .22);
+    }
+
+    /* Front: the name has room to breathe; the nested frames carry the technical detail. */
+    .card-front { background: #fffefa; color: var(--ink); }
+    .front-mark { position: absolute; top: 7.9%; left: 6.4%; z-index: 3; display: block; width: 16%; height: auto; }
+    .front-name { position: absolute; top: 39.5%; left: 6.4%; z-index: 3; margin: 0; padding-right: 1cqw; background: #fffefa; font-family: "Major Mono Display", ui-monospace, monospace; font-size: 8.8cqw; font-weight: 400; line-height: 1; letter-spacing: -.025em; white-space: nowrap; }
+    .front-role { position: absolute; top: 57.8%; left: 6.4%; z-index: 3; margin: 0; color: #1d6d9a; font-size: 3.5cqw; font-weight: 300; line-height: 1.06; letter-spacing: -.027em; }
+    .front-fields { position: absolute; top: 8.3%; right: 6.5%; z-index: 3; display: grid; gap: .65cqw; text-align: right; font-size: 1.9cqw; line-height: 1.25; letter-spacing: .015em; }
+    .front-fields span:nth-child(1) { color: #167d9d; }
+    .front-fields span:nth-child(2) { color: #6c75a7; }
+    .front-fields span:nth-child(3) { color: #9b6d62; }
+    .front-taxonomy { position: absolute; right: 6.5%; bottom: 4.7%; z-index: 3; color: #536779; font-size: 1.5cqw; line-height: 1; letter-spacing: .025em; white-space: nowrap; }
+    .frame { position: absolute; border: .11cqw solid; pointer-events: none; }
+    .frame-cyan { inset: 7.7% 5.9% 15.2% 50.2%; border-color: rgba(52, 166, 186, .69); }
+    .frame-lilac { inset: 16.1% 13.5% 8.1% 42.9%; border-color: rgba(147, 160, 217, .48); }
+    .frame-peach { inset: 25.4% 19.9% 0 35.2%; border-color: rgba(227, 166, 149, .53); }
+    .front-accent { position: absolute; top: 27.5%; right: 6.4%; width: 9.9%; height: .8%; background: var(--yellow); }
+
+    /* Back: contact details stay on the dark stock while the QR sits on paper. */
+    .card-back { background: var(--ink); color: #f7fbfc; }
+    .back-paper { position: absolute; inset: 0; background: #fffefa; clip-path: polygon(79% 0, 100% 0, 100% 100%, 65% 100%); }
+    .back-paper::before { content: ""; position: absolute; top: 0; right: 0; width: 16.4%; height: 24%; background: var(--lilac); }
+    .back-paper::after { content: ""; position: absolute; right: -3%; top: 23%; width: 15%; aspect-ratio: 1; border-radius: 50%; background: var(--mint); }
+    .back-corner { position: absolute; top: 25%; right: 0; width: 8%; height: 18%; border-left: .11cqw solid var(--peach); border-bottom: .11cqw solid var(--peach); }
+    .back-lines { position: absolute; right: 31.2%; bottom: -6%; width: 6.9%; height: 112%; transform: skewX(-16deg); border-right: .15cqw solid var(--cyan); border-left: .15cqw solid var(--cyan); pointer-events: none; }
+    .back-lines::after { content: ""; position: absolute; inset: 0 35%; border-left: .15cqw solid var(--cyan); }
+    .back-info { position: absolute; top: 8.5%; left: 6.4%; z-index: 2; width: 55.5%; }
+    .back-name { margin: 0 0 .1cqw; font-size: 3.2cqw; font-weight: 500; line-height: 1.2; letter-spacing: -.015em; }
+    .back-kicker { margin: 0 0 1.1cqw; color: #a8bfcc; font-size: 1.45cqw; letter-spacing: .045em; }
+    .contact-item { display: block; min-height: 7.25cqw; padding: .82cqw 0 .65cqw; border-top: .08cqw solid rgba(175, 202, 213, .27); text-decoration: none; }
+    .contact-item small { display: block; color: #a9c1cd; font-size: 1.45cqw; line-height: 1.2; letter-spacing: .07em; }
+    .contact-item strong { display: block; margin-top: .32cqw; font-size: 2.5cqw; font-weight: 400; line-height: 1.2; white-space: nowrap; }
+    .contact-item:hover strong { color: #9be1ef; }
+    .back-footer { position: absolute; bottom: 7.7%; left: 6.4%; z-index: 2; color: #b7c9d2; font-size: 1.3cqw; line-height: 1; letter-spacing: .04em; }
+    .qr-link { position: absolute; right: 5.7%; bottom: 8.9%; z-index: 3; display: grid; justify-items: center; width: 25%; color: var(--ink); text-decoration: none; }
+    .qr-link img { display: block; width: 100%; aspect-ratio: 1; image-rendering: pixelated; }
+    .qr-link span { margin-top: .43cqw; font-size: 1.3cqw; letter-spacing: .035em; white-space: nowrap; }
+
+    @media (max-width: 540px) {
+      .preview { width: calc(100% - 28px); padding: 22px 0 34px; }
+      .preview-header { margin-bottom: 21px; }
+      .preview-title { font-size: 13px; }
+      .preview-note { font-size: 10px; }
+      .print-button { font-size: 10px; padding: 7px 9px; }
+      .card-shell + .card-shell { margin-top: 24px; }
+      .side-label { font-size: 10px; }
+    }
+    @page { size: 91mm 55mm; margin: 0; }
+    @media print {
+      :root { color-scheme: light; }
+      html, body { width: 91mm; margin: 0; padding: 0; background: white; }
+      body, .card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .preview { width: 91mm; margin: 0; padding: 0; }
+      .preview-header, .side-label { display: none; }
+      .card-shell, .card-shell + .card-shell { width: 91mm; height: 55mm; margin: 0; padding: 0; }
+      .card-shell + .card-shell { break-before: page; page-break-before: always; }
+      .card { width: 91mm; height: 55mm; box-shadow: none; }
+      .card-back { margin: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="preview">
+    <div class="preview-header">
+      <div>
+        <p class="preview-title">Altena / Business card</p>
+        <p class="preview-note">Front &amp; back · 91 × 55 mm</p>
+      </div>
+      <button class="print-button" type="button" id="print-card">印刷 / PDF</button>
+    </div>
+
+    <section class="card-shell" aria-label="名刺の表面">
+      <p class="side-label">01 / FRONT</p>
+      <article class="card card-front">
+        <div class="frame frame-cyan" aria-hidden="true"></div>
+        <div class="frame frame-lilac" aria-hidden="true"></div>
+        <div class="frame frame-peach" aria-hidden="true"></div>
+        <div class="front-accent" aria-hidden="true"></div>
+        <img class="front-mark" src="img/altena-logo.svg" alt="Altena">
+        <h1 class="front-name">Altena</h1>
+        <p class="front-role">Full-stack<br>Software Engineer</p>
+        <div class="front-fields" aria-label="専門分野"><span>FRONTEND</span><span>BACKEND</span><span>INFRASTRUCTURE</span></div>
+        <span class="front-taxonomy">SYSTEMS / DESIGN / ELECTRONICS / WRITING</span>
+      </article>
+    </section>
+
+    <section class="card-shell" aria-label="名刺の裏面">
+      <p class="side-label">02 / BACK</p>
+      <article class="card card-back">
+        <div class="back-paper" aria-hidden="true"></div>
+        <div class="back-corner" aria-hidden="true"></div>
+        <div class="back-lines" aria-hidden="true"></div>
+        <div class="back-info">
+          <p class="back-name">Altena</p>
+          <p class="back-kicker">CONTACT / INDEX</p>
+          <a class="contact-item" href="https://github.com/4ltena" target="_blank" rel="noopener noreferrer"><small>GITHUB</small><strong>github.com/4ltena</strong></a>
+          <a class="contact-item" href="https://x.com/4ltena" target="_blank" rel="noopener noreferrer"><small>X</small><strong>x.com/4ltena</strong></a>
+          <a class="contact-item" href="https://altena.me/portfolio/index.html"><small>WEB</small><strong>altena.me/portfolio</strong></a>
+          <a class="contact-item" href="mailto:contact@altena.me"><small>EMAIL</small><strong>contact@altena.me</strong></a>
+        </div>
+        <span class="back-footer">FULL-STACK SOFTWARE ENGINEER</span>
+        <a class="qr-link" href="https://altena.me/portfolio/index.html" aria-label="QRコードからポートフォリオを開く"><img src="img/card-portfolio-qr.svg" alt=""><span>SCAN / OPEN PROFILE</span></a>
+      </article>
+    </section>
+  </main>
+  <script>
+    document.getElementById('print-card').addEventListener('click', () => window.print());
+  </script>
+</body>
+</html>

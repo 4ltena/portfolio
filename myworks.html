@@ -6,6 +6,8 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Works | Portfolio</title>
+  <link rel="icon" href="img/favicon.ico?v=20260915-offset" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260915-offset">
   <meta name="description" content="A complete gallery of my creative projects and 3DCG work.">
 
   <!-- fonts -->
@@ -17,22 +19,23 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260915-brand">
+
+  <link rel="stylesheet" href="archive-pages.css?v=20260916-banner-lifecycle-tags">
 
   <!-- JS -->
-  <script src="js/main.js"></script>
-  <script>
-    console.group('%c ALTENA.ME ', 'color:#000;background:#00f2ff;font-weight:bold;padding:2px 8px;border-radius:2px;');
-    console.log('%c[SYS]%c Session synced · Accessing portfolio archives', 'color:#000;background:#00f2ff;padding:1px 5px;border-radius:2px;font-weight:bold;', 'color:#a0a0a5;');
-    console.groupEnd();
-  </script>
-</head>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/works.js?v=20260916-magazine"></script>
+  <script defer src="js/main.js?v=20260915-terminal"></script>
+  <script defer src="/portfolio/js/console-easter-egg.js?v=20260915-terminal"></script>
+  <script src="js/archive-banner-motion.js?v=20260916-banner-lifecycle-tags"></script>
+<script id="portfolio-agent-jsonld" type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://altena.me/portfolio/#website","url":"https://altena.me/portfolio/","name":"Altena Portfolio"},{"@type":"Person","@id":"https://altena.me/portfolio/#altena","name":"Altena","description":"情報系・高専4年 音ゲー・執筆・資格を取ることが趣味。最近は3DCGやインフラばかり触っている。","jobTitle":["Software & Infrastructure Engineer","Frontend Developer / 3D Artist"],"knowsAbout":["Infrastructure","Software","Interfaces"],"sameAs":["https://x.com/4ltena","https://github.com/4ltena"]},{"@type":"CollectionPage","@id":"https://altena.me/portfolio/myworks.html#webpage","url":"https://altena.me/portfolio/myworks.html","name":"My Works | Portfolio","isPartOf":{"@id":"https://altena.me/portfolio/#website"},"mainEntity":{"@id":"https://altena.me/portfolio/myworks.html#itemlist"}},{"@type":"ItemList","@id":"https://altena.me/portfolio/myworks.html#itemlist","numberOfItems":1,"itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://altena.me/portfolio/works/blender-bus-stop/index.html#work"}}]},{"@type":"CreativeWork","@id":"https://altena.me/portfolio/works/blender-bus-stop/index.html#work","url":"https://altena.me/portfolio/works/blender-bus-stop/index.html","author":{"@id":"https://altena.me/portfolio/#altena"},"publisher":{"@id":"https://altena.me/portfolio/#altena"},"isPartOf":{"@id":"https://altena.me/portfolio/#website"},"mainEntityOfPage":{"@id":"https://altena.me/portfolio/works/blender-bus-stop/index.html#webpage"},"name":"Blender練習：バス停を作ってみた","headline":"Blender練習：バス停を作ってみた","description":"Blender生活1週目。田舎のボロいバス停を作ってみた。","keywords":["Blender","3DCG","Practice"],"version":"sha256:1955c2be453572615d437458cb52cce0103f369cb1c5961dde10f06132a4e0ac"}]}</script></head>
 
-<body>
+<body class="archive-page">
   <header class="header glass">
     <div class="header-container">
-      <a href="index.html" class="logo" id="header-logo">
-        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+      <a href="index.html" class="logo" id="header-logo" aria-label="Altena — Home">
+        <svg class="logo-wordmark" viewBox="0 0 3329 840" width="114" height="28" aria-hidden="true" focusable="false"><use href="/portfolio/img/altena-logo.svg#wordmark"></use></svg>
       </a>
       <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
         <span class="bar"></span>
@@ -52,31 +55,18 @@
   </header>
 
   <main>
-    <section class="hero small-hero">
-      <div class="hero-content">
-        <div class="hero-placeholder"></div>
-        <div class="hero-text">
-          <h1 class="reveal">My <span class="accent-blue">Archive</span></h1>
-          <p class="reveal delay-1">All Projects & Case Studies</p>
-        </div>
-      </div>
-    </section>
+    <div class="archive-banner-wrap"><div class="section-banner" data-banner-motion="works-draw"><svg viewBox="0 0 1200 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="1200" height="260" fill="#faf7ef"/><circle cx="935" cy="125" r="150" fill="#90d7e2"/><rect x="710" y="15" width="160" height="240" fill="#b7bee5" transform="rotate(15 790 130)"/><path d="M1040 260V135a90 90 0 0 1 180 0v125" fill="#e8baa6"/><path d="M748 70l95-30 62 68-95 30zM810 138v95M748 70v95l62 68 95-30V108" fill="none" stroke="#273850" stroke-width="2"/><rect x="20" y="-25" width="290" height="65" fill="#bfd8ca" transform="rotate(-10 20 0)"/><path d="M0 235h550" stroke="#273850" stroke-width="2"/></svg><h1>Works</h1></div></div>
 
     <div class="content-wrapper">
       <section class="works-section reveal">
-        <h2 class="section-title">
-          <div class="title-wrapper">
-            <span class="sub-title">ARCHIVE</span>
-            <span class="main-title">Full Gallery</span>
-          </div>
-        </h2>
+
 
         <!-- Search Control -->
         <div class="search-container reveal">
           <div class="search-box glass">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="works-search" placeholder="Search works by title, tag or tech..." autocomplete="off">
-            <button id="clear-search" class="mono clear-search">×</button>
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input type="text" id="works-search" aria-label="Worksを検索" placeholder="タイトル・タグを検索" autocomplete="off">
+            <button id="clear-search" class="mono clear-search" aria-label="検索をクリア">×</button>
           </div>
           <div class="search-stats mono">
             Showing <span id="visible-works-count">0</span> / <span id="total-works-count">0</span> works

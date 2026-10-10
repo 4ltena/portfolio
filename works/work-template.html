@@ -17,19 +17,15 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
-  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../style.css?v=20260916-controls">
+  <link rel="stylesheet" href="../archive-pages.css?v=20260916-controls">
 
   <!-- JS -->
-  <script src="../js/main.js"></script>
-  <script>
-    console.group('%c ALTENA.ME ', 'color:#000;background:#00f2ff;font-weight:bold;padding:2px 8px;border-radius:2px;');
-    console.log('%c[SYS]%c Archive access granted · Project data decrypted', 'color:#000;background:#00f2ff;padding:1px 5px;border-radius:2px;font-weight:bold;', 'color:#a0a0a5;');
-    console.log('%c[INF]%c "The beauty is in the details, Architect."', 'color:#000;background:#c850e8;padding:1px 5px;border-radius:2px;font-weight:bold;', 'color:#a0a0a5;font-style:italic;');
-    console.groupEnd();
-  </script>
+  <script src="../js/main.js?v=20260915-terminal"></script>
+  <script defer src="/portfolio/js/console-easter-egg.js?v=20260915-terminal"></script>
 </head>
 
-<body>
+<body class="reading-page">
   <!--
     　　 （・∀・）　　　|　|　ｶﾞｯ
     　　と　　　　）　 　 |　|
@@ -41,9 +37,7 @@
 
   <header class="header glass">
     <div class="header-container">
-      <a href="../index.html" class="logo" id="header-logo">
-        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
-      </a>
+      <a href="../index.html" class="logo" id="header-logo" aria-label="Altena — Home"><svg class="logo-wordmark" viewBox="0 0 3329 840" width="114" height="28" aria-hidden="true" focusable="false"><use href="/portfolio/img/altena-logo.svg#wordmark"></use></svg></a>
       <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
         <span class="bar"></span>
         <span class="bar"></span>
@@ -62,24 +56,11 @@
   </header>
 
   <main>
-    <section class="hero small-hero">
-      <div class="hero-content">
-        <div class="hero-placeholder"></div>
-        <div class="hero-text">
-          <h1 class="reveal">Project <span class="accent-blue">Title</span></h1>
-          <p class="reveal delay-1">3DCG / Frontend / Design</p>
-        </div>
-      </div>
-    </section>
+    <section class="reading-heading"><a class="reading-back" href="../myworks.html">← Works</a><h1>Project <span class="accent-blue">Title</span></h1><p>3DCG / Frontend / Design</p></section>
 
     <div class="content-wrapper">
       <section class="project-detail reveal">
-        <h2 class="section-title">
-          <div class="title-wrapper">
-            <span class="sub-title">OVERVIEW</span>
-            <span class="main-title">Project Summary</span>
-          </div>
-        </h2>
+
 
         <div class="project-hero-image glass project-placeholder">
           <span class="mono project-placeholder-label">[MAIN RENDER PLACEHOLDER]</span>

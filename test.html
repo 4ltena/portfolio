@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEST — Above Tech Stack 候補</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- このページ専用の試作スタイル。採用が決まったものだけ style.css に移植する。 -->
+  <style>
+    .test-note {
+      max-width: var(--max-width);
+      margin: 4rem auto 1rem;
+      padding: 0 var(--container-padding);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent-primary);
+      letter-spacing: 0.05em;
+    }
+    .test-divider {
+      max-width: var(--max-width);
+      margin: 6rem auto 2rem;
+      padding: 0 var(--container-padding);
+      border-top: 1px dashed var(--glass-border);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+    .test-divider span { display: block; padding-top: 1rem; }
+
+    /* ===== 候補A: Intro / whoami ターミナルカード ===== */
+    .intro-card {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 1.75rem 2rem;
+      font-family: var(--font-mono);
+    }
+    .intro-card .prompt-line {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .intro-card .prompt-line .accent-blue { color: var(--accent-primary); }
+    .intro-card .intro-lead {
+      font-family: var(--font-main);
+      font-size: clamp(1.25rem, 3vw, 1.75rem);
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.4;
+      letter-spacing: -0.01em;
+    }
+    .intro-card .intro-lead .grad {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .intro-card .intro-sub {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* ===== 候補B: At a Glance（数値タイル） ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+    .stat-tile {
+      padding: 1.5rem 1rem;
+      text-align: center;
+    }
+    .stat-tile .stat-num {
+      font-family: var(--font-mono);
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 700;
+      color: var(--accent-primary);
+      line-height: 1;
+    }
+    .stat-tile .stat-num .unit {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-left: 0.15rem;
+    }
+    .stat-tile .stat-label {
+      margin-top: 0.6rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ===== 候補C: Focus / Now（注力分野カード） ===== */
+    .focus-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+    .focus-card {
+      padding: 1.75rem 1.5rem;
+      transition: var(--transition);
+    }
+    .focus-card:hover { transform: translateY(-4px); }
+    .focus-card .focus-no {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent-primary);
+      letter-spacing: 0.1em;
+    }
+    .focus-card h3 {
+      margin: 0.5rem 0 0.6rem;
+      font-size: 1.15rem;
+      color: var(--text-primary);
+    }
+    .focus-card p {
+      font-size: 0.85rem;
+      line-height: 1.7;
+    }
+    @media (max-width: 768px) {
+      .focus-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header glass">
+    <div class="header-container">
+      <a href="index.html" class="logo">
+        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
+      </a>
+      <nav class="nav">
+        <ul>
+          <li><a href="index.html">← back to top</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="content-wrapper">
+
+      <p class="test-note">// test.html — ヒーローと「Tech Stack」の間に入れる候補。採用したものだけ index.html / style.css へ移植する。</p>
+
+      <!-- ===================================================================
+           候補A: Intro / Overview（ターミナル風 whoami カード）
+           ヒーローのキャッチを受けて「何者か」を一言で伝える橋渡し。
+           =================================================================== -->
+      <div class="test-divider"><span>候補A — Intro / Overview（whoami カード）：ヒーローの直後に自己紹介の一文を置く橋渡し</span></div>
+      <section class="reveal" style="margin-bottom: 4rem;">
+        <h2 class="section-title">
+          <div class="title-wrapper">
+            <span class="sub-title">WHOAMI</span>
+            <span class="main-title">Overview</span>
+          </div>
+        </h2>
+        <div class="intro-card glass">
+          <p class="prompt-line"><span class="accent-blue">altena</span>@portfolio:~$ whoami</p>
+          <p class="intro-lead">
+            高専で情報を学ぶ学生。<span class="grad">3DCG とフロントエンド</span>を軸に、
+            手を動かして作ったものを残しています。
+          </p>
+          <p class="intro-sub">
+            音ゲー・執筆・資格取得が趣味。最近は Blender での 3DCG 制作に注力中。
+            このサイト自体も Three.js / 素の HTML・CSS・JS で構築しています。
+          </p>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           候補B: At a Glance（数値タイル）
+           実績を数字で一望。ヒーローの抽象的なキャッチを具体に落とす。
+           =================================================================== -->
+      <div class="test-divider"><span>候補B — At a Glance（数値タイル）：年数・資格数・作品数などを 4 タイルで一望</span></div>
+      <section class="reveal" style="margin-bottom: 4rem;">
+        <h2 class="section-title">
+          <div class="title-wrapper">
+            <span class="sub-title">AT A GLANCE</span>
+            <span class="main-title">By the Numbers</span>
+          </div>
+        </h2>
+        <div class="stats-grid">
+          <div class="stat-tile glass">
+            <div class="stat-num">4<span class="unit">年</span></div>
+            <div class="stat-label">KOSEN / Info</div>
+          </div>
+          <div class="stat-tile glass">
+            <div class="stat-num">12<span class="unit">+</span></div>
+            <div class="stat-label">Certifications</div>
+          </div>
+          <div class="stat-tile glass">
+            <div class="stat-num">8<span class="unit">+</span></div>
+            <div class="stat-label">3DCG Works</div>
+          </div>
+          <div class="stat-tile glass">
+            <div class="stat-num">20<span class="unit">+</span></div>
+            <div class="stat-label">Notes</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           候補C: Focus / Now（注力分野カード 3 枚）
+           "今やっていること" を 3 つの軸で提示。下の Tech Stack に自然に接続。
+           =================================================================== -->
+      <div class="test-divider"><span>候補C — Focus / Now（注力分野カード 3 枚）：3DCG / Frontend / Writing を提示し Tech Stack へ接続</span></div>
+      <section class="reveal" style="margin-bottom: 4rem;">
+        <h2 class="section-title">
+          <div class="title-wrapper">
+            <span class="sub-title">CURRENTLY</span>
+            <span class="main-title">Focus</span>
+          </div>
+        </h2>
+        <div class="focus-grid">
+          <div class="focus-card glass">
+            <span class="focus-no">01</span>
+            <h3>3DCG</h3>
+            <p>Blender を中心にモデリングとシーン制作。最近いちばん時間を使っている領域。</p>
+          </div>
+          <div class="focus-card glass">
+            <span class="focus-no">02</span>
+            <h3>Frontend</h3>
+            <p>Three.js・素の HTML/CSS/JS。このポートフォリオもビルド工程なしで構築。</p>
+          </div>
+          <div class="focus-card glass">
+            <span class="focus-no">03</span>
+            <h3>Writing &amp; Certs</h3>
+            <p>学んだことを Notes に執筆し、資格取得で体系的に裏付け。</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="test-divider"><span>↓ この下に既存の「Tech Stack」セクションが続くイメージ</span></div>
+
+    </div>
+  </main>
+</body>
+
+</html>

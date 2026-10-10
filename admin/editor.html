@@ -9,8 +9,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
-  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../style.css?v=20260915-menu-date">
   <style>
+    /* 管理エディタは暗色のまま据え置く。公開側は style.css で明色テーマに移行したが、
+       このページ独自のスタイルは rgba(255,255,255,…) 前提で書かれているため、
+       トークンだけ旧値へ戻して従来の見た目を保つ。 */
+    :root {
+      --ink: 255, 255, 255;
+      --bg-color: #050505;
+      --surface-color: #0a0a0c;
+      --text-primary: #fff;
+      --text-secondary: #a0a0a5;
+      --accent-primary: #00f2ff;
+      --accent-rgb: 0, 242, 255;
+      --glass-bg: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-hover: rgba(255, 255, 255, 0.06);
+      --shadow-color: rgba(0, 0, 0, 0.5);
+    }
+
     .admin-header {
       position: sticky;
       top: 0;
@@ -157,6 +174,51 @@
     .article-actions { display: flex; gap: 0.5rem; }
     .articles-section { margin-top: 4rem; }
 
+    /* Notes publication desk */
+    .publication-layout { display:grid; grid-template-columns:minmax(0, 1fr) 250px; gap:1.5rem; align-items:start; }
+    .publication-side { position:sticky; top:5.5rem; padding:1rem; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--border-radius-sm); }
+    .publication-side h2 { font:600 .72rem var(--font-mono); letter-spacing:.16em; color:var(--accent-primary); margin:0 0 .8rem; text-transform:uppercase; }
+    .publication-details > summary { display:none; cursor:pointer; color:var(--accent-primary); font:.72rem var(--font-mono); letter-spacing:.13em; list-style:none; }
+    .publication-details > summary::-webkit-details-marker { display:none; }
+    .visibility-options { display:grid; gap:.55rem; }
+    .visibility-option { display:block; position:relative; padding:.75rem; border:1px solid var(--glass-border); border-radius:6px; cursor:pointer; }
+    .visibility-option:has(input:checked) { border-color:var(--accent-primary); background:rgba(0,242,255,.06); }
+    .visibility-option input { position:absolute; opacity:0; }
+    .visibility-option strong, .visibility-option span { display:block; }
+    .visibility-option strong { font:600 .78rem var(--font-mono); color:var(--text-primary); }
+    .visibility-option span { margin-top:.28rem; font-size:.72rem; color:var(--text-secondary); line-height:1.45; }
+    .visibility-option[data-visibility="unlisted"] strong { color:#b7bee5; }
+    .visibility-option[data-visibility="draft"] strong { color:#efe59b; }
+    .cover-panel, .share-panel { margin-top:1rem; padding-top:1rem; border-top:1px solid var(--glass-border); }
+    .cover-preview { aspect-ratio:8 / 3; overflow:hidden; border-radius:5px; border:1px solid var(--glass-border); background:#faf7ef; }
+    .cover-preview svg, .article-cover svg { display:block; width:100%; height:100%; }
+    .cover-meta { display:flex; justify-content:space-between; gap:.5rem; margin:.55rem 0; color:var(--text-secondary); font: .66rem var(--font-mono); }
+    .share-panel[hidden] { display:none; }
+    .share-link-row { display:flex; gap:.45rem; }
+    .share-link-row input { min-width:0; flex:1; font-size:.68rem; }
+    .publication-warning { display:none; margin:1rem 0; padding:.75rem; border:1px solid rgba(255,85,85,.5); background:rgba(255,85,85,.08); color:#ffb3b3; font: .72rem/1.5 var(--font-mono); }
+    .publication-warning.visible { display:block; }
+    .save-state { min-height:1.4em; color:var(--text-secondary); font:.7rem var(--font-mono); }
+    .desk-controls { display:flex; align-items:center; gap:.75rem; margin:1.25rem 0; flex-wrap:wrap; }
+    .desk-filters { display:flex; gap:.35rem; flex-wrap:wrap; }
+    .desk-filter { border:1px solid var(--glass-border); background:transparent; color:var(--text-secondary); border-radius:999px; padding:.35rem .65rem; font:.68rem var(--font-mono); cursor:pointer; }
+    .desk-filter[aria-pressed="true"] { border-color:var(--accent-primary); color:var(--accent-primary); }
+    .desk-search { flex:1; min-width:180px; }
+    .article-row { gap:.8rem; }
+    .article-cover { width:128px; flex:0 0 128px; aspect-ratio:8 / 3; overflow:hidden; border-radius:4px; border:1px solid var(--glass-border); background:#faf7ef; }
+    .article-main { min-width:0; flex:1; }
+    .article-title { display:block; white-space:nowrap; }
+    .article-tags, .article-updated { color:var(--text-secondary); font:.67rem var(--font-mono); margin-top:.25rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .visibility-badge { display:inline-flex; align-items:center; border:1px solid currentColor; border-radius:999px; padding:.18rem .45rem; color:var(--accent-primary); font:.63rem var(--font-mono); white-space:nowrap; }
+    .visibility-badge.unlisted { color:#b7bee5; }
+    .visibility-badge.draft { color:#efe59b; }
+    .article-menu { position:relative; }
+    .article-menu > summary { list-style:none; color:var(--text-secondary); cursor:pointer; padding:.25rem .5rem; border:1px solid var(--glass-border); border-radius:4px; font: .75rem var(--font-mono); }
+    .article-menu > summary::-webkit-details-marker { display:none; }
+    .article-menu-panel { position:absolute; right:0; z-index:4; min-width:165px; padding:.35rem; background:#111; border:1px solid var(--glass-border); border-radius:5px; box-shadow:0 8px 24px rgba(0,0,0,.5); }
+    .article-menu-panel button { width:100%; padding:.5rem .65rem; text-align:left; color:#ff9c9c; background:transparent; border:0; font:.7rem var(--font-mono); cursor:pointer; }
+    .article-menu-panel button:hover { background:rgba(255,85,85,.1); }
+
     /* Shared row buttons */
     .btn-edit-row, .btn-del-row {
       background: transparent;
@@ -256,6 +318,24 @@
       .item-row-meta { display: none; }
       .tab-bar { gap: 1rem; }
       .tab-btn { font-size: 0.7rem; }
+      .publication-layout { display:flex; flex-direction:column; }
+      .publication-side { position:static; width:100%; order:-1; }
+      .article-row { display:grid; grid-template-columns:96px minmax(0,1fr) auto; align-items:start; padding: .8rem; }
+      .article-cover { width:96px; flex-basis:96px; }
+      .article-date { display:block; min-width:auto; }
+      .article-actions { grid-column:2 / -1; margin-top:.45rem; flex-wrap:wrap; }
+      .form-actions { position:sticky; bottom:0; z-index:5; padding:.75rem 0; background:linear-gradient(to top, #050505 75%, transparent); }
+    }
+    @media (max-width: 390px) {
+      .publication-side { padding:.8rem; }
+      .publication-details > summary { display:flex; justify-content:space-between; align-items:center; }
+      .publication-details > summary::after { content:'+'; font-size:1rem; }
+      .publication-details[open] > summary { margin-bottom:.8rem; }
+      .publication-details[open] > summary::after { content:'−'; }
+      .publication-details > h2 { display:none; }
+      .form-actions { gap:.45rem; }
+      .save-state { display:grid; gap:.15rem; font-size:.62rem; }
+      .btn-publish { padding:.65rem .85rem; font-size:.75rem; }
     }
   </style>
 </head>
@@ -275,23 +355,24 @@
   <div class="admin-wrap">
 
     <!-- Tab bar -->
-    <div class="tab-bar">
-      <button class="tab-btn active" data-tab="notes">// Notes</button>
-      <button class="tab-btn"        data-tab="timeline">// Timeline</button>
-      <button class="tab-btn"        data-tab="skills">// Skills</button>
-      <button class="tab-btn"        data-tab="certs">// Certificates</button>
-      <button class="tab-btn"        data-tab="images">// Images</button>
+    <div class="tab-bar" role="tablist" aria-label="管理項目">
+      <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-notes" id="tab-notes" data-tab="notes">// Notes</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-timeline" id="tab-timeline" data-tab="timeline">// Timeline</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-skills" id="tab-skills" data-tab="skills">// Skills</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-certs" id="tab-certs" data-tab="certs">// Certificates</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-images" id="tab-images" data-tab="images">// Images</button>
     </div>
 
     <!-- ══════════════════════════════════════════════════ -->
     <!-- TAB: Notes                                         -->
     <!-- ══════════════════════════════════════════════════ -->
-    <div class="tab-panel active" id="panel-notes">
+    <div class="tab-panel active" id="panel-notes" role="tabpanel" aria-labelledby="tab-notes">
 
       <div id="edit-banner">Editing: <span id="edit-title-label"></span></div>
 
       <form id="article-form" novalidate>
         <input type="hidden" id="editing-id">
+        <div class="publication-layout">
         <div class="form-grid">
           <div class="form-field full">
             <label for="title-input">Title *</label>
@@ -314,7 +395,7 @@
             <textarea class="form-input" id="excerpt-input" placeholder="Short description (1–2 sentences)"></textarea>
           </div>
           <div class="form-field full">
-            <label>Content *</label>
+            <label for="content-input">Content *</label>
             <div class="md-editor-wrap">
               <div class="md-toolbar" id="md-toolbar"></div>
               <div class="md-body">
@@ -329,18 +410,62 @@
             </div>
           </div>
         </div>
+        <aside class="publication-side" aria-label="公開設定">
+          <details class="publication-details" id="publication-details" open>
+          <summary>公開設定 <span id="publication-summary-state">下書き</span></summary>
+          <h2>// Publication</h2>
+          <div class="visibility-options" role="radiogroup" aria-label="公開状態">
+            <label class="visibility-option" data-visibility="public">
+              <input type="radio" name="visibility" value="public">
+              <strong>公開</strong><span>Notes一覧、Latest Notes、liteに表示します。</span>
+            </label>
+            <label class="visibility-option" data-visibility="unlisted">
+              <input type="radio" name="visibility" value="unlisted">
+              <strong>限定公開</strong><span>一覧には表示せず、共有リンクを知る人だけが閲覧できます。</span>
+            </label>
+            <label class="visibility-option" data-visibility="draft">
+              <input type="radio" name="visibility" value="draft" checked>
+              <strong>下書き</strong><span>管理画面内のプレビューだけで確認します。</span>
+            </label>
+          </div>
+          <p class="publication-warning" id="publication-warning" role="alert">一度公開した本文は、検索・外部キャッシュ・第三者アーカイブから完全には回収できません。機密用途は新しい限定公開記事として作成してください。</p>
+          <section class="cover-panel" aria-labelledby="cover-title">
+            <h2 id="cover-title">// Cover</h2>
+            <div class="cover-preview" id="cover-preview" aria-label="記事サムネイルのプレビュー"></div>
+            <div class="cover-meta"><span id="cover-pattern-label">構図: 割当待ち</span><span id="cover-pattern-id"></span></div>
+            <button type="button" class="btn-preview" id="btn-reroll-cover">構図を再抽選</button>
+          </section>
+          <section class="share-panel" id="share-panel" hidden aria-labelledby="share-title">
+            <h2 id="share-title">// Share link</h2>
+            <p class="tags-hint">保存後に共有リンクを発行できます。リンクを再発行すると以前のリンクは失効します。</p>
+            <div class="share-link-row"><input class="form-input" id="share-link" readonly aria-label="限定公開リンク"><button type="button" class="btn-preview" id="btn-copy-share">コピー</button></div>
+            <button type="button" class="btn-preview" id="btn-rotate-share" style="margin-top:.5rem">リンクを再発行</button>
+          </section>
+          </details>
+        </aside>
+        </div>
 
         <div class="form-actions">
           <div style="display:flex;gap:0.75rem;align-items:center;">
             <button type="button" class="btn-cancel" id="btn-cancel" style="display:none">Cancel edit</button>
           </div>
-          <button type="submit" class="btn-publish" id="btn-submit">Publish →</button>
+          <div class="save-state" id="save-state" role="status" aria-live="polite"><span id="save-visibility">下書き</span><span id="save-state-text">未保存</span></div>
+          <button type="submit" class="btn-publish" id="btn-submit">公開する</button>
         </div>
-        <div id="status-msg"></div>
+        <div id="status-msg" role="status" aria-live="polite"></div>
       </form>
 
       <div class="articles-section">
-        <div class="admin-section-title">// Articles <span id="article-count" style="opacity:0.5"></span></div>
+        <div class="admin-section-title">// Publication desk <span id="article-count" style="opacity:0.5"></span></div>
+        <div class="desk-controls">
+          <div class="desk-filters" role="group" aria-label="記事の公開状態で絞り込み">
+            <button type="button" class="desk-filter" data-filter="all" aria-pressed="true">すべて <span>0</span></button>
+            <button type="button" class="desk-filter" data-filter="public" aria-pressed="false">公開 <span>0</span></button>
+            <button type="button" class="desk-filter" data-filter="unlisted" aria-pressed="false">限定公開 <span>0</span></button>
+            <button type="button" class="desk-filter" data-filter="draft" aria-pressed="false">下書き <span>0</span></button>
+          </div>
+          <input class="form-input desk-search" id="article-search" type="search" placeholder="タイトル・タグを検索" aria-label="管理用の記事検索">
+        </div>
         <div class="articles-list" id="articles-list"><div class="empty-list">Loading...</div></div>
       </div>
     </div>
@@ -348,7 +473,7 @@
     <!-- ══════════════════════════════════════════════════ -->
     <!-- TAB: Timeline                                      -->
     <!-- ══════════════════════════════════════════════════ -->
-    <div class="tab-panel" id="panel-timeline">
+    <div class="tab-panel" id="panel-timeline" role="tabpanel" aria-labelledby="tab-timeline">
 
       <div class="admin-section-title">// Add / Edit</div>
       <form id="tl-form" novalidate>
@@ -389,7 +514,7 @@
     <!-- ══════════════════════════════════════════════════ -->
     <!-- TAB: Skills                                        -->
     <!-- ══════════════════════════════════════════════════ -->
-    <div class="tab-panel" id="panel-skills">
+    <div class="tab-panel" id="panel-skills" role="tabpanel" aria-labelledby="tab-skills">
 
       <div class="admin-section-title">// Add / Edit</div>
       <form id="sk-form" novalidate>
@@ -437,7 +562,7 @@
     <!-- ══════════════════════════════════════════════════ -->
     <!-- TAB: Certificates                                  -->
     <!-- ══════════════════════════════════════════════════ -->
-    <div class="tab-panel" id="panel-certs">
+    <div class="tab-panel" id="panel-certs" role="tabpanel" aria-labelledby="tab-certs">
       <div class="admin-section-title">// Node Settings <span id="cert-count" style="opacity:0.5"></span></div>
       <p style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-secondary);margin-bottom:1.5rem;line-height:1.7;">
         Timeline の <code style="background:rgba(255,255,255,0.06);padding:0.1rem 0.4rem;border-radius:3px">cert</code> カテゴリのエントリを自動取得します。
@@ -456,13 +581,13 @@
     <!-- ══════════════════════════════════════════════════ -->
     <!-- TAB: Images                                        -->
     <!-- ══════════════════════════════════════════════════ -->
-    <div class="tab-panel" id="panel-images">
+    <div class="tab-panel" id="panel-images" role="tabpanel" aria-labelledby="tab-images">
 
       <div class="admin-section-title">// Upload</div>
       <div class="drop-zone" id="drop-zone">
         <div>Drop images here, or click to select files</div>
-        <div class="drop-zone-hint">SVG · PNG · JPG · GIF · WEBP · ICO &nbsp;|&nbsp; max 10 MB each</div>
-        <input type="file" id="img-file-input" accept=".svg,.png,.jpg,.jpeg,.gif,.webp,.ico" multiple style="display:none">
+        <div class="drop-zone-hint">PNG · JPG · GIF · WEBP · ICO &nbsp;|&nbsp; max 10 MB each</div>
+        <input type="file" id="img-file-input" accept=".png,.jpg,.jpeg,.gif,.webp,.ico" multiple style="display:none">
       </div>
       <div class="img-upload-status" id="img-upload-status"></div>
 
@@ -472,10 +597,14 @@
 
   </div><!-- /admin-wrap -->
 
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Pinned: preview is sanitized locally as a second boundary. The server remains canonical. -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js" integrity="sha384-JEyTNhjM6R1ElGoJns4U2Ln4ofPcqzSsynQkmEc/KGy6336qAZl70tDLufbkla+3" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@18.0.14/lib/marked.umd.js" integrity="sha384-2vpGtuKqJvFlwJqYnf/wUMuzUfhUnYBt9oay0e2yaFcq0Dh6/aEbQ8YAOeKGzlYo" crossorigin="anonymous"></script>
+  <script src="../js/cover-art.js?v=20260922-publication-desk"></script>
+  <script src="../js/calendar-date.js?v=20261009-timeline-date"></script>
   <!-- HTML → Markdown 変換（既存記事の編集時に保存済み HTML を Markdown へ戻す） -->
-  <script src="https://cdn.jsdelivr.net/npm/turndown/dist/turndown.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/turndown-plugin-gfm/dist/turndown-plugin-gfm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/turndown@7.2.4/dist/turndown.js" integrity="sha384-VRHmZZ8b5mH5yknWcg48OJS6RmXZmlgvsqhOXJqY0rwvwirs1M12xd+49c3NpW6a" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/turndown-plugin-gfm@1.0.2/dist/turndown-plugin-gfm.js" integrity="sha384-2TroN1N6OfLQ+K4qttptnIfMREzUlMa3hW/nZqDZXv7Sm9BkESfGEupDEqCbzyRl" crossorigin="anonymous"></script>
   <script>
     const TOKEN_KEY = 'admin_token';
     let token = localStorage.getItem(TOKEN_KEY);
@@ -517,6 +646,30 @@
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
+    // Notesの入力形式を保ち、Timelineも実在する年月日を保存する。
+    const { formatCompactDate } = CalendarDate;
+
+    function normalizeDateField(field) {
+      const formatted = formatCompactDate(field.value, field.id === 'tl-date');
+      field.setCustomValidity(formatted === null ? '存在する日付を入力してください（例：20260811）。' : '');
+      if (formatted !== null) field.value = formatted;
+      return formatted !== null;
+    }
+
+    for (const id of ['date-input', 'tl-date']) {
+      const field = document.getElementById(id);
+      field.inputMode = 'numeric';
+      field.addEventListener('input', event => {
+        field.setCustomValidity('');
+        if (!event.isComposing) normalizeDateField(field);
+      });
+      field.addEventListener('compositionend', () => normalizeDateField(field));
+      field.addEventListener('change', () => normalizeDateField(field));
+      field.addEventListener('blur', () => {
+        if (!normalizeDateField(field)) field.reportValidity();
+      });
+    }
+
     // Today default
     const today = new Date();
     const pad = n => String(n).padStart(2, '0');
@@ -529,13 +682,23 @@
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.setAttribute('aria-selected', 'false'));
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
         document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
         if (btn.dataset.tab === 'timeline') loadTimeline();
         if (btn.dataset.tab === 'skills')   { loadSkills(); loadPickerImages(); }
         if (btn.dataset.tab === 'certs')    loadCerts();
         if (btn.dataset.tab === 'images')   loadImages();
+      });
+      btn.addEventListener('keydown', event => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const tabs = [...document.querySelectorAll('.tab-btn')];
+        const current = tabs.indexOf(btn);
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+        tabs[next].focus(); tabs[next].click();
       });
     });
 
@@ -605,8 +768,14 @@
 
     function updateMdPreview() {
       const md = contentInput.value;
-      mdPreviewPane.innerHTML = md.trim()
-        ? marked.parse(md)
+      const rendered = md.trim() ? marked.parse(md) : '';
+      // Server sanitizer is authoritative; this closes the preview-only XSS gap.
+      mdPreviewPane.innerHTML = rendered
+        ? (window.DOMPurify ? DOMPurify.sanitize(rendered, {
+            USE_PROFILES: { html: true },
+            FORBID_TAGS: ['style', 'svg', 'math', 'form', 'input', 'iframe', 'object', 'embed'],
+            FORBID_ATTR: [/^on/i]
+          }) : '<span style="font-family:var(--font-mono);font-size:0.78rem;color:#ffb3b3">安全なプレビューを読み込めませんでした。</span>')
         : '<span style="font-family:var(--font-mono);font-size:0.78rem;opacity:0.3">preview…</span>';
     }
     contentInput.addEventListener('input', updateMdPreview);
@@ -727,6 +896,81 @@
     const editLabel  = document.getElementById('edit-title-label');
     const btnCancel  = document.getElementById('btn-cancel');
     const btnSubmit  = document.getElementById('btn-submit');
+    const visibilityInputs = Array.from(document.querySelectorAll('input[name="visibility"]'));
+    const warningEl = document.getElementById('publication-warning');
+    const sharePanel = document.getElementById('share-panel');
+    const shareLinkInput = document.getElementById('share-link');
+    let editingVisibility = 'draft';
+    let currentArticle = null;
+
+    function visibilityValue() {
+      return visibilityInputs.find(input => input.checked)?.value || 'draft';
+    }
+    function updateSubmitLabel() {
+      const labels = { public: '公開する', unlisted: '限定公開で保存', draft: '下書きを保存' };
+      btnSubmit.textContent = labels[visibilityValue()] || labels.public;
+      document.getElementById('save-visibility').textContent = articleVisibilityLabel(visibilityValue());
+      document.getElementById('publication-summary-state').textContent = articleVisibilityLabel(visibilityValue());
+    }
+    function setVisibility(value, persisted = editingVisibility) {
+      const next = ['public', 'unlisted', 'draft'].includes(value) ? value : 'draft';
+      const input = visibilityInputs.find(item => item.value === next);
+      if (input) input.checked = true;
+      warningEl.classList.toggle('visible', persisted === 'public' && next !== 'public');
+      sharePanel.hidden = next !== 'unlisted' || !editingId.value;
+      updateSubmitLabel();
+    }
+    function setCover(article) {
+      currentArticle = article || null;
+      const preview = document.getElementById('cover-preview');
+      const pattern = Number.isInteger(article?.coverPattern) ? article.coverPattern : null;
+      const fallbackId = article?.id || 'new-note';
+      if (typeof PastelCover !== 'undefined') {
+        try { preview.innerHTML = PastelCover.render(fallbackId, 8 / 3, 0, pattern); } catch { preview.textContent = 'サムネイルを表示できません'; }
+      }
+      const patternName = typeof PastelCover !== 'undefined' ? PastelCover.patterns?.[pattern] : null;
+      const label = pattern == null ? '構図: 保存時に割当' : `構図: ${patternName || '不明'}`;
+      document.getElementById('cover-pattern-label').textContent = label;
+      document.getElementById('cover-pattern-id').textContent = pattern == null ? '' : `#${pattern + 1}`;
+    }
+    visibilityInputs.forEach(input => input.addEventListener('change', () => setVisibility(input.value)));
+    contentInput.addEventListener('input', () => document.getElementById('save-state-text').textContent = '未保存の変更があります');
+    const publicationDetails = document.getElementById('publication-details');
+    if (window.matchMedia('(max-width: 390px)').matches) publicationDetails.open = false;
+
+    async function copyText(value, successMessage) {
+      if (!value) return;
+      try { await navigator.clipboard.writeText(value); showStatus(successMessage, 'ok'); }
+      catch { shareLinkInput.focus(); shareLinkInput.select(); showStatus('コピーできませんでした。リンクを選択してコピーしてください。', 'err'); }
+    }
+    async function loadShareLink(id) {
+      const r = await fetch(`/portfolio/api/admin/articles/${encodeURIComponent(id)}/share-link`, { headers: authHeader() });
+      if (!r.ok) throw new Error('share-link');
+      const data = await r.json();
+      const url = typeof data.url === 'string' && data.url ? new URL(data.url, location.origin).href : '';
+      shareLinkInput.value = url;
+      return url;
+    }
+    document.getElementById('btn-copy-share').addEventListener('click', async () => {
+      try { await copyText(await loadShareLink(editingId.value), '共有リンクをコピーしました。'); } catch { showStatus('共有リンクを取得できませんでした。', 'err'); }
+    });
+    document.getElementById('btn-rotate-share').addEventListener('click', async () => {
+      if (!editingId.value || !confirm('共有リンクを再発行します。以前のリンクはただちに無効になります。')) return;
+      try {
+        const r = await fetch(`/portfolio/api/admin/articles/${encodeURIComponent(editingId.value)}/share/rotate`, { method: 'POST', headers: authHeader() });
+        if (!r.ok) throw new Error('rotate');
+        const data = await r.json(); shareLinkInput.value = typeof data.url === 'string' && data.url ? new URL(data.url, location.origin).href : '';
+        showStatus('共有リンクを再発行しました。', 'ok');
+      } catch { showStatus('共有リンクを再発行できませんでした。', 'err'); }
+    });
+    document.getElementById('btn-reroll-cover').addEventListener('click', async () => {
+      if (!editingId.value) { showStatus('構図の再抽選は記事を保存してから行えます。', 'err'); return; }
+      try {
+        const r = await fetch(`/portfolio/api/admin/articles/${encodeURIComponent(editingId.value)}/cover/reroll`, { method: 'POST', headers: authHeader() });
+        if (!r.ok) throw new Error('reroll');
+        const data = await r.json(); setCover({ ...currentArticle, ...data }); showStatus('構図を再抽選しました。', 'ok'); loadArticles();
+      } catch { showStatus('構図を再抽選できませんでした。', 'err'); }
+    });
 
     // 既存タグ一覧（loadArticles で集計）
     let allTags = [];
@@ -803,6 +1047,7 @@
 
     function startEdit(article) {
       editingId.value = article.id;
+      editingVisibility = article.visibility || 'draft';
       document.getElementById('title-input').value   = article.title   || '';
       document.getElementById('date-input').value    = article.date    || '';
       document.getElementById('tags-input').value    = (article.tags || []).join(', ');
@@ -811,26 +1056,34 @@
       contentInput.value = htmlToMarkdown(article.content || '');
       updateMdPreview();
       editLabel.textContent = article.title;
+      setVisibility(article.visibility || 'draft', article.visibility || 'draft');
+      setCover(article);
       editBanner.style.display = 'block';
       btnCancel.style.display  = 'inline';
-      btnSubmit.textContent    = 'Update →';
+      updateSubmitLabel();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function clearForm() {
       editingId.value = '';
+      editingVisibility = 'draft';
       document.getElementById('article-form').reset();
       document.getElementById('date-input').value =
         `${today.getFullYear()}/${pad(today.getMonth()+1)}/${pad(today.getDate())}`;
       editBanner.style.display = 'none';
       btnCancel.style.display  = 'none';
-      btnSubmit.textContent    = 'Publish →';
+      setVisibility('draft', 'draft');
+      setCover(null);
+      updateSubmitLabel();
+      document.getElementById('save-state-text').textContent = '未保存';
       updateMdPreview();
     }
     btnCancel.addEventListener('click', clearForm);
 
     document.getElementById('article-form').addEventListener('submit', async e => {
       e.preventDefault();
+      const dateField = document.getElementById('date-input');
+      if (!normalizeDateField(dateField)) { dateField.reportValidity(); return; }
       if (!await verifyAuth()) return;
       const id = editingId.value;
       const title   = document.getElementById('title-input').value.trim();
@@ -839,59 +1092,122 @@
       const content = marked.parse(markdown);
 
       const tags = document.getElementById('tags-input').value.split(/[\s,，]+/).map(t => t.trim()).filter(Boolean);
-      const body = { title, date: document.getElementById('date-input').value.trim(), tags, excerpt: document.getElementById('excerpt-input').value.trim(), content };
+      const visibility = visibilityValue();
+      if (id && editingVisibility === 'public' && visibility !== 'public') {
+        const accepted = confirm('公開済みの記事を制限します。オリジン上の公開ページは削除されますが、検索・外部キャッシュ・第三者アーカイブから本文を完全には回収できません。続行しますか？');
+        if (!accepted) return;
+      }
+      const body = { title, date: document.getElementById('date-input').value.trim(), tags, excerpt: document.getElementById('excerpt-input').value.trim(), content, visibility };
 
       btnSubmit.disabled = true;
       try {
-        const r    = await fetch(id ? `/portfolio/api/articles/${id}` : '/portfolio/api/articles', { method: id ? 'PUT' : 'POST', headers: authHeader(), body: JSON.stringify(body) });
+        const r    = await fetch(id ? `/portfolio/api/admin/articles/${encodeURIComponent(id)}` : '/portfolio/api/admin/articles', { method: id ? 'PUT' : 'POST', headers: authHeader(), body: JSON.stringify(body) });
         const data = await r.json();
-        if (r.ok) { showStatus(id ? 'Article updated.' : 'Article published.', 'ok'); clearForm(); loadArticles(); }
+        if (r.ok) { showStatus(id ? '記事を保存しました。' : '記事を保存しました。', 'ok'); document.getElementById('save-state-text').textContent = '保存済み'; clearForm(); loadArticles(); }
         else       { showStatus(data.error || 'Error.', 'err'); }
       } catch { showStatus('Network error.', 'err'); }
       finally    { btnSubmit.disabled = false; }
     });
 
+    let managedArticles = [];
+    let articleFilter = 'all';
+    const articleSearch = document.getElementById('article-search');
+    function articleVisibilityLabel(value) {
+      return ({ public: '公開', unlisted: '限定公開', draft: '下書き' })[value] || '下書き';
+    }
+    function formatUpdatedAt(value) {
+      if (value == null || value === '') return '—';
+      const milliseconds = typeof value === 'number' ? value : Number(value);
+      if (!Number.isFinite(milliseconds)) return '—';
+      const date = new Date(milliseconds);
+      if (Number.isNaN(date.getTime())) return '—';
+      const parts = new Intl.DateTimeFormat('ja-JP', {
+        timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+      }).formatToParts(date).reduce((result, part) => ({ ...result, [part.type]: part.value }), {});
+      return `${parts.year}/${parts.month}/${parts.day} ${parts.hour}:${parts.minute}`;
+    }
+    function updateDeskFilters() {
+      const counts = { all: managedArticles.length, public: 0, unlisted: 0, draft: 0 };
+      managedArticles.forEach(article => { counts[article.visibility || 'draft'] += 1; });
+      document.querySelectorAll('.desk-filter').forEach(button => {
+        const selected = button.dataset.filter === articleFilter;
+        button.setAttribute('aria-pressed', String(selected));
+        button.querySelector('span').textContent = counts[button.dataset.filter] || 0;
+      });
+    }
+    function renderArticles() {
+      const list = document.getElementById('articles-list');
+      const query = articleSearch.value.trim().toLowerCase();
+      const articles = managedArticles.filter(article => {
+        const visibility = article.visibility || 'draft';
+        const matchesVisibility = articleFilter === 'all' || visibility === articleFilter;
+        const haystack = [article.title, ...(article.tags || [])].join(' ').toLowerCase();
+        return matchesVisibility && (!query || haystack.includes(query));
+      });
+      document.getElementById('article-count').textContent = `(${managedArticles.length})`;
+      if (!articles.length) { list.innerHTML = '<div class="empty-list">該当する記事はありません。</div>'; return; }
+      list.innerHTML = '';
+      for (const a of articles) {
+        const visibility = a.visibility || 'draft';
+        const row = document.createElement('div');
+        row.className = 'article-row';
+        const cover = document.createElement('div'); cover.className = 'article-cover';
+        if (typeof PastelCover !== 'undefined') {
+          try { cover.innerHTML = PastelCover.render(a.id, 8 / 3, 0, Number.isInteger(a.coverPattern) ? a.coverPattern : null); } catch { cover.textContent = ''; }
+        }
+        row.appendChild(cover);
+        const main = document.createElement('div'); main.className = 'article-main';
+        const safeUrl = typeof a.url === 'string' ? a.url : '';
+        main.innerHTML = `<span class="article-date">${escHtml(a.date || '')}</span>
+          <span class="visibility-badge ${escHtml(visibility)}">${articleVisibilityLabel(visibility)}</span>
+          <span class="article-title">${safeUrl ? `<a href="${escHtml(safeUrl)}" target="_blank" rel="noopener">${escHtml(a.title)}</a>` : escHtml(a.title)}</span>
+          <div class="article-tags">${escHtml((a.tags || []).map(tag => '#' + tag).join(' '))}</div>
+          <div class="article-updated">更新: ${escHtml(formatUpdatedAt(a.updatedAt ?? a.updated_at))} · 構図 #${Number.isInteger(a.coverPattern) ? a.coverPattern + 1 : '—'}</div>`;
+        row.appendChild(main);
+        const actions = document.createElement('div'); actions.className = 'article-actions';
+        if (visibility === 'public' && safeUrl) {
+          const open = document.createElement('a'); open.className = 'btn-edit-row'; open.href = safeUrl; open.target = '_blank'; open.rel = 'noopener'; open.textContent = '開く'; actions.appendChild(open);
+        }
+        if (visibility === 'unlisted') {
+          const copy = document.createElement('button'); copy.className = 'btn-edit-row'; copy.type = 'button'; copy.textContent = 'リンクをコピー';
+          copy.addEventListener('click', async () => { try { await copyText(await loadShareLink(a.id), '共有リンクをコピーしました。'); } catch { showStatus('共有リンクを取得できませんでした。', 'err'); } }); actions.appendChild(copy);
+          const rotate = document.createElement('button'); rotate.className = 'btn-edit-row'; rotate.type = 'button'; rotate.textContent = '再発行';
+          rotate.addEventListener('click', async () => { if (!confirm('共有リンクを再発行します。以前のリンクは無効になります。')) return; const r = await fetch(`/portfolio/api/admin/articles/${encodeURIComponent(a.id)}/share/rotate`, { method:'POST', headers:authHeader() }); if (r.ok) { showStatus('共有リンクを再発行しました。', 'ok'); } else showStatus('共有リンクを再発行できませんでした。', 'err'); }); actions.appendChild(rotate);
+        }
+        const edit = document.createElement('button'); edit.className = 'btn-edit-row'; edit.type = 'button'; edit.textContent = '編集'; edit.dataset.id = a.id; actions.appendChild(edit);
+        const menu = document.createElement('details'); menu.className = 'article-menu';
+        const summary = document.createElement('summary'); summary.setAttribute('aria-label', `${a.title} のその他の操作`); summary.textContent = '…';
+        const panel = document.createElement('div'); panel.className = 'article-menu-panel';
+        const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'この記事を削除'; remove.dataset.id = a.id; remove.dataset.title = a.title; panel.appendChild(remove); menu.append(summary, panel); actions.appendChild(menu);
+        row.appendChild(actions); list.appendChild(row);
+      }
+      list.querySelectorAll('.btn-edit-row[data-id]').forEach(btn => btn.addEventListener('click', async () => {
+        const r = await fetch(`/portfolio/api/admin/articles/${encodeURIComponent(btn.dataset.id)}`, { headers: authHeader() });
+        if (r.ok) startEdit(await r.json()); else showStatus('記事を読み込めませんでした。', 'err');
+      }));
+      list.querySelectorAll('.article-menu-panel button').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm(`「${btn.dataset.title}」を削除します。この操作は元に戻せません。`)) return;
+        const r = await fetch(`/portfolio/api/admin/articles/${encodeURIComponent(btn.dataset.id)}`, { method: 'DELETE', headers: authHeader() });
+        if (r.ok) { showStatus('記事を削除しました。', 'ok'); loadArticles(); } else showStatus('記事を削除できませんでした。', 'err');
+      }));
+    }
     async function loadArticles() {
       const list = document.getElementById('articles-list');
       list.innerHTML = '<div class="empty-list">Loading...</div>';
       try {
-        const r        = await fetch('/portfolio/api/articles', { headers: authHeader() });
-        const articles = await r.json();
-        // 既存タグを集計（予測補完用）
-        const tagSet = new Set();
-        articles.forEach(a => (a.tags || []).forEach(t => { const v = String(t).trim(); if (v) tagSet.add(v); }));
+        const r = await fetch('/portfolio/api/admin/articles', { headers: authHeader() });
+        if (!r.ok) throw new Error('articles');
+        managedArticles = await r.json();
+        const tagSet = new Set(); managedArticles.forEach(article => (article.tags || []).forEach(tag => { if (String(tag).trim()) tagSet.add(String(tag).trim()); }));
         allTags = [...tagSet].sort((a, b) => a.localeCompare(b));
-        document.getElementById('article-count').textContent = `(${articles.length})`;
-        if (!articles.length) { list.innerHTML = '<div class="empty-list">No articles yet.</div>'; return; }
-        list.innerHTML = '';
-        for (const a of articles) {
-          const row = document.createElement('div');
-          row.className = 'article-row';
-          row.innerHTML = `
-            <span class="article-date">${a.date}</span>
-            <span class="article-title"><a href="/portfolio/notes/${a.id}/" target="_blank">${escHtml(a.title)}</a></span>
-            <div class="article-actions">
-              <button class="btn-edit-row" data-id="${a.id}">Edit</button>
-              <button class="btn-del-row"  data-id="${a.id}">×</button>
-            </div>`;
-          list.appendChild(row);
-        }
-        list.querySelectorAll('.btn-edit-row').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const r2 = await fetch(`/portfolio/api/articles/${btn.dataset.id}`, { headers: authHeader() });
-            if (r2.ok) startEdit(await r2.json());
-          });
-        });
-        list.querySelectorAll('.btn-del-row').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            if (!confirm('Delete this article?')) return;
-            const r2 = await fetch(`/portfolio/api/articles/${btn.dataset.id}`, { method: 'DELETE', headers: authHeader() });
-            if (r2.ok) loadArticles(); else alert('Delete failed.');
-          });
-        });
-      } catch { list.innerHTML = '<div class="empty-list" style="color:#ff5555">Failed to load articles.</div>'; }
+        updateDeskFilters(); renderArticles();
+      } catch { list.innerHTML = '<div class="empty-list" style="color:#ff5555">記事を読み込めませんでした。</div>'; }
     }
+    document.querySelectorAll('.desk-filter').forEach(button => button.addEventListener('click', () => { articleFilter = button.dataset.filter; updateDeskFilters(); renderArticles(); }));
+    articleSearch.addEventListener('input', renderArticles);
 
+    setCover(null);
     loadArticles();
 
     // ─────────────────────────────────────────────────────
@@ -925,6 +1241,7 @@
     function tlStartEdit(item) {
       tlEditId.value = item.id;
       document.getElementById('tl-date').value     = item.date;
+      normalizeDateField(document.getElementById('tl-date'));
       document.getElementById('tl-category').value = item.category;
       document.getElementById('tl-title').value    = item.title;
       document.getElementById('tl-href').value     = item.href || '';
@@ -934,6 +1251,8 @@
 
     document.getElementById('tl-form').addEventListener('submit', async e => {
       e.preventDefault();
+      const dateField = document.getElementById('tl-date');
+      if (!normalizeDateField(dateField)) { dateField.reportValidity(); return; }
       if (!await verifyAuth()) return;
       const id = tlEditId.value;
       const date     = document.getElementById('tl-date').value.trim();
@@ -965,7 +1284,7 @@
           const row = document.createElement('div');
           row.className = 'item-row';
           row.innerHTML = `
-            <span class="item-row-meta">${escHtml(item.date)}</span>
+            <span class="item-row-meta">${escHtml(formatCompactDate(item.date, true) || item.date)}</span>
             <span class="item-row-title">${escHtml(item.title)}</span>
             <span class="item-row-badge">${escHtml(item.category)}</span>
             <div class="article-actions">
@@ -1176,6 +1495,8 @@
               <option value="lang"   ${meta.node_category==='lang'   ?'selected':''}>lang — 言語文化</option>
               <option value="math"   ${meta.node_category==='math'   ?'selected':''}>math — 数学統計</option>
               <option value="design" ${meta.node_category==='design' ?'selected':''}>design — デザイン</option>
+              <option value="elec" ${meta.node_category==='elec' ?'selected':''}>elec — 電気電子</option>
+              <option value="other" ${meta.node_category==='other' ?'selected':''}>other — その他</option>
             </select>
             <select class="form-input cert-parent" data-id="${cert.id}"
               style="width:auto;min-width:160px;max-width:220px;padding:0.35rem 0.5rem;font-size:0.75rem;flex-shrink:0;">
@@ -1292,6 +1613,8 @@
               <option value="lang"   ${editing?.node_category==='lang'   ?'selected':''}>lang — 言語文化</option>
               <option value="math"   ${editing?.node_category==='math'   ?'selected':''}>math — 数学統計</option>
               <option value="design" ${editing?.node_category==='design' ?'selected':''}>design — デザイン</option>
+              <option value="elec" ${editing?.node_category==='elec' ?'selected':''}>elec — 電気電子</option>
+              <option value="other" ${editing?.node_category==='other' ?'selected':''}>other — その他</option>
             </select>
           </div>
           <div class="form-field">

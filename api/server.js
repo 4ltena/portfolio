@@ -4,13 +4,26 @@ const bcrypt       = require('bcryptjs');
 const jwt          = require('jsonwebtoken');
 const fs           = require('fs');
 const path         = require('path');
+const os           = require('os');
 const crypto       = require('crypto');
 const https        = require('https');
+const tls          = require('tls');
 const { execSync } = require('child_process');
+const { execFile } = require('child_process');
 const Database     = require('better-sqlite3');
 const multer       = require('multer');
+const { formatCompactDate } = require('../js/calendar-date');
+const {
+    migrateNotesSchema, normalizeArticlePayload, sanitizeHtml, makeShareSignature,
+    hasValidShareSignature, makePublicationJob, nextPublishedAt, contentHash, assertArticleId, articleView,
+    writeStagedArticle, quarantineManagedDirectory, removeManagedDirectory, promoteStagedArticle,
+    activateStagedArticle, rollbackActivatedArticle, commitActivatedArticle, restoreQuarantinedDirectory,
+    targetDirectory, assertPublishTargetManagedOrAbsent, syncPath
+} = require('./notes-publication');
 
 const app = express();
+// Only the local nginx hop may supply a forwarded client address.
+app.set('trust proxy', 'loopback');
 app.use(express.json({ limit: '4mb' }));
 
 const ts  = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
@@ -18,10 +31,10 @@ const log = (...args) => console.log(`[${ts()}]`, ...args);
 const err = (...args) => console.error(`[${ts()}]`, ...args);
 
 // ─── Paths ────────────────────────────────────────────────────────────────────
-const PORTFOLIO_ROOT = path.resolve(__dirname, '..');
-const DATA_DIR       = path.join(__dirname, 'data');
-const NOTES_OUT_DIR  = path.join(PORTFOLIO_ROOT, 'notes');
-const IMG_DIR        = path.join(PORTFOLIO_ROOT, 'img');
+const PORTFOLIO_ROOT = process.env.PORTFOLIO_ROOT ? path.resolve(process.env.PORTFOLIO_ROOT) : path.resolve(__dirname, '..');
+const DATA_DIR       = process.env.PORTFOLIO_DATA_DIR ? path.resolve(process.env.PORTFOLIO_DATA_DIR) : path.join(__dirname, 'data');
+const NOTES_OUT_DIR  = process.env.PORTFOLIO_NOTES_OUT_DIR ? path.resolve(process.env.PORTFOLIO_NOTES_OUT_DIR) : path.join(PORTFOLIO_ROOT, 'notes');
+const IMG_DIR        = process.env.PORTFOLIO_IMG_DIR ? path.resolve(process.env.PORTFOLIO_IMG_DIR) : path.join(PORTFOLIO_ROOT, 'img');
 const CONFIG_FILE    = path.join(DATA_DIR, 'config.json');
 const DB_FILE        = path.join(DATA_DIR, 'portfolio.db');
 const EASTER_FILE    = path.join(DATA_DIR, 'easter.html');
@@ -176,50 +189,120 @@ const DEFAULT_SKILLS = [
     }
 })();
 
+migrateNotesSchema(db);
+
+const { createArticleCovers } = require('./article-covers');
+const articleCovers = createArticleCovers(db);
+
 // ─── Config ───────────────────────────────────────────────────────────────────
+function atomicWriteConfig(cfg) {
+    const temporary = `${CONFIG_FILE}.${process.pid}.${crypto.randomBytes(6).toString('hex')}.tmp`;
+    const fd = fs.openSync(temporary, 'wx', 0o600);
+    try {
+        fs.writeFileSync(fd, JSON.stringify(cfg, null, 2));
+        fs.fsyncSync(fd);
+    } finally { fs.closeSync(fd); }
+    fs.chmodSync(temporary, 0o600);
+    fs.renameSync(temporary, CONFIG_FILE);
+    const parent = fs.openSync(DATA_DIR, 'r');
+    try { fs.fsyncSync(parent); } finally { fs.closeSync(parent); }
+}
+
+function readVerifiedConfig(expectedShareSecret = null) {
+    const persisted = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+    if (expectedShareSecret !== null && persisted.shareSecret !== expectedShareSecret) {
+        throw new Error('Persisted share secret verification failed');
+    }
+    if ((fs.statSync(CONFIG_FILE).mode & 0o777) !== 0o600) fs.chmodSync(CONFIG_FILE, 0o600);
+    if ((fs.statSync(CONFIG_FILE).mode & 0o777) !== 0o600) throw new Error('Config permissions verification failed');
+    return persisted;
+}
+
 function loadConfig() {
-    if (fs.existsSync(CONFIG_FILE)) return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
-    const pw  = process.env.ADMIN_PASSWORD || 'changeme';
-    const cfg = { passwordHash: bcrypt.hashSync(pw, 12), jwtSecret: crypto.randomBytes(48).toString('hex') };
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2), { mode: 0o600 });
-    log('[INIT] Config created. Set ADMIN_PASSWORD env var to change password.');
-    return cfg;
+    if (fs.existsSync(CONFIG_FILE)) {
+        const cfg = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+        if (!cfg.shareSecret) {
+            cfg.shareSecret = crypto.randomBytes(48).toString('base64url');
+            atomicWriteConfig(cfg);
+            return readVerifiedConfig(cfg.shareSecret);
+        }
+        return readVerifiedConfig();
+    }
+    const pw = process.env.ADMIN_PASSWORD;
+    if (!pw || pw.length < 16) {
+        throw new Error('ADMIN_PASSWORD (at least 16 characters) is required to initialize the admin config');
+    }
+    const cfg = {
+        passwordHash: bcrypt.hashSync(pw, 12),
+        jwtSecret: crypto.randomBytes(48).toString('hex'),
+        shareSecret: crypto.randomBytes(48).toString('base64url')
+    };
+    atomicWriteConfig(cfg);
+    const persisted = readVerifiedConfig(cfg.shareSecret);
+    log('[INIT] Config created with explicit ADMIN_PASSWORD.');
+    return persisted;
 }
 const config = loadConfig();
 
 // ─── Rate limiter ─────────────────────────────────────────────────────────────
 const loginAttempts = new Map();
+let loginRateChecks = 0;
 function checkRateLimit(ip) {
     const now = Date.now();
+    if (++loginRateChecks % 256 === 0) {
+        for (const [key, value] of loginAttempts) if (now > value.reset) loginAttempts.delete(key);
+    }
     const e   = loginAttempts.get(ip) || { n: 0, reset: now + 15 * 60 * 1000 };
     if (now > e.reset) { e.n = 0; e.reset = now + 15 * 60 * 1000; }
     e.n++;
+    if (!loginAttempts.has(ip) && loginAttempts.size >= 10000) loginAttempts.delete(loginAttempts.keys().next().value);
     loginAttempts.set(ip, e);
     return e.n <= 10;
 }
 
 // ─── Auth middleware ──────────────────────────────────────────────────────────
-function requireAuth(req, res, next) {
+function requireAdmin(req, res, next) {
     const h = req.headers.authorization || '';
     if (!h.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
-    try { req.user = jwt.verify(h.slice(7), config.jwtSecret); next(); }
+    try {
+        const payload = jwt.verify(h.slice(7), config.jwtSecret);
+        if (payload.admin !== true) return res.status(403).json({ error: 'Forbidden' });
+        req.user = payload;
+        next();
+    }
     catch { res.status(401).json({ error: 'Invalid token' }); }
 }
+const requireAuth = requireAdmin;
 
 // ─── Image upload (multer) ────────────────────────────────────────────────────
 const ALLOWED_IMG = /\.(svg|png|jpg|jpeg|gif|webp|ico)$/i;
+const UPLOADABLE_IMG = /\.(png|jpg|jpeg|gif|webp|ico)$/i;
+
+function hasRasterSignature(filePath, name) {
+    const fd = fs.openSync(filePath, 'r');
+    const header = Buffer.alloc(16);
+    let length;
+    try { length = fs.readSync(fd, header, 0, header.length, 0); }
+    finally { fs.closeSync(fd); }
+    if (/\.png$/i.test(name)) return length >= 8 && header.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    if (/\.jpe?g$/i.test(name)) return length >= 3 && header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+    if (/\.gif$/i.test(name)) return length >= 6 && /^(GIF87a|GIF89a)$/.test(header.toString('ascii', 0, 6));
+    if (/\.webp$/i.test(name)) return length >= 12 && header.toString('ascii', 0, 4) === 'RIFF' && header.toString('ascii', 8, 12) === 'WEBP';
+    if (/\.ico$/i.test(name)) return length >= 4 && header[0] === 0 && header[1] === 0 && header[2] === 1 && header[3] === 0;
+    return false;
+}
 
 const imgStorage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, IMG_DIR),
     filename:    (req, file, cb) => {
         const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-        cb(null, safe);
+        cb(null, `.${safe}.${crypto.randomBytes(8).toString('hex')}.upload`);
     }
 });
 const upload = multer({
     storage:    imgStorage,
     limits:     { fileSize: 10 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => cb(null, ALLOWED_IMG.test(file.originalname))
+    fileFilter: (req, file, cb) => cb(null, UPLOADABLE_IMG.test(file.originalname))
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -238,7 +321,7 @@ function esc(s) {
 }
 
 function generateHtml(a) {
-    const tagsHtml = a.tags.map(t => `<span class="tag-link">#${esc(t)}</span>`).join('\n                  ');
+    const tagsHtml = a.tags.map(t => `<a class="tag-link" href="../../notes.html?tag=${encodeURIComponent(t)}">#${esc(t)}</a>`).join('\n                  ');
     return `<!doctype html>
 <html lang="ja">
 
@@ -254,16 +337,15 @@ function generateHtml(a) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
-  <link rel="stylesheet" href="../../style.css">
-  <script src="../../js/main.js"></script>
+  <link rel="stylesheet" href="../../style.css?v=20260916-controls">
+  <link rel="stylesheet" href="../../archive-pages.css?v=20260916-controls">
+  <script defer src="../../js/main.js?v=20260915-terminal"></script>
 </head>
 
-<body>
+<body class="reading-page">
   <header class="header glass">
     <div class="header-container">
-      <a href="../../index.html" class="logo" id="header-logo">
-        <span class="slash-icon">//</span>Alt<span class="ena">ena</span>
-      </a>
+      <a href="../../index.html" class="logo" id="header-logo" aria-label="Altena — Home"><svg class="logo-wordmark" viewBox="0 0 3329 840" width="114" height="28" aria-hidden="true" focusable="false"><use href="/portfolio/img/altena-logo.svg#wordmark"></use></svg></a>
       <button class="hamburger" id="mobile-menu-toggle" aria-label="Toggle navigation">
         <span class="bar"></span>
         <span class="bar"></span>
@@ -282,15 +364,7 @@ function generateHtml(a) {
   </header>
 
   <main>
-    <section class="hero small-hero">
-      <div class="hero-content">
-        <div class="hero-placeholder"></div>
-        <div class="hero-text">
-          <h1 class="reveal">${esc(a.title)}</h1>
-          <p class="reveal delay-1">${esc(a.date)}</p>
-        </div>
-      </div>
-    </section>
+    <section class="reading-heading"><a class="reading-back" href="../../notes.html">← Notes</a><h1>${esc(a.title)}</h1><p>${esc(a.date)}</p></section>
 
     <div class="content-wrapper">
       <article class="note-detail reveal">
@@ -304,7 +378,7 @@ function generateHtml(a) {
         </div>
 
         <div class="note-body glass">
-          ${a.content}
+          ${sanitizeHtml(a.content)}
         </div>
 
         <div class="back-home reveal">
@@ -324,70 +398,298 @@ function generateHtml(a) {
 </html>`;
 }
 
-// ─── Articles ─────────────────────────────────────────────────────────────────
+// ─── Notes publication ────────────────────────────────────────────────────────
+function articleDirectory(id) { return targetDirectory(NOTES_OUT_DIR, id); }
+function renderArticle(row) {
+    const clean = { ...row, tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags, content: sanitizeHtml(row.content) };
+    const html = generateHtml(clean);
+    if (clean.visibility !== 'public') return html;
+    const { noteDto } = require('./agent-public-service');
+    const { generateJsonLd, embedJsonLd } = require('./agent-jsonld');
+    return embedJsonLd(html, generateJsonLd({ kind: 'note', item: noteDto(clean) }));
+}
+function transientDirectories(id) {
+    if (!fs.existsSync(NOTES_OUT_DIR)) return [];
+    const prefix = `.${assertArticleId(id)}.`;
+    return fs.readdirSync(NOTES_OUT_DIR, { withFileTypes: true })
+        .filter(entry => entry.isDirectory() && entry.name.startsWith(prefix))
+        .map(entry => path.join(NOTES_OUT_DIR, entry.name));
+}
+function cleanTransients(id, preserved = []) {
+    const keep = new Set(preserved.filter(Boolean).map(directory => path.resolve(directory)));
+    for (const directory of transientDirectories(id)) {
+        if (!keep.has(path.resolve(directory))) removeManagedDirectory(directory, id);
+    }
+}
+function recoverPendingPublication(job, row) {
+    const target = articleDirectory(job.article_id);
+    for (const directory of transientDirectories(job.article_id)) {
+        const name = path.basename(directory);
+        if (name.includes('.quarantine-') && row?.visibility === 'public' && !fs.existsSync(target)) {
+            fs.renameSync(directory, target);
+            syncPath(NOTES_OUT_DIR);
+        } else {
+            removeManagedDirectory(directory, job.article_id);
+        }
+    }
+    db.prepare("UPDATE article_publication_jobs SET stage='complete',updated_at=? WHERE id=?").run(Date.now(), job.id);
+}
+function finalizePublication(job, row) {
+    if (job.operation === 'delete' || !row || row.visibility !== 'public') {
+        // restricted states have already been atomically moved out of their public URL before DB commit.
+        cleanTransients(job.article_id);
+    } else {
+        const staged = writeStagedArticle(NOTES_OUT_DIR, row.id, renderArticle(row));
+        promoteStagedArticle(NOTES_OUT_DIR, row.id, staged);
+        cleanTransients(row.id);
+    }
+    db.prepare("UPDATE article_publication_jobs SET stage='complete',updated_at=? WHERE id=?").run(Date.now(), job.id);
+}
+function reconcilePublicationJobs() {
+    for (const job of db.prepare("SELECT * FROM article_publication_jobs WHERE stage!='complete' ORDER BY id").all()) {
+        const row = db.prepare('SELECT * FROM articles WHERE id=?').get(job.article_id);
+        if (job.stage === 'pending') recoverPendingPublication(job, row);
+        else {
+            // A stale generation is never trusted. The DB-confirmed row is rendered again below.
+            const generationMatches = row && row.updated_at === job.expected_updated_at && contentHash(row.content) === job.content_hash;
+            if (!generationMatches) log(`[NOTES] Rebuilding generation for ${job.article_id} from confirmed DB row`);
+            finalizePublication(job, row);
+        }
+    }
+}
+function rerollIfPublicCollision(id, visibility) {
+    if (visibility !== 'public') return;
+    const cover = db.prepare('SELECT cover_pattern FROM article_covers WHERE article_id=?').get(id)?.cover_pattern;
+    const recent = db.prepare(`SELECT c.cover_pattern FROM articles a JOIN article_covers c ON c.article_id=a.id
+        WHERE a.visibility='public' AND a.id != ? ORDER BY a.published_at DESC,a.id DESC LIMIT 3`).all(id);
+    if (recent.some(row => row.cover_pattern === cover)) articleCovers.reroll(id);
+}
+
+function captureArticleSnapshot(id) {
+    return {
+        id,
+        row: db.prepare('SELECT * FROM articles WHERE id=?').get(id) || null,
+        cover: db.prepare('SELECT * FROM article_covers WHERE article_id=?').get(id) || null
+    };
+}
+
+function restoreArticleSnapshot(snapshot) {
+    db.transaction(() => {
+        db.prepare('DELETE FROM articles WHERE id=?').run(snapshot.id);
+        if (snapshot.row) {
+            const row = snapshot.row;
+            db.prepare(`INSERT INTO articles
+                (id,title,date,tags,excerpt,content,created_at,updated_at,visibility,published_at,share_version)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(
+                row.id, row.title, row.date, row.tags, row.excerpt, row.content, row.created_at,
+                row.updated_at, row.visibility, row.published_at, row.share_version);
+        }
+        db.prepare('DELETE FROM article_covers WHERE article_id=?').run(snapshot.id);
+        if (snapshot.cover) {
+            db.prepare('INSERT INTO article_covers (assignment_order,article_id,cover_pattern) VALUES (?,?,?)').run(
+                snapshot.cover.assignment_order, snapshot.cover.article_id, snapshot.cover.cover_pattern);
+        }
+    })();
+}
+
+function publicationCheckpoint(stage) {
+    if (process.env.NODE_ENV === 'test' && process.env.PORTFOLIO_TEST_PUBLICATION_FAILURE === stage) {
+        throw new Error(`Injected publication ${stage} failure`);
+    }
+}
+
+function failBeforeDatabaseCommit(error, job, id, staged, quarantine) {
+    try {
+        if (staged) removeManagedDirectory(staged, id);
+        if (quarantine) restoreQuarantinedDirectory(NOTES_OUT_DIR, id, quarantine);
+        if (job) db.prepare("UPDATE article_publication_jobs SET stage='complete',updated_at=? WHERE id=?").run(Date.now(), job);
+    } catch (cleanupError) {
+        throw new AggregateError([error, cleanupError], `${error.message}; preparation rollback failed`);
+    }
+    throw error;
+}
+
+function compensateAfterDatabaseCommit(error, snapshot, job, rollbackOutput) {
+    try {
+        restoreArticleSnapshot(snapshot);
+    } catch (databaseError) {
+        // Keep the database_committed job so startup reconciliation can converge to the DB state.
+        throw new AggregateError([error, databaseError], `${error.message}; database compensation failed`);
+    }
+    try {
+        rollbackOutput();
+        db.prepare("UPDATE article_publication_jobs SET stage='complete',updated_at=? WHERE id=?").run(Date.now(), job);
+    } catch (outputError) {
+        // The DB is back at the prior generation. Keeping this job lets startup rebuild that generation.
+        throw new AggregateError([error, outputError], `${error.message}; output compensation failed`);
+    }
+    throw error;
+}
+
+function saveArticle(id, payload, previous = null) {
+    const snapshot = captureArticleSnapshot(id);
+    previous = snapshot.row;
+    const article = normalizeArticlePayload(payload, previous && { ...previous, tags: JSON.parse(previous.tags) });
+    const now = Date.now();
+    const publishedAt = nextPublishedAt(previous, article.visibility, now);
+    const shareVersion = previous?.visibility === 'unlisted' || article.visibility !== 'unlisted'
+        ? (previous?.share_version || 0) : (previous?.share_version || 0) + 1;
+    let job;
+    let staged = null;
+    let quarantine = null;
+    let activation = null;
+    try {
+        job = makePublicationJob(db, { id, updated_at: now, content: article.content }, article.visibility === 'public' ? 'publish' : 'unpublish', article.visibility, now);
+        // Build public output before the database becomes public. For public → restricted, first
+        // move the managed directory away from its URL; no DB state can then expose stale content.
+        if (article.visibility === 'public') {
+            // Never commit a public URL whose directory belongs to an unknown producer.
+            assertPublishTargetManagedOrAbsent(NOTES_OUT_DIR, id);
+            staged = writeStagedArticle(NOTES_OUT_DIR, id, renderArticle({ ...article, id, updated_at: now, published_at: publishedAt }));
+        }
+        else if (previous?.visibility === 'public') quarantine = quarantineManagedDirectory(NOTES_OUT_DIR, id);
+        db.transaction(() => {
+        if (previous) db.prepare(`UPDATE articles SET title=?,date=?,tags=?,excerpt=?,content=?,visibility=?,published_at=?,share_version=?,updated_at=? WHERE id=?`).run(
+            article.title, article.date, JSON.stringify(article.tags), article.excerpt, article.content, article.visibility,
+            publishedAt, shareVersion, now, id);
+        else {
+            db.prepare(`INSERT INTO articles (id,title,date,tags,excerpt,content,created_at,updated_at,visibility,published_at,share_version) VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(
+                id, article.title, article.date, JSON.stringify(article.tags), article.excerpt, article.content, now, now,
+                article.visibility, publishedAt, shareVersion);
+            articleCovers.assign(id);
+        }
+        const updated = db.prepare('SELECT * FROM articles WHERE id=?').get(id);
+        rerollIfPublicCollision(id, updated.visibility);
+        db.prepare("UPDATE article_publication_jobs SET stage='database_committed',updated_at=? WHERE id=?").run(now, job);
+        })();
+    } catch (error) {
+        failBeforeDatabaseCommit(error, job, id, staged, quarantine);
+    }
+    const saved = db.prepare(`SELECT a.*,c.cover_pattern FROM articles a LEFT JOIN article_covers c ON c.article_id=a.id WHERE a.id=?`).get(id);
+    try {
+        if (saved.visibility === 'public') {
+            publicationCheckpoint('promote');
+            activation = activateStagedArticle(NOTES_OUT_DIR, id, staged);
+        }
+        publicationCheckpoint('cleanup');
+        cleanTransients(id, [activation?.backup, quarantine]);
+        if (activation?.backup || quarantine) publicationCheckpoint('remove');
+        if (activation) commitActivatedArticle(id, activation);
+        else if (quarantine) removeManagedDirectory(quarantine, id);
+    } catch (error) {
+        compensateAfterDatabaseCommit(error, snapshot, job, () => {
+            if (activation) rollbackActivatedArticle(NOTES_OUT_DIR, id, activation);
+            else if (staged && fs.existsSync(staged)) removeManagedDirectory(staged, id);
+            if (quarantine) restoreQuarantinedDirectory(NOTES_OUT_DIR, id, quarantine);
+        });
+    }
+    // Keep this outside the filesystem compensation block. If this DB write fails, the
+    // desired DB/output generation is already consistent and the unfinished job is safe
+    // for startup reconciliation; the previous output backup has intentionally been retired.
+    db.prepare("UPDATE article_publication_jobs SET stage='complete',updated_at=? WHERE id=?").run(Date.now(), job);
+    return db.prepare(`SELECT a.*,c.cover_pattern FROM articles a LEFT JOIN article_covers c ON c.article_id=a.id WHERE a.id=?`).get(id);
+}
+function deleteArticle(id) {
+    const snapshot = captureArticleSnapshot(id);
+    const previous = snapshot.row;
+    if (!previous) return false;
+    const job = makePublicationJob(db, previous, 'delete', 'draft', Date.now());
+    let quarantine = null;
+    try {
+        quarantine = previous.visibility === 'public' ? quarantineManagedDirectory(NOTES_OUT_DIR, id) : null;
+        db.transaction(() => {
+            db.prepare('DELETE FROM articles WHERE id=?').run(id);
+            db.prepare("UPDATE article_publication_jobs SET stage='database_committed',updated_at=? WHERE id=?").run(Date.now(), job);
+        })();
+    } catch (error) {
+        failBeforeDatabaseCommit(error, job, id, null, quarantine);
+    }
+    try {
+        publicationCheckpoint('cleanup');
+        cleanTransients(id, [quarantine]);
+        if (quarantine) publicationCheckpoint('remove');
+        if (quarantine) removeManagedDirectory(quarantine, id);
+    } catch (error) {
+        compensateAfterDatabaseCommit(error, snapshot, job, () => {
+            if (quarantine) restoreQuarantinedDirectory(NOTES_OUT_DIR, id, quarantine);
+        });
+    }
+    db.prepare("UPDATE article_publication_jobs SET stage='complete',updated_at=? WHERE id=?").run(Date.now(), job);
+    return true;
+}
+reconcilePublicationJobs();
+
 app.get('/articles', (req, res) => {
-    const rows = db.prepare('SELECT id,title,date,tags,excerpt,created_at FROM articles ORDER BY created_at DESC').all();
-    res.json(rows.map(r => ({ id: r.id, title: r.title, date: r.date, tags: JSON.parse(r.tags), excerpt: r.excerpt, createdAt: r.created_at })));
+    const rows = db.prepare(`SELECT a.*,c.cover_pattern FROM articles a LEFT JOIN article_covers c ON c.article_id=a.id WHERE a.visibility='public' ORDER BY a.published_at DESC,a.id DESC`).all();
+    res.json(rows.map(row => articleView(row)));
 });
-
 app.get('/articles/:id', (req, res) => {
-    const id  = req.params.id.replace(/[^a-zA-Z0-9\-_]/g, '');
-    const row = db.prepare('SELECT * FROM articles WHERE id = ?').get(id);
+    const id = req.params.id;
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(id)) return res.status(404).json({ error: 'Not found' });
+    const row = db.prepare(`SELECT a.*,c.cover_pattern FROM articles a LEFT JOIN article_covers c ON c.article_id=a.id WHERE a.id=? AND a.visibility='public'`).get(id);
     if (!row) return res.status(404).json({ error: 'Not found' });
-    res.json({ ...row, tags: JSON.parse(row.tags), createdAt: row.created_at, updatedAt: row.updated_at });
+    res.json(articleView(row, true));
+});
+app.get('/shared-articles/:id', (req, res) => {
+    const id = req.params.id;
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(id)) return res.status(404).json({ error: 'Not found' });
+    const row = db.prepare(`SELECT a.*,c.cover_pattern FROM articles a LEFT JOIN article_covers c ON c.article_id=a.id WHERE a.id=? AND a.visibility='unlisted'`).get(id);
+    if (!row || !hasValidShareSignature(config.shareSecret, id, row.share_version, req.get('X-Note-Share') || '')) return res.status(404).json({ error: 'Not found' });
+    res.set('Cache-Control', 'private, no-store').set('Referrer-Policy', 'no-referrer').json(articleView(row, true));
+});
+app.get('/admin/articles', requireAdmin, (req, res) => {
+    const rows = db.prepare(`SELECT a.*,c.cover_pattern FROM articles a LEFT JOIN article_covers c ON c.article_id=a.id ORDER BY COALESCE(a.published_at,a.updated_at,a.created_at) DESC,a.id DESC`).all();
+    res.set('Cache-Control', 'private, no-store').json(rows.map(row => articleView(row)));
+});
+app.get('/admin/articles/:id', requireAdmin, (req, res) => {
+    const id = req.params.id; if (!/^[A-Za-z0-9_-]{1,128}$/.test(id)) return res.status(404).json({ error: 'Not found' });
+    const row = db.prepare(`SELECT a.*,c.cover_pattern FROM articles a LEFT JOIN article_covers c ON c.article_id=a.id WHERE a.id=?`).get(id);
+    if (!row) return res.status(404).json({ error: 'Not found' });
+    res.set('Cache-Control', 'private, no-store').json(articleView(row, true));
+});
+app.post('/admin/articles', requireAdmin, (req, res) => {
+    try { res.status(201).set('Cache-Control', 'private, no-store').json(articleView(saveArticle(makeId(req.body?.title || 'post'), req.body), true)); }
+    catch (error) { res.status(400).json({ error: error.message }); }
+});
+app.put('/admin/articles/:id', requireAdmin, (req, res) => {
+    try { const id = assertArticleId(req.params.id); const previous = db.prepare('SELECT * FROM articles WHERE id=?').get(id);
+        if (!previous) return res.status(404).json({ error: 'Not found' });
+        res.set('Cache-Control', 'private, no-store').json(articleView(saveArticle(id, req.body, previous), true));
+    } catch (error) { res.status(400).json({ error: error.message }); }
+});
+app.delete('/admin/articles/:id', requireAdmin, (req, res) => {
+    try { const id = assertArticleId(req.params.id); if (!db.prepare('SELECT id FROM articles WHERE id=?').get(id)) return res.status(404).json({ error: 'Not found' });
+        deleteArticle(id);
+        res.set('Cache-Control', 'private, no-store').json({ ok: true });
+    } catch (error) { res.status(400).json({ error: error.message }); }
+});
+app.get('/admin/articles/:id/share-link', requireAdmin, (req, res) => {
+    try { const id = assertArticleId(req.params.id); const row = db.prepare('SELECT * FROM articles WHERE id=?').get(id);
+        if (!row || row.visibility !== 'unlisted') return res.status(404).json({ error: 'Not found' });
+        res.set('Cache-Control', 'private, no-store').json({ url: `/portfolio/shared-note.html#${id}.${makeShareSignature(config.shareSecret, id, row.share_version)}` });
+    } catch (error) { res.status(400).json({ error: error.message }); }
+});
+app.post('/admin/articles/:id/share/rotate', requireAdmin, (req, res) => {
+    try { const id = assertArticleId(req.params.id); const row = db.prepare('SELECT * FROM articles WHERE id=?').get(id);
+        if (!row || row.visibility !== 'unlisted') return res.status(404).json({ error: 'Not found' });
+        const version = row.share_version + 1; db.prepare('UPDATE articles SET share_version=?,updated_at=? WHERE id=?').run(version, Date.now(), id);
+        res.set('Cache-Control', 'private, no-store').json({ url: `/portfolio/shared-note.html#${id}.${makeShareSignature(config.shareSecret, id, version)}` });
+    } catch (error) { res.status(400).json({ error: error.message }); }
+});
+app.post('/admin/articles/:id/cover/reroll', requireAdmin, (req, res) => {
+    try { const id = assertArticleId(req.params.id); if (!db.prepare('SELECT id FROM articles WHERE id=?').get(id)) return res.status(404).json({ error: 'Not found' });
+        res.set('Cache-Control', 'private, no-store').json({ id, coverPattern: articleCovers.reroll(id) });
+    } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-app.post('/articles', requireAuth, (req, res) => {
-    const { title, date, tags, excerpt, content } = req.body;
-    if (!title?.trim() || !content?.trim()) return res.status(400).json({ error: 'title and content are required' });
-    const id      = makeId(title);
-    const tagJson = JSON.stringify(Array.isArray(tags) ? tags.map(t => t.trim()).filter(Boolean) : []);
-    const now     = Date.now();
-    db.prepare('INSERT INTO articles (id,title,date,tags,excerpt,content,created_at) VALUES (?,?,?,?,?,?,?)').run(
-        id, title.trim(), date?.trim() || todayStr(), tagJson, excerpt?.trim() || '', content.trim(), now
-    );
-    const article = { id, title: title.trim(), date: date?.trim() || todayStr(), tags: JSON.parse(tagJson), excerpt: excerpt?.trim() || '', content: content.trim() };
-    const dir = path.join(NOTES_OUT_DIR, id);
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, 'index.html'), generateHtml(article));
-    res.status(201).json({ id, url: `/portfolio/notes/${id}/` });
-});
-
-app.put('/articles/:id', requireAuth, (req, res) => {
-    const id  = req.params.id.replace(/[^a-zA-Z0-9\-_]/g, '');
-    const row = db.prepare('SELECT * FROM articles WHERE id = ?').get(id);
-    if (!row) return res.status(404).json({ error: 'Not found' });
-    const { title, date, tags, excerpt, content } = req.body;
-    const tagJson = Array.isArray(tags) ? JSON.stringify(tags.map(t => t.trim()).filter(Boolean)) : row.tags;
-    db.prepare('UPDATE articles SET title=?,date=?,tags=?,excerpt=?,content=?,updated_at=? WHERE id=?').run(
-        title?.trim()   || row.title,
-        date?.trim()    || row.date,
-        tagJson,
-        excerpt != null ? excerpt.trim() : row.excerpt,
-        content?.trim() || row.content,
-        Date.now(), id
-    );
-    const updated = db.prepare('SELECT * FROM articles WHERE id = ?').get(id);
-    const article = { ...updated, tags: JSON.parse(updated.tags) };
-    const dir = path.join(NOTES_OUT_DIR, id);
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, 'index.html'), generateHtml(article));
-    res.json({ id, url: `/portfolio/notes/${id}/` });
-});
-
-app.delete('/articles/:id', requireAuth, (req, res) => {
-    const id  = req.params.id.replace(/[^a-zA-Z0-9\-_]/g, '');
-    const row = db.prepare('SELECT id FROM articles WHERE id = ?').get(id);
-    if (!row) return res.status(404).json({ error: 'Not found' });
-    db.prepare('DELETE FROM articles WHERE id = ?').run(id);
-    const dir = path.join(NOTES_OUT_DIR, id);
-    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true });
-    res.json({ ok: true });
-});
+// Compatibility write routes retain their endpoint but now require an explicit admin claim.
+app.post('/articles', requireAdmin, (req, res) => { try { res.status(201).json(articleView(saveArticle(makeId(req.body?.title || 'post'), { ...req.body, visibility: req.body?.visibility || 'draft' }), true)); } catch (error) { res.status(400).json({ error: error.message }); } });
+app.put('/articles/:id', requireAdmin, (req, res) => { try { const id = assertArticleId(req.params.id); const previous = db.prepare('SELECT * FROM articles WHERE id=?').get(id); if (!previous) return res.status(404).json({ error: 'Not found' }); res.json(articleView(saveArticle(id, { ...req.body, visibility: req.body?.visibility || previous.visibility }, previous), true)); } catch (error) { res.status(400).json({ error: error.message }); } });
+app.delete('/articles/:id', requireAdmin, (req, res) => { const id = req.params.id; if (!/^[A-Za-z0-9_-]{1,128}$/.test(id) || !db.prepare('SELECT id FROM articles WHERE id=?').get(id)) return res.status(404).json({ error: 'Not found' }); try { deleteArticle(id); res.json({ ok: true }); } catch (error) { res.status(400).json({ error: error.message }); } });
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 const EASTER_USER    = process.env.EASTER_USER    || 'lunami';
-const EASTER_PASS    = process.env.EASTER_PASS    || 'iroha';
+const EASTER_PASS    = process.env.EASTER_PASS || '';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 app.post('/auth/login', (req, res) => {
@@ -396,7 +698,7 @@ app.post('/auth/login', (req, res) => {
     const { username, password } = req.body || {};
     if (!password) return res.status(400).json({ error: 'Password required' });
 
-    if ((username || '').toLowerCase() === EASTER_USER && password === EASTER_PASS) {
+    if (EASTER_PASS && (username || '').toLowerCase() === EASTER_USER && password === EASTER_PASS) {
         const token = jwt.sign({ easter: true }, config.jwtSecret, { expiresIn: '5m' });
         return res.json({ type: 'easter', token });
     }
@@ -434,7 +736,11 @@ function httpsReq(url, opts, body) {
               headers: opts.headers || {} },
             res => {
                 let buf = '';
-                res.on('data', c => buf += c);
+                res.on('data', c => {
+                    buf += c;
+                    if (buf.length > 1024 * 1024) res.destroy(new Error('Upstream response too large'));
+                });
+                res.on('error', reject);
                 res.on('end', () => {
                     try { resolve({ status: res.statusCode, json: JSON.parse(buf) }); }
                     catch { resolve({ status: res.statusCode, json: null }); }
@@ -442,6 +748,7 @@ function httpsReq(url, opts, body) {
             }
         );
         req.on('error', reject);
+        req.setTimeout(10000, () => req.destroy(new Error('Upstream timeout')));
         if (body) req.write(body);
         req.end();
     });
@@ -471,7 +778,7 @@ async function callGemini(input, sysPrompt) {
                      m.supportedGenerationMethods.includes('generateContent') &&
                      !m.name.includes('thinking') && !m.name.includes('embedding') && !m.name.includes('aqa'))
         .map(m => m.name);
-    for (const model of models) {
+    for (const model of models.slice(0, 2)) {
         try {
             const body = JSON.stringify({
                 system_instruction: { parts: [{ text: sysPrompt }] },
@@ -494,6 +801,10 @@ async function callGemini(input, sysPrompt) {
 }
 
 // ─── Fushi chat proxy ─────────────────────────────────────────────────────────
+const FUSHI_DAILY_LIMIT = 50;
+let fushiWindowStart = Date.now();
+let fushiRequests = 0;
+let fushiInFlight = 0;
 app.post('/fushi/chat', async (req, res) => {
     const h = req.headers.authorization || '';
     if (!h.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
@@ -503,15 +814,25 @@ app.post('/fushi/chat', async (req, res) => {
     } catch { return res.status(401).json({ error: 'Token expired' }); }
     if (!GEMINI_API_KEY) return res.status(503).json({ error: 'API not configured' });
     const { input, systemPrompt } = req.body || {};
-    if (!input || !systemPrompt) return res.status(400).json({ error: 'Missing fields' });
+    if (typeof input !== 'string' || typeof systemPrompt !== 'string' || !input || !systemPrompt) return res.status(400).json({ error: 'Missing fields' });
     if (input.length > 2000 || systemPrompt.length > 30000) return res.status(400).json({ error: 'Too long' });
+    const now = Date.now();
+    if (now - fushiWindowStart >= 24 * 60 * 60 * 1000) {
+        fushiWindowStart = now;
+        fushiRequests = 0;
+    }
+    if (fushiRequests >= FUSHI_DAILY_LIMIT || fushiInFlight >= 2) {
+        return res.status(429).json({ error: 'Chat limit reached. Try again later.' });
+    }
+    fushiRequests++;
+    fushiInFlight++;
     try {
         const text = await callGemini(String(input), String(systemPrompt));
         res.json({ text: text || null });
     } catch (e) {
         err('[fushi/chat]', e.message);
         res.status(500).json({ error: 'Upstream error' });
-    }
+    } finally { fushiInFlight--; }
 });
 
 // ─── System monitoring ────────────────────────────────────────────────────────
@@ -534,9 +855,11 @@ app.get('/timeline', (req, res) => {
 
 app.post('/timeline', requireAuth, (req, res) => {
     const { date, title, category, href } = req.body;
+    const normalizedDate = formatCompactDate(date, true);
+    if (normalizedDate === null) return res.status(400).json({ error: 'A valid date (YYYY/MM/DD) is required' });
     if (!date?.trim() || !title?.trim() || !category?.trim()) return res.status(400).json({ error: 'date, title, category are required' });
     const id   = 'tl-' + Date.now().toString(36);
-    const item = { id, date: date.trim(), title: title.trim(), category: category.trim(), href: href?.trim() || null };
+    const item = { id, date: normalizedDate, title: title.trim(), category: category.trim(), href: href?.trim() || null };
     db.prepare('INSERT INTO timeline (id,date,title,category,href) VALUES (?,?,?,?,?)').run(item.id, item.date, item.title, item.category, item.href);
     res.status(201).json(item);
 });
@@ -545,8 +868,11 @@ app.put('/timeline/:id', requireAuth, (req, res) => {
     const row = db.prepare('SELECT * FROM timeline WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ error: 'Not found' });
     const { date, title, category, href } = req.body;
+    const dateInput = date == null || (typeof date === 'string' && !date.trim()) ? row.date : date;
+    const normalizedDate = formatCompactDate(dateInput, true);
+    if (normalizedDate === null) return res.status(400).json({ error: 'A valid date (YYYY/MM/DD) is required' });
     const updated = {
-        date:     date?.trim()     || row.date,
+        date:     normalizedDate,
         title:    title?.trim()    || row.title,
         category: category?.trim() || row.category,
         href:     href !== undefined ? (href?.trim() || null) : row.href,
@@ -611,7 +937,13 @@ app.get('/images', requireAuth, (req, res) => {
 
 app.post('/images', requireAuth, upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file or type not allowed' });
-    res.status(201).json({ name: req.file.filename, url: `/portfolio/img/${req.file.filename}` });
+    const safeName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    if (!hasRasterSignature(req.file.path, safeName)) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: 'Image content does not match its extension' });
+    }
+    fs.renameSync(req.file.path, path.join(IMG_DIR, safeName));
+    res.status(201).json({ name: safeName, url: `/portfolio/img/${safeName}` });
 });
 
 app.put('/images/:name', requireAuth, (req, res) => {
@@ -619,6 +951,7 @@ app.put('/images/:name', requireAuth, (req, res) => {
     const newName = String(req.body.name || '').replace(/[^a-zA-Z0-9._-]/g, '');
     if (!oldName || !newName) return res.status(400).json({ error: 'Invalid filename' });
     if (!ALLOWED_IMG.test(newName)) return res.status(400).json({ error: 'Extension not allowed' });
+    if (/\.svg$/i.test(newName) && !/\.svg$/i.test(oldName)) return res.status(400).json({ error: 'SVG upload is not allowed' });
     const oldPath = path.join(IMG_DIR, oldName);
     const newPath = path.join(IMG_DIR, newName);
     if (!fs.existsSync(oldPath)) return res.status(404).json({ error: 'Not found' });
@@ -687,33 +1020,68 @@ app.delete('/cert-plans/:id', requireAuth, (req, res) => {
 });
 
 // ─── System Status (public) ───────────────────────────────────────────────────
-app.get('/status', (req, res) => {
-    try {
-        const uptimeSec = parseFloat(fs.readFileSync('/proc/uptime', 'utf8').split(' ')[0]);
-        const days  = Math.floor(uptimeSec / 86400);
-        const hours = Math.floor((uptimeSec % 86400) / 3600);
-
-        const nginxRaw = execSync('nginx -v 2>&1').toString();
-        const nginx = nginxRaw.match(/nginx\/([\d.]+)/)?.[1] ?? 'unknown';
-
-        let tls = 'unknown';
-        try {
-            const enddate = execSync(
-                "echo | openssl s_client -connect altena.me:443 -servername altena.me 2>/dev/null | openssl x509 -noout -enddate",
-                { timeout: 8000 }
-            ).toString();
-            const m = enddate.match(/notAfter=(.+)/);
-            if (m) tls = new Date(m[1]) > new Date() ? 'valid' : 'expired';
-        } catch { /* tls check failed */ }
-
-        res.json({ status: 'ONLINE', uptime: { days, hours }, nginx, tls });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
+let statusSnapshot = null;
+let statusExpires = 0;
+let statusPending = null;
+function readNginxVersion() {
+    return new Promise(resolve => {
+        execFile('nginx', ['-v'], { timeout: 2000 }, (error, stdout, stderr) => {
+            resolve(error ? 'unknown' : (stdout + stderr).match(/nginx\/([\d.]+)/)?.[1] ?? 'unknown');
+        });
+    });
+}
+function readTlsState() {
+    return new Promise(resolve => {
+        const socket = tls.connect({ host: 'altena.me', port: 443, servername: 'altena.me' });
+        let finished = false;
+        const finish = value => {
+            if (finished) return;
+            finished = true;
+            socket.destroy();
+            resolve(value);
+        };
+        socket.setTimeout(4000, () => finish('unknown'));
+        socket.once('error', error => finish(error.code === 'CERT_HAS_EXPIRED' ? 'expired' : 'unknown'));
+        socket.once('secureConnect', () => {
+            const expiry = Date.parse(socket.getPeerCertificate().valid_to || '');
+            finish(Number.isFinite(expiry) ? (expiry > Date.now() ? 'valid' : 'expired') : 'unknown');
+        });
+    });
+}
+async function currentStatus() {
+    if (statusSnapshot && Date.now() < statusExpires) return statusSnapshot;
+    if (!statusPending) {
+        statusPending = (async () => {
+            const [nginx, tlsState] = await Promise.all([readNginxVersion(), readTlsState()]);
+            const uptimeSec = os.uptime();
+            if (!Number.isFinite(uptimeSec)) throw new Error('Uptime unavailable');
+            statusSnapshot = {
+                status: 'ONLINE',
+                uptime: { days: Math.floor(uptimeSec / 86400), hours: Math.floor((uptimeSec % 86400) / 3600) },
+                nginx, tls: tlsState
+            };
+            statusExpires = Date.now() + 5 * 60 * 1000;
+            return statusSnapshot;
+        })().finally(() => { statusPending = null; });
     }
+    return statusPending;
+}
+app.get('/status', async (req, res) => {
+    try { res.json(await currentStatus()); }
+    catch (error) { err('[status]', error.message); res.status(500).json({ error: 'Status unavailable' }); }
 });
+
+// Public Markdown only; nginx maps the public .md/llms.txt URLs to this namespace.
+// JSON endpoints remain local until their separate deployment is requested.
+app.use('/agent/api/public', require('./agent-public').createPublicRouter({
+    service: require('./agent-public-service').createPublicService({ root: PORTFOLIO_ROOT, db })
+}));
+app.use('/agent', require('./agent-markdown').createMarkdownRouter({ root: PORTFOLIO_ROOT, db }));
 
 // ─── Catch-all ────────────────────────────────────────────────────────────────
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '127.0.0.1', () => log(`[BOOT] Portfolio API listening on 127.0.0.1:${PORT}`));
+if (require.main === module) app.listen(PORT, '127.0.0.1', () => log(`[BOOT] Portfolio API listening on 127.0.0.1:${PORT}`));
+
+module.exports = { app, db, config };

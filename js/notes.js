@@ -10,7 +10,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const adminBar     = document.getElementById('admin-bar');
 
     let allArticles = [];
-    let activeTag   = null;
+    const initialQuery = new URLSearchParams(location.search);
+    let activeTag = initialQuery.get('tag')?.toLowerCase() || null;
+    if (searchInput) searchInput.value = initialQuery.get('search') || '';
+    if (clearBtn) clearBtn.style.opacity = searchInput?.value ? '1' : '0';
 
     // --- Admin bar visibility ---
     const token = localStorage.getItem('admin_token');
@@ -28,14 +31,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!r.ok) throw new Error('API error');
         allArticles = await r.json();
     } catch {
-        grid.innerHTML = '<p class="empty-list" style="padding:2rem 0;color:var(--text-secondary);font-family:var(--font-mono);font-size:.85rem;opacity:.5">Failed to load articles.</p>';
+        grid.innerHTML = '<p class="empty-list">Failed to load articles.</p>';
         return;
     }
 
     if (totalCount) totalCount.textContent = allArticles.length;
 
     buildTagCloud(allArticles);
-    renderCards(allArticles);
+    applyFilters();
 
     // --- Search ---
     searchInput?.addEventListener('input', () => {
@@ -52,6 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         activeTag = null;
         document.querySelectorAll('.tag-cloud-chip').forEach(c => c.classList.remove('active'));
         applyFilters();
+        searchInput.focus();
     });
 
     function applyFilters() {
@@ -66,6 +70,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 (a.tags || []).some(t => t.toLowerCase().includes(q))
             );
         });
+        document.querySelectorAll('.tag-cloud-chip').forEach(chip => {
+            const selected = chip.dataset.tag === activeTag;
+            chip.classList.toggle('active', selected);
+            chip.setAttribute('aria-pressed', String(selected));
+        });
         renderCards(filtered);
     }
 
@@ -76,8 +85,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
         tagCloud.innerHTML = '';
         sorted.forEach(([tag, count]) => {
-            const chip = document.createElement('span');
+            const chip = document.createElement('button');
+            chip.type = 'button';
             chip.className = 'tag-cloud-chip';
+            chip.dataset.tag = tag.toLowerCase();
             chip.textContent = `#${tag} (${count})`;
             chip.addEventListener('click', () => {
                 const isActive = chip.classList.contains('active');
@@ -100,31 +111,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (visibleCount) visibleCount.textContent = articles.length;
 
         if (!articles.length) {
-            grid.innerHTML = '<p class="empty-list" style="grid-column:1/-1;padding:3rem 0;text-align:center;color:var(--text-secondary);font-family:var(--font-mono);font-size:.85rem;opacity:.5">No entries found.</p>';
+            grid.innerHTML = '<p class="empty-list">No entries found.</p>';
             return;
         }
 
-        grid.innerHTML = '';
-        articles.forEach(a => {
-            const tagsHtml = (a.tags || [])
-                .map(t => `<span class="tag-link">#${escHtml(t)}</span>`)
-                .join('');
-
-            const card = document.createElement('a');
-            card.href      = `/portfolio/notes/${a.id}/`;
-            card.className = 'note-card glass';
-            card.innerHTML = `
-                <div class="note-meta">
-                    <span class="note-date">${escHtml(a.date)}</span>
-                    <div class="hashtags">${tagsHtml}</div>
-                </div>
-                <h3>${escHtml(a.title)}</h3>
-                <p class="note-excerpt">${escHtml(a.excerpt || '')}</p>`;
-            grid.appendChild(card);
-        });
-    }
-
-    function escHtml(s) {
-        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        // buildNoteCard / escHtml は js/utils.js（notes.js より前に読み込む）で定義。
+        grid.replaceChildren(...articles.map(buildNoteCard));
+        HomeBanners.decorateNotes(grid, articles);
     }
 });
